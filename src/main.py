@@ -1,8 +1,8 @@
-from typing import Set
+from typing import Set, List, Union, Tuple
 import os
+import glob
 import argparse
 import subprocess
-from concurrent.futures import ProcessPoolExecutor
 import logging
 
 import pandas as pd
@@ -13,56 +13,65 @@ def read_config(config_path: str) -> pd.DataFrame:
     Reads the config file and returns a dataframe
     """
     config = pd.read_csv(config_path, sep='\t')
-    config['truth_vcf_paths'] = config['truth_vcf_paths'].map(lambda x: x.split(','))
-    config['sample_type'] = config['sample_type'].map(lambda x: set(x.split(',')))
     return config
 
 
-def run_evaluator_sample(pipeline_folder_path: str, output_folder: str, sample: pd.Series) -> None:
-    """
-    Runs the evaluator for a single sample
-    """
-    sample_name = sample['sample_name']
-    truth_vcf_paths = sample['truth_vcf_paths']
-    fasta_path = sample['reference_fasta_path']
-    evaluator_command = os.environ['EVALUATOR_COMMAND']
-    evaluator_command_split = evaluator_command.split()
-    pipeline_vcf_paths = [os.path.join(pipeline_folder_path, sample_name, '*.vcf.gz'),
-                          os.path.join(pipeline_folder_path, sample_name, '*.vcf'),
-                          os.path.join(pipeline_folder_path, sample_name, '*.bcf')]
-    output_folder = os.path.join(output_folder, sample_name)
-    os.makedirs(output_folder, exist_ok=True)
-    output_prefix = os.path.join(output_folder, os.path.basename(pipeline_folder_path))
-    # If output_prefixmetrics.csv already exists and is not empty, skip the evaluation
-    if os.path.exists(output_prefix + 'metrics.csv') and os.path.getsize(output_prefix + 'metrics.csv') > 0:
-        logging.info(f'Skipping {sample_name} for {os.path.basename(pipeline_folder_path)} because the metrics file already exists')
-        return
-    args = evaluator_command_split + ['-t', *truth_vcf_paths, '-v', *pipeline_vcf_paths, '-f', fasta_path, '-o', output_prefix]
-    print(args)
-    subprocess.check_call(args)
+def get_recall_precision_samples(config: pd.DataFrame) -> Tuple[List[str], List[str]]:
+    sample_type_set = config['sample_type'].map(lambda x: set(x.split(',')))
+    recall_samples = config[sample_type_set.apply(lambda x: 'recall' in x)]['sample_name'].tolist()
+    precision_samples = config[sample_type_set.apply(lambda x: 'precision' in x)]['sample_name'].tolist()
+    return recall_samples, precision_samples
 
 
 def run_evaluator(pipeline_folder_path: str, output_folder: str, config: pd.DataFrame, max_processes: int) -> None:
-    pool = ProcessPoolExecutor(max_workers=max_processes)
-    futures = []
-    for _, row in config.iterrows():
-        futures.append(pool.submit(run_evaluator_sample, pipeline_folder_path, output_folder, row))
-    for future in futures:
-        future.result()
-    pool.shutdown()
+    pipelines_vcf_paths = config['sample_name'].apply(
+        lambda sample_name: ','.join([os.path.join(pipeline_folder_path, sample_name, '*.vcf.gz'),
+                                      os.path.join(pipeline_folder_path, sample_name, '*.vcf'),
+                                      os.path.join(pipeline_folder_path, sample_name, '*.bcf')]))
+    # Create a new config file with the paths to the pipeline VCFs
+    config_with_pipeline_vcf_paths = config.copy()
+    config_with_pipeline_vcf_paths['test_vcf_paths'] = pipelines_vcf_paths
+    # Save the new config file
+    config_path = os.path.join(output_folder, 'config.tsv')
+    config_with_pipeline_vcf_paths.to_csv(config_path, sep='\t', index=False)
+    # Execute the evaluator
+    evaluator_command = os.environ['EVALUATOR_COMMAND']
+    evaluator_command_split = evaluator_command.split()
+    args = evaluator_command_split + ['-c', config_path, '-o', output_folder, '-p', str(max_processes)]
+    subprocess.check_call(args)
 
 
 def run_improver(pipeline_evaluations_folder_path: str, output_folder: str, callers_folder: str, config: pd.DataFrame, max_processes: int) -> None:
     improver_command = os.environ['IMPROVER_COMMAND']
     improver_command_split = improver_command.split()
-    recall_samples = config['recall' in config['sample_type']]['sample_name'].tolist()
-    precision_samples = config['precision' in config['sample_type']].tolist()
-    # TODO: Callers folder is missing
+    recall_samples, precision_samples = get_recall_precision_samples(config)
     args = improver_command_split + ['-e', pipeline_evaluations_folder_path,
                                      '-c', callers_folder,
                                      '-rs', *recall_samples, '-ps', *precision_samples,
-                                     '-o', output_folder, '-p', max_processes]
-    subprocess.check_call(args)  # type: ignore
+                                     '-o', output_folder, '-p', str(max_processes)]
+    subprocess.check_call(args)
+
+
+def run_harmonizator(pipeline_improvements_folder_paths: List[str], output_folder: str, config: pd.DataFrame, max_processes: int) -> None:
+    harmonizer_command = os.environ['HARMONIZATOR_COMMAND']
+    harmonizer_command_split = harmonizer_command.split()
+    args = harmonizer_command_split + ['-i', *pipeline_improvements_folder_paths, '-o', output_folder, '-p', str(max_processes)]
+    subprocess.check_call(args)
+
+
+def run_ui(pipelines_evaluation_folder_paths: List[str], pipeline_improvements_folder_paths: Union[List[str], None], callers_folder: Union[str, None], harmonization_folder: Union[str, None], output_folder: str, config: pd.DataFrame) -> None:
+    ui_command = os.environ['UI_COMMAND']
+    ui_command_split = ui_command.split()
+    recall_samples, precision_samples = get_recall_precision_samples(config)
+    args = ui_command_split + ['-pe', *pipelines_evaluation_folder_paths, '-rs', *recall_samples, '-ps', *precision_samples]
+    if pipeline_improvements_folder_paths:
+        args += ['-pi', *pipeline_improvements_folder_paths]
+    if callers_folder:
+        args += ['-c', callers_folder]
+    if harmonization_folder:
+        args += ['-ha', harmonization_folder]
+    args += ['-o', output_folder]
+    subprocess.check_call(args)
 
 
 def check_samples_folders(pipeline_folder_path: str, sample_names: Set[str]) -> None:
@@ -100,6 +109,8 @@ if __name__ == '__main__':
     # Check if the environment variables are set
     if 'EVALUATOR_COMMAND' not in os.environ:
         raise Exception('EVALUATOR_COMMAND environment variable is not set')
+    if 'UI_COMMAND' not in os.environ:
+        raise Exception('UI_COMMAND environment variable is not set')
     if args.callers_folder and 'IMPROVER_COMMAND' not in os.environ:
         raise Exception('IMPROVER_COMMAND environment variable is not set')
     if args.callers_folder and len(args.pipelines_folders) > 1 and 'HARMONIZATOR_COMMAND' not in os.environ:
@@ -124,21 +135,27 @@ if __name__ == '__main__':
         output_pipeline_evaluation_folder = os.path.join(args.output, 'evaluation', os.path.basename(pipeline_folder))
         os.makedirs(output_pipeline_evaluation_folder, exist_ok=True)
         run_evaluator(pipeline_folder, output_pipeline_evaluation_folder, config, args.max_processes)
+    pipelines_evaluation_folder_paths = glob.glob(os.path.join(args.output, 'evaluation', '*'))
 
     # Run the improver
-    if not args.callers_folder:
-        exit(0)
-
-    for pipeline_evaluation_folder in os.listdir(os.path.join(args.output, 'evaluation')):
-        pipeline_evaluation_folder = os.path.join(args.output, 'evaluation', pipeline_evaluation_folder)
-        output_pipeline_improvement_folder = os.path.join(args.output, 'improvement', os.path.basename(pipeline_evaluation_folder))
-        os.makedirs(output_pipeline_improvement_folder, exist_ok=True)
-        run_improver(pipeline_evaluation_folder, output_pipeline_improvement_folder, args.callers_folder, config, args.max_processes)
-
-    exit(0)
+    pipeline_improvements_folder_paths = None
+    if args.callers_folder:
+        for pipeline_evaluation_folder in pipelines_evaluation_folder_paths:
+            output_pipeline_improvement_folder = os.path.join(args.output, 'improvement', os.path.basename(pipeline_evaluation_folder))
+            os.makedirs(output_pipeline_improvement_folder, exist_ok=True)
+            run_improver(pipeline_evaluation_folder, output_pipeline_improvement_folder, args.callers_folder, config, args.max_processes)
+        pipeline_improvements_folder_paths = glob.glob(os.path.join(args.output, 'improvement', '*'))
 
     # Run the harmonizator
-    if len(args.pipelines_folders) > 1:
+    output_harmonization_folder = None
+    if len(args.pipelines_folders) > 1 and pipeline_improvements_folder_paths:
         output_harmonization_folder = os.path.join(args.output, 'harmonization')
         os.makedirs(output_harmonization_folder, exist_ok=True)
-        # TODO: run harmonizator
+        pipeline_improvements_folder_result_paths = [os.path.join(folder, 'results') for folder in pipeline_improvements_folder_paths]
+        run_harmonizator(pipeline_improvements_folder_result_paths, output_harmonization_folder, config, args.max_processes)
+
+    # Run the UI
+    ui_output_folder = os.path.join(args.output, 'ui_report')
+    os.makedirs(ui_output_folder, exist_ok=True)
+    run_ui(pipelines_evaluation_folder_paths, pipeline_improvements_folder_paths,
+           args.callers_folder, output_harmonization_folder, ui_output_folder, config)
