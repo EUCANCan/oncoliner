@@ -82,9 +82,9 @@ def check_samples_folders(pipeline_folder_path: str, sample_names: Set[str]) -> 
     missing_samples = sample_names - pipeline_samples
     missing_pipeline_samples = pipeline_samples - sample_names
     if missing_samples:
-        raise Exception(f'The following samples are missing from {pipeline_folder_path}: {missing_samples}')
+        raise Exception(f'The following samples are missing in {pipeline_folder_path}: {missing_samples}')
     if missing_pipeline_samples:
-        raise Exception(f'The following samples are missing from the config file: {missing_pipeline_samples}')
+        logging.warn(f'The following samples are missing from the config file: {missing_pipeline_samples}')
 
 
 if __name__ == '__main__':
@@ -93,8 +93,7 @@ if __name__ == '__main__':
     parser.add_argument('-pf', '--pipelines-folders', type=str, required=True, nargs='+', help='Paths to pipelines folders')
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to output folder')
     parser.add_argument('-cf', '--callers-folder', type=str, help='Path to callers folder')
-    parser.add_argument('--max-processes', type=int, default=len(os.sched_getaffinity(0)),
-                        help='Maximum number of processes to use (defaults to the number of cores)')
+    parser.add_argument('--max-processes', type=int, default=1, help='Maximum number of processes to use (defaults to 1)')
 
     args = parser.parse_args()
 
