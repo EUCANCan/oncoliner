@@ -84,7 +84,7 @@ def check_samples_folders(pipeline_folder_path: str, sample_names: Set[str]) -> 
     if missing_samples:
         raise Exception(f'The following samples are missing in {pipeline_folder_path}: {missing_samples}')
     if missing_pipeline_samples:
-        logging.warn(f'The following samples are missing from the config file: {missing_pipeline_samples}')
+        logging.warning(f'The following samples are missing from the config file: {missing_pipeline_samples}')
 
 
 if __name__ == '__main__':
