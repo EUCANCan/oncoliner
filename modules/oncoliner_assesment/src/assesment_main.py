@@ -130,7 +130,7 @@ def main(truth_vcfs, test_vcfs, output_prefix, fasta_ref, indel_threshold=DEFAUL
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('Oncoliner Assesment')
+    parser = argparse.ArgumentParser(description='Oncoliner Assesment')
     parser.add_argument('-t', '--truths', help='Path to the VCF truth files', nargs='+', required=True, type=str)
     parser.add_argument('-v', '--tests', help='Path to the VCF test files', nargs='+', required=True, type=str)
     parser.add_argument('-o', '--output_prefix',

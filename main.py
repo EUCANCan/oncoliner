@@ -34,9 +34,9 @@ def run_evaluator(pipeline_folder_path: str, output_folder: str, config: pd.Data
     # Save the new config file
     config_path = os.path.join(output_folder, 'config.tsv')
     config_with_pipeline_vcf_paths.to_csv(config_path, sep='\t', index=False)
-    # Execute the evaluator
-    evaluator_command = os.environ['EVALUATOR_COMMAND']
-    evaluator_command_split = evaluator_command.split()
+    # Execute the assesment
+    assesment_command = os.environ['ASSESMENT_COMMAND']
+    evaluator_command_split = assesment_command.split()
     args = evaluator_command_split + ['-c', config_path, '-o', output_folder, '-p', str(max_processes)]
     subprocess.check_call(args)
 
@@ -53,7 +53,7 @@ def run_improver(pipeline_evaluations_folder_path: str, output_folder: str, call
 
 
 def run_harmonizator(pipeline_improvements_folder_paths: List[str], output_folder: str, config: pd.DataFrame, max_processes: int) -> None:
-    harmonizer_command = os.environ['HARMONIZATOR_COMMAND']
+    harmonizer_command = os.environ['HARMONIZATION_COMMAND']
     harmonizer_command_split = harmonizer_command.split()
     args = harmonizer_command_split + ['-i', *pipeline_improvements_folder_paths, '-o', output_folder, '-p', str(max_processes)]
     subprocess.check_call(args)
@@ -105,15 +105,19 @@ if __name__ == '__main__':
     args.output = os.path.abspath(args.output)
     if args.callers_folder:
         args.callers_folder = os.path.abspath(args.callers_folder)
-    # Check if the environment variables are set
-    if 'EVALUATOR_COMMAND' not in os.environ:
-        raise Exception('EVALUATOR_COMMAND environment variable is not set')
+    # Check if the environment variables are set, set them if not
+    if 'ASSESMENT_COMMAND' not in os.environ:
+        logging.info('ASSESMENT_COMMAND environment variable is not set')
+        os.environ['ASSESMENT_COMMAND'] = 'python3 modules/oncoliner_assesment/src/assesment_bulk.py'
     if 'UI_COMMAND' not in os.environ:
-        raise Exception('UI_COMMAND environment variable is not set')
-    if args.callers_folder and 'IMPROVER_COMMAND' not in os.environ:
-        raise Exception('IMPROVER_COMMAND environment variable is not set')
-    if args.callers_folder and len(args.pipelines_folders) > 1 and 'HARMONIZATOR_COMMAND' not in os.environ:
-        raise Exception('HARMONIZATOR_COMMAND environment variable is not set')
+        logging.info('UI_COMMAND environment variable is not set')
+        os.environ['UI_COMMAND'] = 'python3 modules/oncoliner_ui/src/ui_main.py'
+    if args.callers_folder and 'IMPROVEMENT_COMMAND' not in os.environ:
+        logging.info('IMPROVEMENT_COMMAND environment variable is not set')
+        os.environ['IMPROVEMENT_COMMAND'] = 'python3 modules/oncoliner_improvement/src/improvement_main.py'
+    if args.callers_folder and len(args.pipelines_folders) > 1 and 'HARMONIZATION_COMMAND' not in os.environ:
+        logging.info('HARMONIZATION_COMMAND environment variable is not set')
+        os.environ['HARMONIZATION_COMMAND'] = 'python3 modules/oncoliner_harmonization/src/harmonization_main.py'
     # Make sure the basenames of the pipelines folders are unique
     if len(args.pipelines_folders) != len(set([os.path.basename(folder) for folder in args.pipelines_folders])):
         raise Exception('The basenames of the pipelines folders must be unique')

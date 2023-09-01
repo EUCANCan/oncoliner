@@ -65,7 +65,7 @@ def aggregate_metrics_from_samples(output_file: str, samples_folder: str, recall
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser('Oncoliner Assesment Bulk')
+    parser = argparse.ArgumentParser(description='Oncoliner Assesment Bulk')
     parser.add_argument('-c', '--config-file', required=True, type=str, help='Path to the config TSV file')
     parser.add_argument('-o', '--output-folder', required=True, type=str, help='Path to the output folder')
     parser.add_argument('-it', '--indel-threshold',
