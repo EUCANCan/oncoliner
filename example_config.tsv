@@ -1,4 +1,4 @@
-sample_name	sample_type	reference_fasta_path	truth_vcf_paths
+sample_name	sample_types	reference_fasta_path	truth_vcf_paths
 PCAWG_pilot_1	recall	<path_to_GRCh37_hs37d5>/genome.fa	<path_to_truth_vcfs>/vcf_1.vcf,<path_to_truth_vcfs>/vcf_2.vcf.gz,<path_to_truth_vcfs>/vcf_*.gz
 PCAWG_pilot_2	recall	<path_to_GRCh37_hs37d5>/genome.fa	<path_to_truth_vcfs>/vcf_1.vcf,<path_to_truth_vcfs>/vcf_2.vcf.gz,<path_to_truth_vcfs>/vcf_*.gz
 PCAWG_pilot_3	recall	<path_to_GRCh37_hs37d5>/genome.fa	<path_to_truth_vcfs>/vcf_1.vcf,<path_to_truth_vcfs>/vcf_2.vcf.gz,<path_to_truth_vcfs>/vcf_*.gz

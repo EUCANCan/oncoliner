@@ -17,7 +17,7 @@ def read_config(config_path: str) -> pd.DataFrame:
 
 
 def get_recall_precision_samples(config: pd.DataFrame) -> Tuple[List[str], List[str]]:
-    sample_type_set = config['sample_type'].map(lambda x: set(x.split(',')))
+    sample_type_set = config['sample_types'].map(lambda x: set(x.split(',')))
     recall_samples = config[sample_type_set.apply(lambda x: 'recall' in x)]['sample_name'].tolist()
     precision_samples = config[sample_type_set.apply(lambda x: 'precision' in x)]['sample_name'].tolist()
     return recall_samples, precision_samples

@@ -3,7 +3,7 @@ import sys
 import pysam
 
 # Add vcf-ops to the path
-sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'vcf_ops', 'src'))
+sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'shared', 'vcf_ops', 'src'))
 
 from vcf_ops import VariantType  # noqa
 
