@@ -135,10 +135,10 @@ if __name__ == '__main__':
 
     # Run the evaluator
     for pipeline_folder in args.pipelines_folders:
-        output_pipeline_evaluation_folder = os.path.join(args.output, 'evaluation', os.path.basename(pipeline_folder))
+        output_pipeline_evaluation_folder = os.path.join(args.output, 'assesment', os.path.basename(pipeline_folder))
         os.makedirs(output_pipeline_evaluation_folder, exist_ok=True)
         run_evaluator(pipeline_folder, output_pipeline_evaluation_folder, config, args.max_processes)
-    pipelines_evaluation_folder_paths = glob.glob(os.path.join(args.output, 'evaluation', '*'))
+    pipelines_evaluation_folder_paths = glob.glob(os.path.join(args.output, 'assesment', '*'))
 
     # Run the improver
     pipeline_improvements_folder_paths = None

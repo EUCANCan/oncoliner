@@ -11,8 +11,10 @@ WIP
 
 
 ## Dependencies
+Oncoliner's improvement module makes use of the following Python modules:
 * [`pandas`](https://pandas.pydata.org/)
-* [`numpy`](https://numpy.org/)
+* [`pysam`](https://github.com/pysam-developers/pysam)
+
 
 
 ## Usage

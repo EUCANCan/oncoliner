@@ -1,0 +1,28 @@
+Bootstrap: docker
+From: ubuntu:20.04
+Stage: spython-base
+
+%files
+modules /oncoliner/modules
+main.py /oncoliner/main.py
+%labelsº
+author="Rodrigo Martin <rodrigo.martin@bsc.es>"
+%post
+
+DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+apt-get update && apt-get upgrade -y && apt-get install -y \
+python3 \
+python3-pip
+
+# Python dependencies
+pip install pysam pandas variant-extractor
+
+mkdir /oncoliner
+
+# Copy modules and main script
+%runscript
+exec /bin/bash "$@"
+%startscript
+exec /bin/bash "$@"
