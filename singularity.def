@@ -5,21 +5,23 @@ Stage: spython-base
 %files
 modules /oncoliner/modules
 main.py /oncoliner/main.py
-%labelsº
+%labels
 author="Rodrigo Martin <rodrigo.martin@bsc.es>"
 %post
 
-DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
 apt-get update && apt-get upgrade -y && apt-get install -y \
 python3 \
-python3-pip
+python3-pip \
+libz-dev \
+libglib2.0-dev \
+libbz2-dev \
+liblzma-dev
 
 # Python dependencies
 pip install pysam pandas variant-extractor
-
-mkdir /oncoliner
 
 # Copy modules and main script
 %runscript

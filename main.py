@@ -88,7 +88,7 @@ def check_samples_folders(pipeline_folder_path: str, sample_names: Set[str]) -> 
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Oncoliner')
     parser.add_argument('-c', '--config', type=str, required=True, help='Path to config file')
     parser.add_argument('-pf', '--pipelines-folders', type=str, required=True, nargs='+', help='Paths to pipelines folders')
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to output folder')
