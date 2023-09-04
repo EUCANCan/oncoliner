@@ -1,5 +1,5 @@
 {
     "python.analysis.extraPaths": [
-        "./modules/shared/vcf_ops/src"
+        "./shared/vcf_ops/src"
     ]
 }
