@@ -10,10 +10,10 @@ import pandas as pd
 from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExecutor
 
 # Add vcf-ops to the path
-sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'shared', 'vcf-ops','src'))
+sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', 'shared', 'vcf_ops', 'src'))
 
 from vcf_ops.constants import DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS, DEFAULT_CONTIGS  # noqa
-from vcf_ops.metrics import aggregate_metrics  # noqa
+from vcf_ops.metrics import aggregate_metrics, combine_precision_recall_metrics  # noqa
 from vcf_ops.intersect import intersect  # noqa
 from vcf_ops.union import union  # noqa
 from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
@@ -38,27 +38,26 @@ def extract_vcfs(path_prefix: str) -> pd.DataFrame:
     return read_vcfs(files)
 
 
-def evaluate_sample(truth_sample_folder, test_sample_folder, output_prefix, fasta_ref, indel_threshold, window_ratio, window_limit, sv_size_bins, contigs):
+def evaluate_sample(truth_sample_folder, test_sample_folder, output_prefix, fasta_ref, indel_threshold, window_radius, sv_size_bins, contigs):
     # If output_prefix*metrics.csv exists and is not empty, skip
     output_metrics = glob.glob(output_prefix + '*metrics.csv')
     if len(output_metrics) > 0 and os.path.getsize(output_metrics[0]) > 0:
         return
     # Get evaluator path from the environment
-    evaluator_command = os.environ.get('EVALUATOR_COMMAND')
-    if evaluator_command is None:
-        raise Exception('EVALUATOR_COMMAND environment variable not defined')
+    assesment_command = os.environ.get('ASSESMENT_COMMAND')
+    if assesment_command is None:
+        raise Exception('ASSESMENT_COMMAND environment variable not defined')
     # Get files
     truth_sample_vcfs = get_vcf_files(truth_sample_folder + '/')
     test_sample_vcfs = get_vcf_files(test_sample_folder + '/')
     subprocess.check_call(
-        evaluator_command.split() + [
+        assesment_command.split() + [
             '-t'] + truth_sample_vcfs + [
             '-v'] + test_sample_vcfs + [
             '-o', output_prefix,
             '-f', fasta_ref,
             '-it', str(indel_threshold),
-            '-wr', str(window_ratio),
-            '-wl', str(window_limit),
+            '-wr', str(window_radius),
             '--sv-size-bins'] + [str(bin) for bin in sv_size_bins] + [
             '--contigs'] + contigs
     )
@@ -127,7 +126,7 @@ def union_callers(caller_1_prefix: str, caller_2_prefix: str, output_prefix: str
     # Union
     df_union, _ = union(df_1, df_2, indel_threshold, window_radius)
     # Write VCF files
-    if len(df_union) != len(df_1):
+    if len(df_union) > len(df_1):
         write_masked_vcfs(df_union, output_prefix, indel_threshold, fasta_ref)
         return True
     return False
@@ -200,14 +199,7 @@ def calculate_aggregated_metrics_caller(caller_folder: str, recall_samples: List
     recall_aggregated_metrics = aggregate_metrics([pd.read_csv(metrics_file) for metrics_file in recall_metrics_files])
     precision_metrics_files = [glob.glob(os.path.join(caller_folder, sample, '*metrics.csv'))[0] for sample in precision_samples]
     precision_aggregated_metrics = aggregate_metrics([pd.read_csv(metrics_file) for metrics_file in precision_metrics_files])
-    final_metrics = recall_aggregated_metrics
-    final_metrics['precision'] = precision_aggregated_metrics['precision']
-    final_metrics['f1_score'] = 2 * final_metrics['recall'] * \
-        final_metrics['precision'] / (final_metrics['recall'] + final_metrics['precision'])
-    final_metrics['f1_score'].fillna(0, inplace=True)
-    final_metrics['fp'] = precision_aggregated_metrics['fp']
-    # Set columns
-    final_metrics = final_metrics[['variant_type', 'variant_size', 'window_size', 'tp', 'fp', 'fn', 'recall', 'precision', 'f1_score']]
+    final_metrics = combine_precision_recall_metrics(recall_aggregated_metrics, precision_aggregated_metrics)
     final_metrics.to_csv(output_file, index=False)
 
 
@@ -257,18 +249,18 @@ def main(args):
     args.truth = os.path.abspath(args.truth)
     args.test = os.path.abspath(args.test)
 
-    # All subfolders (samples) in truth must be in test
-    if set(os.listdir(args.truth)) != set(os.listdir(args.test)):
-        raise ValueError('The samples in the truth and test folders are not the same')
-
-    # All test subfolders (samples) must contain the same subfolders (callers)
-    callers_names = set(os.listdir(os.path.join(args.test, os.listdir(args.test)[0])))
-    for folder in os.listdir(args.test):
-        if set(os.listdir(os.path.join(args.test, folder))) != callers_names:
-            raise ValueError(f'The samples in the test folder do not contain the same files: {folder}')
-    # Remove the extension from the callers names
-    callers_names = [caller.replace('.vcf.gz', '').replace('.bcf', '').replace('.vcf', '') for caller in callers_names]
+    # Get callers names
+    callers_names = os.listdir(args.test)
     callers_names.sort()
+
+    # All test folders (callers) must contain the same subfolders (samples)
+    for caller_folder in callers_names:
+        missing_truth_samples = set(os.listdir(args.truth)) - set(os.listdir(os.path.join(args.test, caller_folder)))
+        missing_test_samples = set(os.listdir(os.path.join(args.test, caller_folder))) - set(os.listdir(args.truth))
+        if len(missing_truth_samples) > 0:
+            raise Exception(f'Caller {caller_folder} is missing samples from the truth folder: {missing_truth_samples}')
+        if len(missing_test_samples) > 0:
+            raise Exception(f'Caller {caller_folder} has more samples than the truth folder: {missing_test_samples}')
 
     # Create output folder
     os.makedirs(args.output, exist_ok=True)
@@ -278,21 +270,26 @@ def main(args):
     # Create output folder for combinations
     output_combinations = os.path.join(args.output, 'combinations')
     os.makedirs(output_combinations, exist_ok=True)
-    # Copy each variant caller files to the output_combinations folder
+    # Evaluate the callers
+    original_caller_folders = [os.path.join(args.test, caller_name) for caller_name in callers_names]
+    evaluate_callers(original_caller_folders, args.truth, output_evaluations, args.processes, fasta_ref=args.fasta_ref,
+                     indel_threshold=args.indel_threshold, window_radius=args.window_radius,
+                     sv_size_bins=args.sv_size_bins, contigs=args.contigs)
+
+    # Copy each variant caller TP+FP files to its corresponding output_combinations folder
     for caller_name in callers_names:
         caller_combination_folder = os.path.join(output_combinations, caller_name)
         os.makedirs(caller_combination_folder, exist_ok=True)
-        for sample in os.listdir(args.test):
+        for sample in os.listdir(os.path.join(args.test, caller_name)):
             caller_combination_sample_folder = os.path.join(caller_combination_folder, sample)
             os.makedirs(caller_combination_sample_folder, exist_ok=True)
-            for file in get_vcf_files(os.path.join(args.test, sample, caller_name)):
+            for file in get_vcf_files(os.path.join(output_evaluations, caller_name, sample, '')):
+                # Filter TP+FP files
+                if 'tp.' not in file and 'fp.' not in file:
+                    continue
                 shutil.copy(file, caller_combination_sample_folder)
     # Get callers prefixes
     callers_folders = [os.path.join(output_combinations, caller_name) for caller_name in os.listdir(output_combinations)]
-    # Evaluate the callers
-    evaluate_callers(callers_folders, args.truth, output_evaluations, args.processes, fasta_ref=args.fasta_ref,
-                     indel_threshold=args.indel_threshold, window_radius=args.window_radius,
-                     sv_size_bins=args.sv_size_bins, contigs=args.contigs)
     # Get the variant types for each caller
     # Create a dict variant_type -> callers
     callers_variant_types = {
@@ -309,13 +306,15 @@ def main(args):
         callers_operations_by_variant_type[variant_type] = generate_combinations(callers, args.max_combinations)
     # Perform the operations
     for operations in callers_operations_by_variant_type.values():
+        if len(operations) == 0:
+            continue
         execute_operations(operations, output_combinations, args.processes, fasta_ref=args.fasta_ref,
-                           indel_threshold=args.indel_threshold, window_ratio=args.window_ratio, window_limit=args.window_limit)
+                           indel_threshold=args.indel_threshold, window_radius=args.window_radius)
     # Evaluate the combinations
     combinations_prefixes = list(set(os.listdir(output_combinations)) - set(callers_folders))
     combinations_folders = [os.path.join(output_combinations, combination_prefix) for combination_prefix in combinations_prefixes]
     evaluate_callers(combinations_folders, args.truth, output_evaluations, args.processes, fasta_ref=args.fasta_ref,
-                     indel_threshold=args.indel_threshold, window_ratio=args.window_ratio, window_limit=args.window_limit,
+                     indel_threshold=args.indel_threshold, window_radius=args.window_radius,
                      sv_size_bins=args.sv_size_bins, contigs=args.contigs)
 
     # Calculate aggregated metrics
@@ -328,7 +327,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Pipeline designer')
     parser.add_argument('-t', '--truth', help='Path to the VCF truth folder', required=True, type=str)
     parser.add_argument('-v', '--test', help='Path to the VCF test folder', required=True, type=str)
     parser.add_argument('-o', '--output', help='Path to the output folder', required=True, type=str)
