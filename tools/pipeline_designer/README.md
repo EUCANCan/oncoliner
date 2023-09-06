@@ -1,5 +1,11 @@
 # Pipeline Designer<!-- omit in toc -->
 
+Pipeline Designer is a standalone tool that allows the user to combine the results of different variant callers to improve the results of a variant calling pipeline. Pipeline Designer outputs the list of the best combinations of variant callers for each variant type and size, including SNVs, indels and SVs. Pipeline Designer also displays the F1-score, precision, recall and the number and names of genes discovered (if provided) of each combination (see [Oncoliner's assesment module](../../modules/oncoliner_assesment/) for more information about the evaluation process).
+
+The user just needs to provide the VCF files of the variant callers they want to combine as well as the truth files of the samples. The user must also specify which samples should be used to compute recall related metrics and which samples should be used to compute precision related metrics. Pipeline Designer will automatically combine the variant callers and evaluate the results. Check the [Use case example](#use-case-example) section for more information.
+
+Pipeline Designer is part of the [Oncoliner suite](../../README.md) and is provided as a standalone command line tool. It is available as in the [Docker image](../../Dockerfile) and [Singularity image](../../singularity.def) of Oncoliner.
+
 ## Table of contents<!-- omit in toc -->
 - [Dependencies](#dependencies)
 - [Usage](#usage)
@@ -74,7 +80,7 @@ options:
 
 ### Output
 
-The pipeline designer will generate a series of files in the output folder. Most of them are intermediate files that are used by the pipeline designer to generate the final output files and recover in case of failure. The most important ones are the `.csv` files in `$OUTPUT_FOLDER/improvement_list`.
+Pipeline Designer generates a series of files in the output folder. Most of them are intermediate files that are used by Pipeline Designer to generate the final output files and recover in case of failure. The most important ones are the `.csv` files in `$OUTPUT_FOLDER/improvement_list`.
 
 Each output `.csv` file is named after the variant type and the variant size (e.g `SNV_1.csv` contains the callers combinations results for SNVs of size 1). Each file contains the following columns:
 
@@ -97,7 +103,7 @@ Each output `.csv` file is named after the variant type and the variant size (e.
 
 Assume that we have the following input variant callers: `variant_caller_1` and `variant_caller_2`. Both are SV callers. We want to combine them to improve the results of our pipeline. We have the following samples: `sample_1` and `sample_2`. We will use `sample_1` as a recall sample and `sample_2` as a precision sample.
 
-First of all, we need to run the variant callers and obtain the VCF files for each sample. Assume we obtain the following VCF files: `variant_caller_1.vcf` and `variant_caller_2.vcf` for each sample. **Make sure the names of the VCF files are the same across all the samples**.
+First of all, we need to run the variant callers and obtain the VCF files for each sample. Assume we obtain the following VCF files: `variant_caller_1_sample_N.vcf` and `variant_caller_2_sample_N.vcf` for each sample. **Make sure the names of the samples subfolders are the same across all the variant callers**.
 
 **Optional**. We recommend normalizing the VCF files before running the pipeline designer (see [Usage](#usage) for more information). However, in this case it is not necessary because we are only working with SVs.
 
