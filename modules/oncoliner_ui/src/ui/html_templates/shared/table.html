@@ -1,0 +1,38 @@
+
+<div class="viz-table">
+    <table id="{{id}}" class="table table-striped table-bordered">
+        <thead>
+            {% for head in data.columns %}
+                {% if head in conf.table %}
+                <th data-bs-toggle="tooltip" data-bs-placement="top" {{"data-filterable" if conf.table[head].filterable else ""}} {{"data-sortable" if conf.table[head].sortable else ""}} data-bs-title="{{conf.table[head].tooltip}}">{{ conf.table[head].name }}{{"*" if not hide_legend and conf.table[head].legend }}</th>
+                {% else %}
+                <th>{{ head }}</th>
+                {% endif %}
+            {% endfor %}
+        </thead>
+        <tbody>
+            {% for line in data.values %}
+            <tr>
+                {% for cell in line %}
+                <td>{{ cell }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="viz-table-legend">
+        {% if not hide_legend %}
+        {% for head in data.columns %}
+        {% if head in conf.table and conf.table[head].legend %}
+        <div><b>*{{ conf.table[head].name }}</b>: {{ conf.table[head].legend }}</div>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+<!-- TODO: Henri: The sort icons are not displayed in Firefox -->
+{% block javascript %}
+<script type="text/javascript">
+    makeTableDynamic("{{id}}", {{(data.values|length>50)|string|lower}}, {{data.columns.get_loc(default_sort_column) if default_sort_column else undefined}});
+</script>
+{% endblock %}

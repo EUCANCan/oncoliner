@@ -24,6 +24,10 @@ def get_recall_precision_samples(config: pd.DataFrame) -> Tuple[List[str], List[
 
 
 def run_evaluator(pipeline_folder_path: str, output_folder: str, config: pd.DataFrame, max_processes: int) -> None:
+    # If output_folder/aggregated_metrics.csv already exists and it is not empty, skip the assesment
+    if os.path.exists(os.path.join(output_folder, 'aggregated_metrics.csv')) and os.path.getsize(os.path.join(output_folder, 'aggregated_metrics.csv')) > 0:
+        logging.warning(f'The assesment file {os.path.join(output_folder, "aggregated_metrics.csv")} already exists.\nSkipping the assesment for pipeline {pipeline_folder_path}')
+        return
     pipelines_vcf_paths = config['sample_name'].apply(
         lambda sample_name: ','.join([os.path.join(pipeline_folder_path, sample_name, '*.vcf.gz'),
                                       os.path.join(pipeline_folder_path, sample_name, '*.vcf'),
@@ -42,6 +46,10 @@ def run_evaluator(pipeline_folder_path: str, output_folder: str, config: pd.Data
 
 
 def run_improver(pipeline_evaluations_folder_path: str, output_folder: str, callers_folder: str, config: pd.DataFrame, max_processes: int) -> None:
+    # If the output_folder/improvement_list folder already exists and it is not empty, skip the improvement
+    if os.path.exists(os.path.join(output_folder, 'improvement_list')) and os.listdir(os.path.join(output_folder, 'improvement_list')):
+        logging.warning(f'The improvement folder {os.path.join(output_folder, "improvement_list")} already exists and it is not empty.\nSkipping the improvement for pipeline {pipeline_evaluations_folder_path}')
+        return
     improver_command = os.environ['IMPROVEMENT_COMMAND']
     improver_command_split = improver_command.split()
     recall_samples, precision_samples = get_recall_precision_samples(config)
@@ -52,25 +60,28 @@ def run_improver(pipeline_evaluations_folder_path: str, output_folder: str, call
     subprocess.check_call(args)
 
 
-def run_harmonizator(pipeline_improvements_folder_paths: List[str], output_folder: str, config: pd.DataFrame, max_processes: int) -> None:
+def run_harmonizator(pipeline_improvements_folder_paths: List[str], output_folder: str, max_processes: int) -> None:
+    # If the output folder already exists and it is not empty, skip the harmonization
+    if os.path.exists(output_folder) and os.listdir(output_folder):
+        logging.warning(f'The harmonization folder {output_folder} already exists and it is not empty. Skipping the harmonization.')
+        return
     harmonizer_command = os.environ['HARMONIZATION_COMMAND']
     harmonizer_command_split = harmonizer_command.split()
     args = harmonizer_command_split + ['-i', *pipeline_improvements_folder_paths, '-o', output_folder, '-p', str(max_processes)]
     subprocess.check_call(args)
 
 
-def run_ui(pipelines_evaluation_folder_paths: List[str], pipeline_improvements_folder_paths: Union[List[str], None], callers_folder: Union[str, None], harmonization_folder: Union[str, None], output_folder: str, config: pd.DataFrame) -> None:
+def run_ui(pipelines_evaluation_folder_paths: List[str], pipeline_improvements_folder_paths: Union[List[str], None], callers_folder: Union[str, None], harmonization_folder: Union[str, None], output_file: str) -> None:
     ui_command = os.environ['UI_COMMAND']
     ui_command_split = ui_command.split()
-    recall_samples, precision_samples = get_recall_precision_samples(config)
-    args = ui_command_split + ['-pe', *pipelines_evaluation_folder_paths, '-rs', *recall_samples, '-ps', *precision_samples]
+    args = ui_command_split + ['-pe', *sorted(pipelines_evaluation_folder_paths)]
     if pipeline_improvements_folder_paths:
         args += ['-pi', *pipeline_improvements_folder_paths]
     if callers_folder:
         args += ['-c', callers_folder]
     if harmonization_folder:
         args += ['-ha', harmonization_folder]
-    args += ['-o', output_folder]
+    args += ['-o', output_file]
     subprocess.check_call(args)
 
 
@@ -155,10 +166,9 @@ if __name__ == '__main__':
         output_harmonization_folder = os.path.join(args.output, 'harmonization')
         os.makedirs(output_harmonization_folder, exist_ok=True)
         pipeline_improvements_folder_result_paths = [os.path.join(folder, 'results') for folder in pipeline_improvements_folder_paths]
-        run_harmonizator(pipeline_improvements_folder_result_paths, output_harmonization_folder, config, args.max_processes)
+        run_harmonizator(pipeline_improvements_folder_result_paths, output_harmonization_folder, args.max_processes)
 
     # Run the UI
-    ui_output_folder = os.path.join(args.output, 'ui_report')
-    os.makedirs(ui_output_folder, exist_ok=True)
+    ui_output_file = os.path.join(args.output, 'oncoliner_report.html')
     run_ui(pipelines_evaluation_folder_paths, pipeline_improvements_folder_paths,
-           args.callers_folder, output_harmonization_folder, ui_output_folder, config)
+           args.callers_folder, output_harmonization_folder, ui_output_file)

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="theme-color" content="#33b5e5">
+        <title>Oncoliner report</title>
+        <link rel="shortcut icon" href="data:image/svg+xml,{{ include_encoded('index/svg/Oncoliner_icon.svg') }}" >
+        {% block styles %}
+        <style type="text/css">{{ include_raw('index/css_external/bootstrap@5.2.3/bootstrap.min.css') }}</style>
+        <style type="text/css">{{ include_raw('index/css_external/datatables@1.13.4/datatables.min.css') }}</style>
+        <style type="text/css">{{ include_raw('index/css/app.css') }}</style>
+        <style type="text/css">{{ include_raw('index/css_external/fontello/fontello-embedded.css') }}</style>
+        <style type="text/css">{{ include_raw('index/css/font.css') }}</style>
+        {% endblock %}
+
+        {% block javascript %}
+        <script type="text/javascript">{{ include_raw('index/js_external/jquery@3.6.4/jquery-3.6.4.slim.min.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js_external/bootstrap@5.2.3/bootstrap.bundle.min.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js_external/datatables@1.13.4/datatables.min.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js_external/chart.js@4.2.1/chart.umd.min.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js_external/chartjs-plugin-datalabels@2.2.0/chartjs-plugin-datalabels.min.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js_external/filesaver@2.0.4/FileSaver.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js_external/popper.js@2.11.6/popper.min.js') }}</script>
+
+
+        <script type="text/javascript">{{ include_raw('index/js/table.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js/navigation.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js/charts/chartUtils.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js/charts/IRadarChart.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js/charts/metricsChart.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js/charts/improvementChart.js') }}</script>
+        <script type="text/javascript">{{ include_raw('index/js/charts/harmonizationChart.js') }}</script>
+        <script type="text/javascript">
+            function afterInit() {
+                hideElementById('loading_screen');
+
+                const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+                const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => {
+                    if (tooltipTriggerEl.getAttribute('data-bs-title')) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    }
+                });
+            }
+
+            const config = JSON.parse(`{{include_raw("conf.json")}}`);
+        </script>
+        {% endblock %}
+    </head>
+    <body onload="afterInit()">
+        <div class="viz-mask" id="loading_screen">
+            <div class="viz-loader"></div>
+        </div>
+
+        <!-- TODO: Henri: The "fade" class does not work, no animation is shown -->
+        <section role="tabpanel">
+            <div id="main-oncoliner-logo" class="logo-container"> {{include_raw('index/svg/Oncoliner_logo.svg')}} </div>
+            <nav class="nav nav-tabs main-nav-tabs">
+                <div class="nav viz-nav-tabs-container" id="nav-tab" role="tablist">
+                    <button class="nav-link active" id="nav-assesment-tab" data-bs-toggle="tab" data-bs-target="#nav-assesment" type="button" role="tab" aria-controls="nav-assesment" aria-selected="true">Assesment</button>
+                    {% if 'improvement' in main_tabs %}
+                    <button class="nav-link" id="nav-improvement-tab" data-bs-toggle="tab" data-bs-target="#nav-improvement" type="button" role="tab" aria-controls="nav-improvement" aria-selected="false">Improvement</button>
+                    {% endif %}
+                    {% if 'harmonization' in main_tabs %}
+                    <button class="nav-link" id="nav-harmonization-tab" data-bs-toggle="tab" data-bs-target="#nav-harmonization" type="button" role="tab" aria-controls="nav-harmonization" aria-selected="false">Harmonization</button>
+                    {% endif %}
+                </div>
+            </nav>
+            <div class="tab-content" id="nav-tabContent">
+                <div class="tab-pane fade show active" id="nav-assesment" role="tabpanel" aria-labelledby="nav-assesment-tab">
+                    {{ render_tab('assesment') }}
+                </div>
+                <div class="tab-pane fade" id="nav-improvement" role="tabpanel" aria-labelledby="nav-improvement-tab">
+                    {{ render_tab('improvement') }}
+                </div>
+                {% if 'harmonization' in main_tabs %}
+                <div class="tab-pane fade" id="nav-harmonization" role="tabpanel" aria-labelledby="nav-harmonization-tab">
+                    {{ render_tab('harmonization') }}
+                </div>
+                {% endif %}
+            </div>
+        </section>
+        <footer class="viz-footer">
+            <div>
+                <p>
+                    Report generated by <a href="{{conf['commons']['links']['oncoliner']}}" target="_blank">Oncoliner</a>.
+                </p>
+                <p>
+                    This report uses
+                    {% for js in conf['commons']['libraries']['js'] %}
+                        <a href="{{js['url']}}" target="_blank">{{js['name']}}</a> - 
+                    {% endfor %}
+                    and is generated with -
+                    {% for python in conf['commons']['libraries']['python'] %}
+                        <a href="{{python['url']}}" target="_blank">{{python['name']}}</a> -
+                    {% endfor %}
+                </p>
+            </div>
+            <div class="viz-footer-logos-container">
+                <div class="logo-container">{{ include_raw('index/svg/EN_FundedbytheEU_RGB_POS.svg') }}</div>
+                <a href="{{conf['commons']['links']['eucancan']}}" target="_blank" class="logo-container">{{ include_raw('index/svg/EUCANCan Logo_RGB_opt02.svg') }}</a>
+            </div>
+        </footer>
+    </body>
+</html>

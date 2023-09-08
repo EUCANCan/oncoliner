@@ -1,0 +1,356 @@
+
+body {
+    font-family: 'Open Sans';
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat';
+}
+
+#main-oncoliner-logo {
+    width: 250px;
+    padding: 10px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.wrapper {
+    display: flex;
+    align-items: stretch;
+}
+
+.app-sidebar {
+    max-width: 300px;
+    width: 300px;
+    z-index: 10;
+    height: 100%;
+    padding: 0 10px;
+    position: fixed;
+    background: #f8f8f8;
+    margin-top: 30px;
+}
+
+.viz-content {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.viz-content .viz-width-limited {
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.viz-nav-tabs-container {
+    width: 100%;
+    padding-left: 50px;
+}
+
+.viz-bordered-tab-container {
+    border: 1px solid #dee2e6;
+    border-top: 0;
+}
+
+.viz-warning-container {
+    background-color: rgb(254, 224, 163);
+    padding: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    font-size: small;
+}
+
+.viz-warning-container * {
+    margin: 0;
+}
+
+.viz-warning-element {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.sidebar-spacer {
+    margin-left: 340px;
+}
+
+.main-tab-content {
+    margin-top: 40px;
+}
+
+a {
+    cursor: pointer !important;
+}
+
+.nav-pills .nav-link:hover:not(.nav-link.active) {
+    background:#0d6efd30;
+}
+
+
+.main-nav-tabs {
+    z-index: 10;
+    background: white;
+    /*border-bottom: 1px solid #d1d1d1;*/
+}
+
+.main-nav-tabs button {
+    font-size: 20px;
+}
+
+
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-link.active:hover,
+.nav-tabs .nav-link.active:focus {
+    border-color: #d1d1d1 #d1d1d1 #fff;
+    border-style: solid;
+}
+
+.nav-tabs .nav-link:hover {
+    isolation: isolate;
+    border-color: #d1d1d1 #d1d1d1 #d1d1d1;
+    border-style: dashed;
+}
+
+.viz-center {
+    text-align: center;
+}
+
+.viz-plot-container {
+    max-height: 500px;
+    display: inline-flex;
+}
+
+.viz-mask {
+    z-index:1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #33333399;;
+}
+
+.viz-loader {
+    margin: auto;
+    border: 20px solid #003399;
+    border-radius: 50%;
+    border-top: 20px solid #ff0000;
+    width: 200px;
+    height: 200px;
+    animation: spinner 4s linear infinite;
+    margin-top:18%;
+}
+
+@keyframes spinner {
+    0% { transform: rotate(0deg); }
+   100% { transform: rotate(720deg); }
+}
+
+.viz-export-dropdown {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
+
+.viz-export-btn {
+    font-size: 25px;
+    color: grey;
+    text-decoration: none;
+    transform: rotate(0deg);
+    -webkit-transition : all 100ms ease-in;
+    -moz-transition : all 100ms ease-in;
+}
+
+.viz-export-btn:hover {
+    color: #0d6efd;
+    transform: rotate(30deg);
+}
+
+.show.viz-export-btn {
+    color: #0d6efd;
+    transform: rotate(30deg);
+}
+
+a[class^="icon-"] {
+    color: grey;
+    text-decoration: none;
+}
+
+a[class^="icon-"]:hover {
+    color: #0d6efd;
+}
+
+a[class^="icon-"].active {
+    color: #0d6efd;
+}
+
+.viz-table tr.active {
+    background-color: #0d6efd33;
+}
+
+.viz-table tr.active a[class^="icon-"] {
+    color: #0d6efd;
+}
+
+/* Tables */
+
+.viz-table {
+    padding: 20px;
+    overflow: auto;
+    font-size: 13px;
+}
+
+.viz-table table {
+    border: 1px solid #dee2e6;
+}
+
+.viz-table td {
+    padding: 1px 5px !important;
+    vertical-align: middle;
+}
+
+.viz-table th {
+    padding: 5px 10px !important;
+    vertical-align: middle;
+}
+
+.viz-table-legend {
+    margin-top: 10px;
+}
+
+.viz-filters input {
+    width: 100%;
+}
+
+.viz-clickable {
+    cursor: pointer;
+}
+
+.viz-nav-block {
+    height: 40vh;
+    overflow: auto;
+    max-height: 40vh;
+    display: block;
+    outline: 1px solid #ccc;
+    outline-offset: -1px;
+    background: white;
+    width: 260px;
+}
+
+.viz-nav-block::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 10px;
+}
+
+#viz-nav-block::-webkit-scrollbar:vertical {
+    width: 11px;
+}
+
+#viz-nav-block::-webkit-scrollbar:horizontal {
+    height: 11px;
+}
+
+.viz-nav-block::-webkit-scrollbar-thumb {
+    border: 2px solid white;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 1px;
+}
+
+.viz-nav-block .accordion-button {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.viz-marg-top-20 {
+    margin-top: 20px;
+}
+
+.viz-nav-block .list-group-item {
+    background: transparent !important;
+}
+
+.viz-inline-plots {
+    height: 60vh;
+}
+
+.viz-plot-info {
+    margin: 10px;
+}
+
+.viz-footer {
+    color: #555;
+    font-size: 12px;
+    width: 100%;
+    background-color: #f8f8f8;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.viz-footer-logos-container {
+    width: 300px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: auto;
+}
+
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.radar-chart-container {
+    width: 100%; 
+    height: 500px;
+    position: relative;
+}
+
+.metrics-chart-container {
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+canvas {
+    width: 100% !important;
+}
+
+/* Overrides */
+
+.fade:not(.show) {
+    opacity: 0;
+    display: none;
+}
+
+.fade {
+    transition: none;
+}
+
+.show {
+    opacity: 1;
+    display: block;
+}
+
+.accordion-body {
+    /*background-color: #EEEEEE;*/
+    padding: 0;
+}
+
+.accordion-body .nav-link {
+    margin: 10px 20px 10px;
+    padding-left: 5px;
+}
+
+.accordion .accordion {
+    margin-left: 20px;
+}
+
+.accordion-button .nav-link {
+    padding: 2px 5px;
+    width: 80%;
+}
+
+.accordion-button.no-expand::after {
+    display: none;
+}

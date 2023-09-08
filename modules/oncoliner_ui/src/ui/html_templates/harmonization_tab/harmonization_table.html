@@ -1,0 +1,5 @@
+{% include 'shared/table.html' %} {% block javascript %}
+<script type="text/javascript">
+    addButtonsToTable("{{id}}", (cells) => setHarmonizationDataFromTable(cells));
+</script>
+{% endblock %}

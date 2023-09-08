@@ -1,0 +1,42 @@
+<div class="wrapper main-tab-content">
+
+   <div class="sidebar-sticky pt-3 app-sidebar">
+        <div class="navbar-brand viz-clickable">
+            Pipelines
+        </div>
+        <div class="nav flex-column nav-pills viz-nav-block" role="tablist" aria-orientation="vertical" >
+            {% for pp in ctrl.get_pipelines_names() %}
+            <a  class="nav-link {{'active' if loop.index == 1}}"
+                aria-selected="{{'true' if loop.index == 1 else 'false'}}"
+                id="{{pp}}_pp_improvement_"
+                data-bs-toggle="pill"
+                aria-controls="{{pp}}_pp_improvement_"
+                data-bs-target="#{{pp}}_pp_improvement"
+                href="#{{pp}}_pp_improvement"
+                role="tab"
+                onclick="toggleTabFromGroup('{{pp}}_improvement_size_type', 'improvement_size_type_filters')"
+                >{{pp}}</a>
+            {% endfor %}
+        </div>
+
+        <!--  FILTERS  -->
+        
+        <div class="navbar-brand viz-clickable">
+            Variant size & type
+        </div>
+        <div class="tab-content" id="improvement_size_type_filters">
+            {% for pp in ctrl.get_pipelines_names() %}
+            <div class="tab-pane flex-column viz-nav-block {{'active show' if loop.index == 1 else ''}}" role="tablist" aria-orientation="vertical" id="{{pp}}_improvement_size_type">
+            	{{ ctrl.render_tree_branch(ctrl.get_tree(pp), 'improvement_' + pp, 'improvements_panel_content_' + pp) }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+
+	<main class="viz-content sidebar-spacer">
+		<h1>Improvement</h1>
+
+		{% for pp in ctrl.get_pipelines_names() %} {{ ctrl.render_pipeline(pp, loop.index == 1) }} {% endfor %}
+	</main>
+</div>

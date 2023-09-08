@@ -1,0 +1,159 @@
+{
+   "commons": {
+      "links": {
+         "eucancan": "https://eucancan.com/",
+         "oncoliner": "https://github.com/EUCANCan/oncoliner"
+      },
+      "libraries":  {
+         "js": [
+            {"name": "Bootstrap", "url": "https://getbootstrap.com/"},
+            {"name": "DataTables", "url": "https://datatables.net/"},
+            {"name": "Chart.js", "url": "https://www.chartjs.org/"},
+            {"name": "file-saver", "url": "https://www.npmjs.com/package/file-saver"},
+            {"name": "popper.js", "url": "https://popper.js.org/"}
+         ],
+         "python": [
+            {"name": "jinja2", "url": "https://pypi.org/project/Jinja2/"},
+            {"name": "pandas", "url": "https://pandas.pydata.org/"}
+         ]
+      }
+   },
+   "names": {
+      "snv_indel_sv": "By variant type",
+      "sv_subtypes": "By variant type and SV subtype",
+      "sv_subtypes_sizes": "By variant type and SV subtype and size"
+   },
+   "warnings": {
+      "no_truth": {
+         "name": "No truth variants",
+         "description": "No truth variants were found."
+      },
+      "no_predicted": {
+         "name": "No predicted variants",
+         "description": "No predicted variants were found."
+      },
+      "low_precision": {
+         "name": "Precision extremely low",
+         "description": "Precision is less than 5%."
+      },
+      "low_recall": {
+         "name": "Recall extremely low",
+         "description": "Recall is less than 5%."
+      }
+   },
+   "table":{
+      "operation":{
+         "name":"Operation",
+         "tooltip":"Operation to perform on the pipeline",
+         "filterable": true
+      },
+      "variant_type":{
+         "name":"Variant type",
+         "tooltip":"Type of the variants",
+         "filterable": true
+      },
+      "variant_size":{
+         "name":"Variant size",
+         "tooltip":"Size range of the variants",
+         "filterable": true
+      },
+      "window_size":{
+         "name":"Window size",
+         "tooltip":"Size range of the window used for the analysis",
+         "filterable": true
+      },
+      "tp":{
+         "name":"TP",
+         "tooltip":"True Positives (variants present in the sample and correctly identified)",
+         "sortable": true
+      },
+      "fn":{
+         "name":"FN",
+         "tooltip":"False Negatives (variants present in the sample and not identified)",
+         "sortable": true
+      },
+      "fp":{
+         "name":"FP",
+         "tooltip":"False Positives (variants not actually present in the sample and incorrectly identified)",
+         "sortable": true
+      },
+      "recall":{
+         "name":"Recall",
+         "tooltip":"Sensitivity or True Positive rate. Recall = TP / (TP + FN)",
+         "legend": "Recall is calculated exclusively using the true positives and false negatives from the recall samples.",
+         "sortable": true
+      },
+      "precision":{
+         "name":"Precision",
+         "tooltip":"Precision = TP / (TP + FP)",
+         "legend": "Precision is calculated exclusively using the true positives and false positives from the precision samples.",
+         "sortable": true
+      },
+      "f1_score":{
+         "name":"F1 score",
+         "tooltip":"F1-score = 2 * (Precision * Recall) / (Precision + Recall)",
+         "legend": "F1-score is calculated using the precision and recall values from the precision and recall samples respectively.",
+         "sortable": true
+      },
+      "protein_affected_genes":{
+         "name":"Prot. genes",
+         "tooltip":"Genes whose proteins are affected by discovered variants (only TP)",
+         "legend": "Warning: Oncoliner does not compute genes linked to false positives.",
+         "sortable": true
+      },
+      "protein_affected_driver_genes":{
+         "name":"Cancer driver prot. genes",
+         "tooltip":"Cancer driver genes whose proteins are affected by discovered variants (only TP)",
+         "legend": "Warning: Oncoliner does not compute genes linked to false positives.",
+         "sortable": true
+      },
+      "added_callers":{
+         "name":"Added callers",
+         "tooltip":"Number of callers added to the pipeline",
+         "filterable": true,
+         "sortable": true
+      },
+      "removed_callers":{
+         "name":"Removed callers",
+         "tooltip":"Number of callers removed from the pipeline",
+         "filterable": true,
+         "sortable": true
+      },
+      "total_changed_callers":{
+         "name":"Total changer callers",
+         "tooltip":"Total number of callers added and removed from the pipeline",
+         "filterable": true,
+         "sortable": true
+      },
+      "total_variants":{
+         "name":"Total variants",
+         "tooltip":"blabla total_variants",
+         "sortable": true
+      },
+      "overlapping_variants":{
+         "name":"Overlapping variants",
+         "tooltip":"blabla overlapping_variants",
+         "sortable": true
+      },
+      "overlapping_variants_ratio":{
+         "name":"Overlapping variants ratio",
+         "tooltip":"blabla overlapping_variants_ratio",
+         "sortable": true
+      },
+      "total_genes":{
+         "name":"Total genes",
+         "tooltip":"blabla total_genes",
+         "sortable": true
+      },
+      "overlapping_genes":{
+         "name":"Overlapping genes",
+         "tooltip":"blabla overlapping_genes",
+         "sortable": true
+      },
+      "overlapping_genes_ratio":{
+         "name":"Overlapping genes ratio",
+         "tooltip":"blabla overlapping_genes_ratio",
+         "sortable": true
+      }
+   }
+}

@@ -72,7 +72,7 @@ The pipelines folders are folders containing the results of executing each pipel
 
 The configuration file is a TSV file with the following columns:
 * `sample_name`: sample name.
-* `sample_type`: sample types (recall or precision), separated by `,`.
+* `sample_types`: sample types (recall or precision), separated by `,`.
 * `reference_fasta_path`: path to the reference FASTA file.
 * `truth_vcf_paths`: path(s) to the truth VCF files, separated by `,`. They can also be wildcard paths (e.g. `truths/*.vcf.gz`).
 
