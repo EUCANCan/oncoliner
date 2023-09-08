@@ -75,7 +75,7 @@ def _aggregate_overlapping_metrics(overlapping_metrics_list):
     return overlapping_metrics
 
 
-def _compute_sample_overlap(pipeline_1_sample_folder, pipeline_2_sample_folder, indel_threshold, window_ratio, window_limit):
+def _compute_sample_overlap(pipeline_1_sample_folder, pipeline_2_sample_folder, indel_threshold, window_radius):
     # Read VCFs
     pipeline_1_vcfs_paths = glob.glob(os.path.join(pipeline_1_sample_folder, '*tp.*')) + \
         glob.glob(os.path.join(pipeline_1_sample_folder, '*fp.*'))
@@ -87,18 +87,18 @@ def _compute_sample_overlap(pipeline_1_sample_folder, pipeline_2_sample_folder, 
     fake_truth = pd.DataFrame(columns=pipeline_1_vcfs.columns)
     df = pd.concat([pipeline_1_vcfs, pipeline_2_vcfs], ignore_index=True)
     # Compute overlap
-    total_variants, overlapping_variants = union(fake_truth, df, indel_threshold, window_ratio, window_limit)
+    total_variants, overlapping_variants = union(fake_truth, df, indel_threshold, window_radius)
     # Metrics
     evaluation_metrics_example = pd.read_csv(glob.glob(os.path.join(pipeline_1_sample_folder, '*metrics.csv'))[0])
     return _compute_overlapping_metrics(total_variants, overlapping_variants, evaluation_metrics_example, indel_threshold)
 
 
-def _compute_overlap(pipelines_combination_path, sample_names, indel_threshold, window_ratio, window_limit, threads):
+def _compute_overlap(pipelines_combination_path, sample_names, indel_threshold, window_radius, threads):
     thread_pool = ThreadPoolExecutor(max_workers=threads)
     results = thread_pool.map(lambda x:
                               _compute_sample_overlap(os.path.join(pipelines_combination_path[0], 'samples', x),
                                                       os.path.join(pipelines_combination_path[1], 'samples', x),
-                                                      indel_threshold, window_ratio, window_limit), sample_names)
+                                                      indel_threshold, window_radius), sample_names)
     overlapping_metrics = list(results)
     agg_overlapping_metrics = _aggregate_overlapping_metrics(overlapping_metrics)
     # Mask if they come from the baseline pipeline
@@ -117,7 +117,7 @@ def _compute_overlap(pipelines_combination_path, sample_names, indel_threshold, 
     return agg_overlapping_metrics
 
 
-def _check_pipelines_combinations(pipelines_folders, window_ratio=None, window_limit=None, processes=1):
+def _check_pipelines_combinations(pipelines_folders, window_radius=None, processes=1):
     # Each folder contains a set of improvements in the form of subfolders
     # Create a list of the possible improvements for each pipeline
     improvements = dict()
@@ -132,10 +132,9 @@ def _check_pipelines_combinations(pipelines_folders, window_ratio=None, window_l
     sample_names = [os.path.basename(f)
                     for f in glob.glob(os.path.join(improvements_combinations[0][0], 'samples', '*'))
                     if os.path.isdir(f)]
-    # Get indel_threshold, window_ratio, window_limit from the first pipeline metrics
+    # Get indel_threshold, window_radius from the first pipeline metrics
     metrics = pd.read_csv(glob.glob(os.path.join(improvements_combinations[0][0], 'samples', '*', '*metrics.csv'))[0])
-    indel_threshold, window_ratio, window_limit, _ = infer_parameters_from_metrics(
-        metrics, window_ratio=window_ratio, window_limit=window_limit)
+    indel_threshold, window_radius, _ = infer_parameters_from_metrics(metrics, window_radius=window_radius)
     # Compute overlap for each combination
     pool = multiprocessing.Pool(processes=processes)
     # Calculate number of processes per combination
@@ -143,8 +142,8 @@ def _check_pipelines_combinations(pipelines_folders, window_ratio=None, window_l
     for i in range(processes % len(improvements_combinations)):
         num_processes[i] += 1
     num_processes = [max(x, 1) for x in num_processes]
-    results = pool.starmap(_compute_overlap, [(x, sample_names, indel_threshold,
-                           window_ratio, window_limit, num_processes[i]) for i, x in enumerate(improvements_combinations)])
+    results = pool.starmap(_compute_overlap, [(x, sample_names, indel_threshold, window_radius,
+                           num_processes[i]) for i, x in enumerate(improvements_combinations)])
     overlapping_metrics = list(results)
     combination_names = [[os.path.basename(x) for x in y] for y in improvements_combinations]
     return list(zip(combination_names, overlapping_metrics))
@@ -184,7 +183,7 @@ def _group_combinations(improvements_combinations_metrics):
     return combinations_groups_dict
 
 
-def main(input_pipelines_improvements, output, window_ratio=None, window_limit=None, processes=1):
+def main(input_pipelines_improvements, output, window_radius=None, processes=1):
     # Convert to absolute paths
     input_pipelines_improvements = [os.path.abspath(p) for p in input_pipelines_improvements]
     output = os.path.abspath(output)
@@ -193,8 +192,7 @@ def main(input_pipelines_improvements, output, window_ratio=None, window_limit=N
     os.makedirs(output, exist_ok=True)
 
     # Compute combinations
-    improvements_combinations_metrics = _check_pipelines_combinations(
-        input_pipelines_improvements, window_ratio, window_limit, processes)
+    improvements_combinations_metrics = _check_pipelines_combinations(input_pipelines_improvements, window_radius, processes)
     combinations_groups_dict = _group_combinations(improvements_combinations_metrics)
     # Save results
     for variant_type, combinations_group in combinations_groups_dict.items():
