@@ -33,6 +33,15 @@ def _extract_protein_affected_genes_from_oncoliner(variant_record_obj) -> Set[st
     protein_affected_genes = set(variant_record_obj.info[ONCOLINER_INFO_FIELD_NAME])
     return protein_affected_genes
 
+def _extract_protein_affected_genes_from_funnsv(variant_record_obj) -> Set[str]:
+    # Extract protein coding genes from funnSV annotation
+    protein_affected_genes = set()
+    for annotation in variant_record_obj.info['FUNNSV_ANNOTATIONS']:
+        for ann in annotation.split('|'):
+            if ann in _PROTEIN_CODING_GENES:
+                protein_affected_genes.add(ann)
+    return protein_affected_genes
+
 
 def _extract_protein_affected_genes_from_vep(variant_record_obj) -> Set[str]:
     # Extract protein coding genes from VEP annotation
@@ -67,6 +76,9 @@ def extract_protein_affected_genes(variant_record_obj) -> Set[str]:
     # Check for VEP annotation
     if _is_gene_annotated_in_vep(variant_record_obj):
         return _extract_protein_affected_genes_from_vep(variant_record_obj)
+    # Check for funnSV annotation
+    if _is_gene_annotated_in_funnsv(variant_record_obj):
+        return _extract_protein_affected_genes_from_funnsv(variant_record_obj)
     return set()
 
 
@@ -84,10 +96,13 @@ def add_gene_annotation_to_variant_record(variant_record_obj, genes_symbols: Set
 def _is_gene_annotated_in_vep(variant_record_obj) -> bool:
     return 'CSQ' in variant_record_obj.info
 
+def _is_gene_annotated_in_funnsv(variant_record_obj) -> bool:
+    return 'FUNNSV_ANNOTATIONS' in variant_record_obj.info
+
 
 def _is_gene_annotated_in_oncoliner(variant_record_obj) -> bool:
     return ONCOLINER_INFO_FIELD_NAME in variant_record_obj.info
 
 
 def is_gene_annotated(variant_record_obj) -> bool:
-    return _is_gene_annotated_in_oncoliner(variant_record_obj) or _is_gene_annotated_in_vep(variant_record_obj)
+    return _is_gene_annotated_in_oncoliner(variant_record_obj) or _is_gene_annotated_in_vep(variant_record_obj) or _is_gene_annotated_in_funnsv(variant_record_obj)

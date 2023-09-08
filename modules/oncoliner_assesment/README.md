@@ -40,9 +40,9 @@ The module will try to obtain the genes affected by the variants from the `INFO`
 
 **WARNING**: It is recommended to normalize indels and SNVs before executing the assesment. For this purpose, we recommend using pre.py from [Illumina's Haplotype Comparison Tools (hap.py)](https://github.com/Illumina/hap.py). We provide an standalone and containerized **[EUCANCan's pre.py wrapper](https://github.com/EUCANCan/prepy-wrapper)** for this purpose.
 
-The main executable code is in the [`src/`](/src/) folder. There are two executable files: [`assesment_main.py`](#assesment_mainpy) and [`assesment_bulk.py`](/src/assesment_bulk.py). The first one is the main executable file and the second one is a wrapper for the first one that allows to execute the assesment in a bulk way.
+The main executable code is in the [`src/`](./src/) folder. There are two executable files: [`assesment_main.py`](#assesment_mainpy) and [`assesment_bulk.py`](#assesment_bulkpy). The first one is the main executable file and the second one is a wrapper for the first one that allows to execute the assesment in multiple samples at the same time taking advantage of multiple processors.
 
-There is an example of usage in the [`examples/`](/examples/) folder for each executable file: [`examples/test_main.sh`](/examples/test_main.sh) and [`examples/test_bulk.sh`](/examples/test_bulk.sh).
+There is an example of usage in the [`example/`](./example/) folder for each executable file: [`example/example_main.sh`](./example/example_main.sh) and [`example/example_bulk.sh`](./example/example_bulk.sh).
 
 
 ### `assesment_main.py`
@@ -53,7 +53,7 @@ Main executable file. It allows to compare a series of (VCF/BCF/VCF.GZ) files ge
 python3 -O src/assesment_main.py -t truth.vcf -v test.vcf -o output_
 ```
 
-Check the example of usage in [`examples/test_main.sh`](/examples/test_main.sh) for more information.
+Check the example of usage in [`example/example_main.sh`](./example/example_main.sh) for more information.
 
 #### Interface<!-- omit in toc -->
 ```
@@ -113,7 +113,7 @@ Wrapper for `assesment_main.py`. It allows to compare a series of (VCF/BCF/VCF.G
 python3 -O src/assesment_main.py -c config.tsv -o output_
 ```
 
-Check the example of usage in [`examples/test_bulk.sh`](/examples/test_bulk.sh) for more information.
+Check the example of usage in [`example/example_bulk.sh`](./example/example_bulk.sh) for more information.
 
 #### Configuration file
 
@@ -122,7 +122,7 @@ The configuration file is a TSV file with the following columns:
 * `sample_type`: sample types (recall or precision), separated by `,`.
 * `reference_fasta_path`: path to the reference FASTA file.
 * `truth_vcf_paths`: path(s) to the truth VCF files, separated by `,`. They can also be wildcard paths (e.g. `truths/*.vcf.gz`).
-* `test_vcf_paths`: path(s) to the test VCF files, separated by `,`. They can also be wildcard paths (e.g. `tests/*.vcf.gz`).
+* `example_vcf_paths`: path(s) to the test VCF files, separated by `,`. They can also be wildcard paths (e.g. `tests/*.vcf.gz`).
 
 #### Interface<!-- omit in toc -->
 ```

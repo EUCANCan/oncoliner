@@ -1,3 +1,0 @@
-sample_name	sample_types	reference_fasta_path	truth_vcf_paths	test_vcf_paths
-sample_1	recall	fake_ref.fa	./input_test/truth/sample_1/test_small_truth.vcf	./input_test/test/sample_1/test_small.vcf
-sample_2	precision	fake_ref.fa	./input_test/truth/sample_2/test_small_truth_2.vcf	./input_test/test/sample_2/test_small_2.vcf

@@ -1,0 +1,54 @@
+##fileformat=VCFv4.2
+##FILTER=<ID=PASS,Description="All filters passed">
+##FILTER=<ID=FAIL,Description="Fail the site if all alleles fail but for different reasons.">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##contig=<ID=1,length=249250621>
+##contig=<ID=2,length=243199373>
+##contig=<ID=3,length=198022430>
+##contig=<ID=4,length=191154276>
+##contig=<ID=5,length=180915260>
+##contig=<ID=6,length=171115067>
+##contig=<ID=7,length=159138663>
+##contig=<ID=8,length=146364022>
+##contig=<ID=9,length=141213431>
+##contig=<ID=10,length=135534747>
+##contig=<ID=11,length=135006516>
+##contig=<ID=12,length=133851895>
+##contig=<ID=13,length=115169878>
+##contig=<ID=14,length=107349540>
+##contig=<ID=15,length=102531392>
+##contig=<ID=16,length=90354753>
+##contig=<ID=17,length=81195210>
+##contig=<ID=18,length=78077248>
+##contig=<ID=19,length=59128983>
+##contig=<ID=20,length=63025520>
+##contig=<ID=21,length=48129895>
+##contig=<ID=22,length=51304566>
+##contig=<ID=X,length=155270560>
+##contig=<ID=Y,length=59373566>
+##contig=<ID=M,length=16571>
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NORMAL	TUMOR
+1	10	.	A	C	.	PASS	TP;SNV;CSQ=ENSG00000142611|ZSWIM7|protein_altering_variant,ENSG00000142611|PRDM16|protein_altering_variant	GT	0/0	0/1
+1	21	.	A	C	.	PASS	FP;SNV	GT	0/0	0/1
+1	22	.	A	C	.	PASS	FP;SNV	GT	0/0	0/1
+1	20	.	CTTTA	C	.	PASS	TP;INDEL	GT	0/0	0/1
+1	66	.	CTTTA	C	.	PASS	FP;INDEL	GT	0/0	0/1
+1	29	.	CTTTA	C	.	PASS	FP;INDEL	GT	0/0	0/1
+1	31	.	C	CAAAAA	.	PASS	TP;INDEL	GT	0/0	0/1
+1	84	.	C	CAAAAA	.	PASS	FP;INDEL	GT	0/0	0/1
+1	37	.	C	CAAAAA	.	PASS	TP;INDEL	GT	0/0	0/1
+1	11100	.	N	N[1:12100[	.	PASS	TP;DEL	GT	0/0	0/1
+1	12100	.	N	N[1:13100[	.	FAIL	FN;DEL	GT	0/0	0/1
+1	11100	.	N	N[1:14100[	.	PASS	TP;DEL	GT	0/0	0/1
+1	21100	.	N	]1:22100]N	.	PASS	TP;DUP	GT	0/0	0/1
+1	22100	.	N	]1:23100]N	.	FAIL	FN;DUP	GT	0/0	0/1
+1	21100	.	N	]1:24100]N	.	PASS	TP;DUP	GT	0/0	0/1
+1	31100	.	N	N]1:32100]	.	PASS	TP;INV	GT	0/0	0/1
+1	32100	.	N	[1:32100[N	.	FAIL	FN;INV	GT	0/0	0/1
+1	31100	.	N	N]1:33100]	.	PASS	TP;INV	GT	0/0	0/1
+1	31100	.	N	[1:33100[N	.	PASS	TP;INV	GT	0/0	0/1
+1	31100	.	N	N]1:34100]	.	PASS	FP;INV	GT	0/0	0/1
+1	31100	.	N	[1:34100[N	.	PASS	TP;INV	GT	0/0	0/1
+1	41100	.	N	N[2:42100[	.	PASS	TP;TRA	GT	0/0	0/1
+1	42100	.	N	[2:43100[N	.	PASS	FP;TRA	GT	0/0	0/1
+1	41100	.	N	N]2:44100]	.	PASS	TP;TRA	GT	0/0	0/1

@@ -13,7 +13,6 @@ from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExec
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', 'shared', 'vcf_ops', 'src'))
 
 from vcf_ops.constants import DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS, DEFAULT_CONTIGS  # noqa
-from vcf_ops.metrics import aggregate_metrics, combine_precision_recall_metrics  # noqa
 from vcf_ops.intersect import intersect  # noqa
 from vcf_ops.union import union  # noqa
 from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
@@ -63,38 +62,49 @@ def evaluate_sample(truth_sample_folder, test_sample_folder, output_prefix, fast
     )
 
 
-def evaluate_caller(caller_folder, truth_folder, output_folder, processes, **kwargs):
-    pool = ThreadPoolExecutor(max_workers=processes)
-    caller_folder_name = os.path.basename(caller_folder)
-    futures = []
-    for sample in os.listdir(truth_folder):
-        truth_sample_folder = os.path.join(truth_folder, sample)
-        test_sample_folder = os.path.join(caller_folder, sample)
-        output_prefix = os.path.join(output_folder, caller_folder_name, sample, caller_folder_name)
-        os.makedirs(os.path.dirname(output_prefix), exist_ok=True)
-        futures.append(pool.submit(evaluate_sample, truth_sample_folder, test_sample_folder, output_prefix, **kwargs))
-    for future in as_completed(futures):
-        future.result()
-    pool.shutdown(wait=True)
+def evaluate_caller(caller_folder, config, output_folder, processes, indel_threshold, window_radius, sv_size_bins, contigs):
+    pipelines_vcf_paths = config['sample_name'].apply(
+        lambda sample_name: ','.join([os.path.join(caller_folder, sample_name, '*.vcf.gz'),
+                                      os.path.join(caller_folder, sample_name, '*.vcf'),
+                                      os.path.join(caller_folder, sample_name, '*.bcf')]))
+    # Create a new config file with the paths to the pipeline VCFs
+    config_with_pipeline_vcf_paths = config.copy()
+    config_with_pipeline_vcf_paths['test_vcf_paths'] = pipelines_vcf_paths
+    # Save the new config file
+    config_path = os.path.join(output_folder, 'config.tsv')
+    config_with_pipeline_vcf_paths.to_csv(config_path, sep='\t', index=False)
+    # Execute the assesment
+    assesment_command = os.environ['ASSESMENT_COMMAND']
+    evaluator_command_split = assesment_command.split()
+    args = evaluator_command_split + \
+        ['-c', config_path,
+         '-p', str(processes),
+         '-o', output_folder,
+         '-it', str(indel_threshold),
+         '-wr', str(window_radius),
+         '--sv-size-bins'] + \
+        [str(bin) for bin in sv_size_bins] +\
+        ['--contigs'] + contigs
+    subprocess.check_call(args)
 
 
-def evaluate_callers(callers_folders, truth_folder, output_folder, processes, **kwargs):
+def evaluate_callers(callers_folders: List[str], config: pd.DataFrame, output_folder: str, processes: int, **kwargs):
     pool = ProcessPoolExecutor(max_workers=processes)
     threads_per_caller = max(1, processes // len(callers_folders))
     futures = []
     for caller_folder in callers_folders:
-        futures.append(pool.submit(evaluate_caller, caller_folder, truth_folder,
-                       output_folder, threads_per_caller, **kwargs))
+        output_caller_folder = os.path.join(output_folder, os.path.basename(caller_folder))
+        os.makedirs(output_caller_folder, exist_ok=True)
+        futures.append(pool.submit(evaluate_caller, caller_folder, config, output_caller_folder, threads_per_caller, **kwargs))
     for future in as_completed(futures):
         future.result()
     pool.shutdown(wait=True)
 
 
-def get_caller_variant_type(caller_folder):
+def get_caller_variant_type(caller_evaluation_folder: str):
     # Get the variant type looking at the aggregated metrics from the caller in the output folder
-    metrics_files_list = glob.glob(os.path.join(caller_folder, '*', '*metrics.csv'))
-    metrics_list = [pd.read_csv(metrics_file) for metrics_file in metrics_files_list]
-    agg_metrics = aggregate_metrics(metrics_list)
+    agg_metrics_path = glob.glob(os.path.join(caller_evaluation_folder, '*aggregated_metrics.csv'))
+    agg_metrics = pd.read_csv(agg_metrics_path[0])
     # Possible variant types: SNV, INDEL and/or SV
     variant_types = set()
     if agg_metrics[agg_metrics['variant_type'] == 'SNV'].iloc[0]['recall'] > MIN_RECALL:
@@ -132,9 +142,9 @@ def union_callers(caller_1_prefix: str, caller_2_prefix: str, output_prefix: str
     return False
 
 
-def op_callers_with_samples(caller_1_folder: str, caller_2_folder: str, operation, output_folder: str, **kwargs):
+def op_callers_with_samples(caller_1_folder: str, caller_2_folder: str, operation, output_folder: str, sample_names: List[str], **kwargs):
     os.makedirs(output_folder, exist_ok=True)
-    for sample in os.listdir(caller_1_folder):
+    for sample in sample_names:
         caller_1_prefix = os.path.join(caller_1_folder, sample + '/')
         caller_2_prefix = os.path.join(caller_2_folder, sample + '/')
         output_prefix = os.path.join(output_folder, sample, os.path.basename(output_folder))
@@ -160,7 +170,7 @@ def execute_operations(operations: List[str], folder: str, processes: int, **kwa
     pool = ProcessPoolExecutor(max_workers=processes)
     # Execute operations in batches of number of parentheses
     max_parentheses = max([operation[-1].count('(') for operation in operations_to_execute])
-    operations_batches = [[] for _ in range(max_parentheses + 1)]
+    operations_batches = [[] for _ in range(max_parentheses + 1)]  # type: ignore
     for operation in operations_to_execute:
         operations_batches[operation[-1].count('(')].append(operation)
     futures = []
@@ -189,34 +199,10 @@ def execute_operations(operations: List[str], folder: str, processes: int, **kwa
     pool.shutdown(wait=True)
 
 
-def calculate_aggregated_metrics_caller(caller_folder: str, recall_samples: List[str], precision_samples: List[str]):
-    output_file = os.path.join(caller_folder, 'aggregated_metrics.csv')
-    # If the output file already exists and is not empty, skip
-    if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-        print(f'Agregated metrics file {output_file} already exists and is not empty, skipping')
-        return
-    recall_metrics_files = [glob.glob(os.path.join(caller_folder, sample, '*metrics.csv'))[0] for sample in recall_samples]
-    recall_aggregated_metrics = aggregate_metrics([pd.read_csv(metrics_file) for metrics_file in recall_metrics_files])
-    precision_metrics_files = [glob.glob(os.path.join(caller_folder, sample, '*metrics.csv'))[0] for sample in precision_samples]
-    precision_aggregated_metrics = aggregate_metrics([pd.read_csv(metrics_file) for metrics_file in precision_metrics_files])
-    final_metrics = combine_precision_recall_metrics(recall_aggregated_metrics, precision_aggregated_metrics)
-    final_metrics.to_csv(output_file, index=False)
-
-
-def calculate_aggregated_metrics(callers_folders: List[str], recall_samples: List[str], precision_samples: List[str], processes: int):
-    pool = ProcessPoolExecutor(max_workers=processes)
-    futures = []
-    for caller_folder in callers_folders:
-        futures.append(pool.submit(calculate_aggregated_metrics_caller, caller_folder, recall_samples, precision_samples))
-    for future in as_completed(futures):
-        future.result()
-    pool.shutdown(wait=True)
-
-
 def create_improvement_list(evaluation_callers_folders: List[str], output_folder: str, processes: int):
     # Read all aggregated metrics files in each thread
     def read_aggregated_metrics(caller_folder):
-        df = pd.read_csv(os.path.join(caller_folder, 'aggregated_metrics.csv'))
+        df = pd.read_csv(glob.glob(os.path.join(caller_folder, '*aggregated_metrics.csv'))[0])
         # Add a column with the operation name at the start of the dataframe
         operation = os.path.basename(caller_folder)
         df.insert(0, 'operation', operation)
@@ -244,23 +230,44 @@ def create_improvement_list(evaluation_callers_folders: List[str], output_folder
         improvement_df.to_csv(output_file, index=False)
 
 
-def main(args):
-    # Convert to absolute paths
-    args.truth = os.path.abspath(args.truth)
-    args.test = os.path.abspath(args.test)
+def _create_config(truth_folder: str, fasta_ref: str, recall_samples: List[str], precision_samples: List[str]) -> pd.DataFrame:
+    entries = []
+    for sample in set(recall_samples).union(precision_samples):
+        sample_types = []
+        if sample in recall_samples:
+            sample_types.append('recall')
+        if sample in precision_samples:
+            sample_types.append('precision')
+        truth_files = get_vcf_files(os.path.join(truth_folder, sample, ''))
+        entries.append([
+            sample,
+            ','.join(sample_types),
+            fasta_ref,
+            ','.join(truth_files)
+        ])
+    config = pd.DataFrame(entries, columns=['sample_name', 'sample_types', 'reference_fasta_path', 'truth_vcf_paths'])
+    return config
 
+
+def main(args):
     # Get callers names
     callers_names = os.listdir(args.test)
     callers_names.sort()
 
+    # Get sample names
+    sample_names = list(set(args.recall_samples).union(args.precision_samples))
+    sample_names.sort()
+
     # All test folders (callers) must contain the same subfolders (samples)
     for caller_folder in callers_names:
-        missing_truth_samples = set(os.listdir(args.truth)) - set(os.listdir(os.path.join(args.test, caller_folder)))
-        missing_test_samples = set(os.listdir(os.path.join(args.test, caller_folder))) - set(os.listdir(args.truth))
-        if len(missing_truth_samples) > 0:
-            raise Exception(f'Caller {caller_folder} is missing samples from the truth folder: {missing_truth_samples}')
-        if len(missing_test_samples) > 0:
-            raise Exception(f'Caller {caller_folder} has more samples than the truth folder: {missing_test_samples}')
+        for sample in sample_names:
+            if not os.path.exists(os.path.join(args.test, caller_folder, sample)):
+                raise Exception(f'Caller {caller_folder} is missing sample {sample} subfolder')
+            if not os.path.exists(os.path.join(args.truth, sample)):
+                raise Exception(f'Truth folder is missing sample {sample} subfolder')
+
+    # Create config
+    config = _create_config(args.truth, args.fasta_ref, args.recall_samples, args.precision_samples)
 
     # Create output folder
     os.makedirs(args.output, exist_ok=True)
@@ -272,7 +279,7 @@ def main(args):
     os.makedirs(output_combinations, exist_ok=True)
     # Evaluate the callers
     original_caller_folders = [os.path.join(args.test, caller_name) for caller_name in callers_names]
-    evaluate_callers(original_caller_folders, args.truth, output_evaluations, args.processes, fasta_ref=args.fasta_ref,
+    evaluate_callers(original_caller_folders, config, output_evaluations, args.processes,
                      indel_threshold=args.indel_threshold, window_radius=args.window_radius,
                      sv_size_bins=args.sv_size_bins, contigs=args.contigs)
 
@@ -280,16 +287,16 @@ def main(args):
     for caller_name in callers_names:
         caller_combination_folder = os.path.join(output_combinations, caller_name)
         os.makedirs(caller_combination_folder, exist_ok=True)
-        for sample in os.listdir(os.path.join(args.test, caller_name)):
+        for sample in sample_names:
             caller_combination_sample_folder = os.path.join(caller_combination_folder, sample)
             os.makedirs(caller_combination_sample_folder, exist_ok=True)
-            for file in get_vcf_files(os.path.join(output_evaluations, caller_name, sample, '')):
+            for file in get_vcf_files(os.path.join(output_evaluations, caller_name, 'samples', sample, '')):
                 # Filter TP+FP files
                 if 'tp.' not in file and 'fp.' not in file:
                     continue
                 shutil.copy(file, caller_combination_sample_folder)
     # Get callers prefixes
-    callers_folders = [os.path.join(output_combinations, caller_name) for caller_name in os.listdir(output_combinations)]
+    callers_folders = [os.path.join(output_combinations, caller_name) for caller_name in callers_names]
     # Get the variant types for each caller
     # Create a dict variant_type -> callers
     callers_variant_types = {
@@ -308,19 +315,16 @@ def main(args):
     for operations in callers_operations_by_variant_type.values():
         if len(operations) == 0:
             continue
-        execute_operations(operations, output_combinations, args.processes, fasta_ref=args.fasta_ref,
+        execute_operations(operations, output_combinations, args.processes, sample_names=sample_names, fasta_ref=args.fasta_ref,
                            indel_threshold=args.indel_threshold, window_radius=args.window_radius)
     # Evaluate the combinations
     combinations_prefixes = list(set(os.listdir(output_combinations)) - set(callers_folders))
     combinations_folders = [os.path.join(output_combinations, combination_prefix) for combination_prefix in combinations_prefixes]
-    evaluate_callers(combinations_folders, args.truth, output_evaluations, args.processes, fasta_ref=args.fasta_ref,
+    evaluate_callers(combinations_folders, config, output_evaluations, args.processes,
                      indel_threshold=args.indel_threshold, window_radius=args.window_radius,
                      sv_size_bins=args.sv_size_bins, contigs=args.contigs)
 
-    # Calculate aggregated metrics
     evaluation_callers_folders = [os.path.join(output_evaluations, name) for name in os.listdir(output_combinations)]
-    calculate_aggregated_metrics(evaluation_callers_folders, args.recall_samples, args.precision_samples, args.processes)
-    # Create a list of all the aggregated metrics files
     output_list_folder = os.path.join(args.output, 'improvement_list')
     os.makedirs(output_list_folder, exist_ok=True)
     create_improvement_list(evaluation_callers_folders, output_list_folder, args.processes)
