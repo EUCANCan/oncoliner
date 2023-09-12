@@ -42,8 +42,6 @@ class AssesmentPipelineDAO():
             sample_warning = self.get_metrics_table(sample).get_warnings()
             # Add sample warnings to warnings dict
             for warning_id, affected_types in sample_warning.items():
-                if len(affected_types) == 0:
-                    continue
                 if warning_id not in warnings:
                     warnings[warning_id] = dict()
                 warnings[warning_id][sample] = affected_types

@@ -15,7 +15,7 @@ class TableFromListDAO():
         # Find indel_threshold
         self._indel_threshold = int(concat_df[concat_df['variant_type'] == 'INDEL']
                                     ['variant_size'].iloc[0].split('-')[-1].strip())
-        self.columns = concat_df.columns.to_list()
+        self.columns_to_drop = ['window_radius']
 
     def get_tree(self, prefix_id):
         if self.tree:
@@ -63,7 +63,7 @@ class TableFromListDAO():
                 last_dict = last_dict[tree_level]
             last_dict['id'] = clean_string(f'{prefix_id}_{variant_type}_{variant_size}')
             # Round all floats to 2 decimals
-            last_dict['data'] = df[self.columns].round(2)
+            last_dict['data'] = df.drop(columns=self.columns_to_drop, errors='ignore').round(2)
 
         # Sort by variant size
         def extract_lower_limit_size(variant_size):
