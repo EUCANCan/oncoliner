@@ -172,3 +172,5 @@ if __name__ == '__main__':
     ui_output_file = os.path.join(args.output, 'oncoliner_report.html')
     run_ui(pipelines_evaluation_folder_paths, pipeline_improvements_folder_paths,
            args.callers_folder, output_harmonization_folder, ui_output_file)
+
+    logging.info(f'Oncoliner report available at {ui_output_file}')
