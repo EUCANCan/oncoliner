@@ -1,10 +1,7 @@
 import re
 
 from vcf_ops.metrics import combine_precision_recall_metrics  # noqa
-
-UNION_SYMBOL = '$or$'
-INTERSECTION_SYMBOL = '$and$'
-REMOVE_SYMBOL = '$not$'
+from vcf_ops.constants import UNION_SYMBOL, INTERSECTION_SYMBOL, REMOVE_SYMBOL  # noqa
 
 
 def build_result_dataframe(operation, mask, precision_df, recall_df):

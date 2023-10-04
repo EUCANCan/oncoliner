@@ -101,6 +101,6 @@ Oncoliner is divided into three functional modules (assesment, improvement and h
 * [Assesment README](/modules/oncoliner_assesment/README.md)
 * [Improvement README](/modules/oncoliner_improvement/README.md)
 * [Harmonization README](/modules/oncoliner_harmonization/README.md)
-* [UI README](/modules/oncoliner_ui/README.md) (TODO)
+* [UI README](/modules/oncoliner_ui/README.md)
 
 Each module can be run independently. However, the results of the assesment module are required to run the improvement module and the results of the improvement module are required to run the harmonization module. The UI module generates a report for the results of each module.

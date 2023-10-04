@@ -1,20 +1,16 @@
 from typing import List, Tuple
-from collections.abc import Sequence
 import itertools
-
-ADDITION_SYMBOL = '$or$'
-INTERSECTION_SYMBOL = '$and$'
 
 
 class Operation():
 
-    def __init__(self, op_str: str):
+    def __init__(self, op_str: str, union_symbol: str, intersection_symbol: str):
         self.op_str = op_str
         self.op_symbol = None
         self.op_elements = set()
-        self.parse_operation(op_str)
+        self.parse_operation(op_str, union_symbol, intersection_symbol)
 
-    def parse_operation(self, op_str: str):
+    def parse_operation(self, op_str: str, union_symbol: str, intersection_symbol: str):
         # Get the parentheses blocks
         elements_strs = []
         nested_parentheses = 0
@@ -34,7 +30,7 @@ class Operation():
                 start_pos = i + 1
         if len(elements_strs) == 1 and op_str[0] == '(' and op_str[-1] == ')':
             # A single parentheses block was found
-            self.parse_operation(op_str[1:-1])
+            self.parse_operation(op_str[1:-1], union_symbol, intersection_symbol)
             return
         if start_pos != len(op_str):
             elements_strs.append(op_str[start_pos:])
@@ -50,12 +46,12 @@ class Operation():
                 continue
             # Get the operation symbol
             middle_str = element_str[:open_pos]
-            addition_pos = middle_str.find(ADDITION_SYMBOL)
-            intersection_pos = middle_str.find(INTERSECTION_SYMBOL)
+            addition_pos = middle_str.find(union_symbol)
+            intersection_pos = middle_str.find(intersection_symbol)
             if addition_pos == -1:
-                new_op_symbol = INTERSECTION_SYMBOL
+                new_op_symbol = intersection_symbol
             elif intersection_pos == -1:
-                new_op_symbol = ADDITION_SYMBOL
+                new_op_symbol = union_symbol
             else:
                 raise Exception(f'Operation symbol combination not supported: {middle_str}')
             if self.op_symbol is None:
@@ -68,8 +64,8 @@ class Operation():
         clean_elements_strs = list(filter(None, clean_elements_strs))
         for element_str in clean_elements_strs:
             # If there are operations, the element is an operation
-            if element_str.count(ADDITION_SYMBOL) + element_str.count(INTERSECTION_SYMBOL) > 0:
-                new_operation_element = Operation(element_str)
+            if element_str.count(union_symbol) + element_str.count(intersection_symbol) > 0:
+                new_operation_element = Operation(element_str, union_symbol, intersection_symbol)
                 # If the operation symbol is the same, add the elements
                 if self.op_symbol == new_operation_element.op_symbol:
                     self.op_elements.update(new_operation_element.op_elements)
@@ -108,25 +104,25 @@ class Operation():
         return '(' + self.op_symbol.join(sorted_op_elements) + ')'
 
 
-def split_operation(operation: str) -> Tuple[str, str, str]:
+def split_operation(operation: str, union_symbol: str, intersection_symbol: str) -> Tuple[str, str, str]:
     # Split the operation by the operation symbol
     # For example: (A+B)+C -> ['(A+B)', 'C']
     # Remove the first and last parenthesis
     operation = operation[1:-1]
     # First check if the operation has the operation symbol before any parenthesis
-    addition_pos = operation.find(ADDITION_SYMBOL)
-    intersection_pos = operation.find(INTERSECTION_SYMBOL)
+    addition_pos = operation.find(union_symbol)
+    intersection_pos = operation.find(intersection_symbol)
     if addition_pos == -1 and intersection_pos == -1:
         raise Exception('Operation symbol not found')
     elif addition_pos == -1:
         operation_pos = intersection_pos
-        operation_symbol = INTERSECTION_SYMBOL
+        operation_symbol = intersection_symbol
     elif intersection_pos == -1:
         operation_pos = addition_pos
-        operation_symbol = ADDITION_SYMBOL
+        operation_symbol = union_symbol
     else:
         operation_pos = addition_pos if addition_pos < intersection_pos else intersection_pos
-        operation_symbol = ADDITION_SYMBOL if addition_pos < intersection_pos else INTERSECTION_SYMBOL
+        operation_symbol = union_symbol if addition_pos < intersection_pos else intersection_symbol
     first_parenthesis_pos = operation.find('(')
     if first_parenthesis_pos == -1 or operation_pos < first_parenthesis_pos:
         return (operation[:operation_pos], operation_symbol, operation[operation_pos + len(operation_symbol):])
@@ -140,24 +136,24 @@ def split_operation(operation: str) -> Tuple[str, str, str]:
         elif char == ')':
             nested_parentheses -= 1
         if nested_parentheses == 0 and found_flag:
-            addition_pos = operation.find(ADDITION_SYMBOL, idx)
-            intersection_pos = operation.find(INTERSECTION_SYMBOL, idx)
+            addition_pos = operation.find(union_symbol, idx)
+            intersection_pos = operation.find(intersection_symbol, idx)
             if addition_pos == -1 and intersection_pos == -1:
                 raise Exception('Operation symbol not found')
             elif addition_pos == -1:
                 operation_pos = intersection_pos
-                operation_symbol = INTERSECTION_SYMBOL
+                operation_symbol = intersection_symbol
             elif intersection_pos == -1:
                 operation_pos = addition_pos
-                operation_symbol = ADDITION_SYMBOL
+                operation_symbol = union_symbol
             else:
                 operation_pos = addition_pos if addition_pos < intersection_pos else intersection_pos
-                operation_symbol = ADDITION_SYMBOL if addition_pos < intersection_pos else INTERSECTION_SYMBOL
+                operation_symbol = union_symbol if addition_pos < intersection_pos else intersection_symbol
             return (operation[:operation_pos], operation_symbol, operation[operation_pos + len(operation_symbol):])
     raise Exception('Operation symbol not found')
 
 
-def generate_combinations(elements: List[str], max_combinations: int) -> List[str]:
+def generate_combinations(elements: List[str], max_combinations: int, union_symbol: str, intersection_symbol: str) -> List[str]:
     # Permutations of the elements
     combinations = min(max_combinations, len(elements)) if max_combinations > 0 else len(elements)
     permutations = itertools.permutations(elements, combinations)
@@ -168,11 +164,11 @@ def generate_combinations(elements: List[str], max_combinations: int) -> List[st
     # Add all possible operations from the groups
     operation_list = []
     for group in all_groups:
-        group_operations = _generate_operations(group)
+        group_operations = _generate_operations(group, union_symbol, intersection_symbol)
         if len(operation_list) > 0:
             group_operations = group_operations[1:-1]  # Remove the first and last all equal operations
         for group_operation in group_operations:
-            op_instance = Operation(group_operation)
+            op_instance = Operation(group_operation, union_symbol, intersection_symbol)
             # Check if the operation is already in the list
             found_flag = False
             for existing_op in operation_list:
@@ -188,7 +184,7 @@ def generate_combinations(elements: List[str], max_combinations: int) -> List[st
         inner_operations = _get_inner_operations(operation_str)
         all_operations.update(inner_operations)
     # Sort by the number of operations and then alphabetically
-    all_operations = sorted(all_operations, key=lambda x: (x.count(ADDITION_SYMBOL) + x.count(INTERSECTION_SYMBOL), x))
+    all_operations = sorted(all_operations, key=lambda x: (x.count(union_symbol) + x.count(intersection_symbol), x))
     return all_operations
 
 
@@ -206,10 +202,10 @@ def _get_inner_operations(operation: str) -> List[str]:
     return inner_operations
 
 
-def _generate_operations(group: str) -> List[str]:
+def _generate_operations(group: str, union_symbol: str, intersection_symbol: str) -> List[str]:
     # Each ")(" is an operation
     operations_counts = group.count(')(')
-    operations_symbols = itertools.product([ADDITION_SYMBOL, INTERSECTION_SYMBOL], repeat=operations_counts)
+    operations_symbols = itertools.product([union_symbol, intersection_symbol], repeat=operations_counts)
     operations = []
     for operation_symbols in operations_symbols:
         op_str = group
@@ -219,7 +215,7 @@ def _generate_operations(group: str) -> List[str]:
     return operations
 
 
-def _generate_groups(elements: Sequence[str]) -> List[str]:
+def _generate_groups(elements: List[str]) -> List[str]:
     if len(elements) == 1:
         return [f'({elements[0]})']
 

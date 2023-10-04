@@ -6,8 +6,8 @@ import argparse
 import glob
 import shutil
 import re
-import pandas as pd
 from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExecutor
+import pandas as pd
 
 # Add vcf-ops to the path
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', 'shared', 'vcf_ops', 'src'))
@@ -16,7 +16,9 @@ from vcf_ops.constants import DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DE
 from vcf_ops.intersect import intersect  # noqa
 from vcf_ops.union import union  # noqa
 from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
-from combinator import ADDITION_SYMBOL, INTERSECTION_SYMBOL, generate_combinations, split_operation  # noqa
+from vcf_ops.constants import UNION_SYMBOL, INTERSECTION_SYMBOL  # noqa
+from combinator import generate_combinations, split_operation  # noqa
+
 
 MIN_RECALL = 0.05
 
@@ -37,29 +39,31 @@ def extract_vcfs(path_prefix: str) -> pd.DataFrame:
     return read_vcfs(files)
 
 
-def evaluate_sample(truth_sample_folder, test_sample_folder, output_prefix, fasta_ref, indel_threshold, window_radius, sv_size_bins, contigs):
-    # If output_prefix*metrics.csv exists and is not empty, skip
-    output_metrics = glob.glob(output_prefix + '*metrics.csv')
-    if len(output_metrics) > 0 and os.path.getsize(output_metrics[0]) > 0:
-        return
-    # Get evaluator path from the environment
-    assesment_command = os.environ.get('ASSESMENT_COMMAND')
-    if assesment_command is None:
-        raise Exception('ASSESMENT_COMMAND environment variable not defined')
-    # Get files
-    truth_sample_vcfs = get_vcf_files(truth_sample_folder + '/')
-    test_sample_vcfs = get_vcf_files(test_sample_folder + '/')
-    subprocess.check_call(
-        assesment_command.split() + [
-            '-t'] + truth_sample_vcfs + [
-            '-v'] + test_sample_vcfs + [
-            '-o', output_prefix,
-            '-f', fasta_ref,
-            '-it', str(indel_threshold),
-            '-wr', str(window_radius),
-            '--sv-size-bins'] + [str(bin) for bin in sv_size_bins] + [
-            '--contigs'] + contigs
-    )
+def check_improvement(combination_evaluation_folder: str, evaluation_element_1_folder: str, evaluation_element_2_folder: str, operation_symbol: str, loss_margin: float) -> bool:
+    # Get the aggregated metrics for all the folders
+    combination_metrics = pd.read_csv(glob.glob(os.path.join(combination_evaluation_folder, '*aggregated_metrics.csv'))[0])
+    element_1_metrics = pd.read_csv(glob.glob(os.path.join(evaluation_element_1_folder, '*aggregated_metrics.csv'))[0])
+    element_2_metrics = pd.read_csv(glob.glob(os.path.join(evaluation_element_2_folder, '*aggregated_metrics.csv'))[0])
+    # Check depending on the operation
+    if operation_symbol == UNION_SYMBOL:
+        metric_loss = 'precision'
+        metric_improve = 'recall'
+    elif operation_symbol == INTERSECTION_SYMBOL:
+        metric_loss = 'recall'
+        metric_improve = 'precision'
+    # Get all the rows where the combination has not lost more than the loss margin
+    loss_mask_1 = element_1_metrics[metric_loss] - combination_metrics[metric_loss] <= loss_margin
+    loss_mask_2 = element_2_metrics[metric_loss] - combination_metrics[metric_loss] <= loss_margin
+    loss_mask = loss_mask_1 | loss_mask_2
+    combination_metrics = combination_metrics[loss_mask]
+    element_1_metrics = element_1_metrics[loss_mask]
+    element_2_metrics = element_2_metrics[loss_mask]
+    # Get all the rows where the combination has improved
+    improve_mask_1 = combination_metrics[metric_improve] - element_1_metrics[metric_improve] > 0.01
+    improve_mask_2 = combination_metrics[metric_improve] - element_2_metrics[metric_improve] > 0.01
+    improve_mask = improve_mask_1 | improve_mask_2
+    combination_metrics = combination_metrics[improve_mask]
+    return combination_metrics
 
 
 def evaluate_caller(caller_folder, config, output_folder, processes, indel_threshold, window_radius, sv_size_bins, contigs):
@@ -85,7 +89,7 @@ def evaluate_caller(caller_folder, config, output_folder, processes, indel_thres
          '--sv-size-bins'] + \
         [str(bin) for bin in sv_size_bins] +\
         ['--contigs'] + contigs
-    subprocess.check_call(args)
+    subprocess.check_call(args, stdout=subprocess.DEVNULL)
 
 
 def evaluate_callers(callers_folders: List[str], config: pd.DataFrame, output_folder: str, processes: int, **kwargs):
@@ -142,57 +146,94 @@ def union_callers(caller_1_prefix: str, caller_2_prefix: str, output_prefix: str
     return False
 
 
-def op_callers_with_samples(caller_1_folder: str, caller_2_folder: str, operation, output_folder: str, sample_names: List[str], **kwargs):
-    os.makedirs(output_folder, exist_ok=True)
+def op_callers_with_samples(operation_tuple, combinations_folder: str, evaluations_folder: str, threads: int, config: pd.DataFrame, **kwargs):
+    element_1, operation_symbol, element_2, operation_str = operation_tuple
+    # Get names of the elements
+    element_1_name = element_1 if element_1.count('(') == 0 else element_1[1:-1]
+    element_2_name = element_2 if element_2.count('(') == 0 else element_2[1:-1]
+    # Get folders of the elements
+    combination_element_1_folder = os.path.join(combinations_folder, element_1_name)
+    combination_element_2_folder = os.path.join(combinations_folder, element_2_name)
+    # If any folder does not exist, skip
+    if not os.path.exists(combination_element_1_folder):
+        print(f'Folder {combination_element_1_folder} does not exist, skipping operation: {operation_str}')
+        return
+    if not os.path.exists(combination_element_2_folder):
+        print(f'Folder {combination_element_2_folder} does not exist, skipping operation: {operation_str}')
+        return
+    # Get the name of the operation
+    operation_name = operation_str[1:-1]
+    combination_output_folder = os.path.join(combinations_folder, operation_name)
+    combination_output_flag_file = os.path.join(combinations_folder, operation_name + '.done')
+    # Avoid the operation if operation_name.done exists
+    if os.path.exists(combination_output_flag_file):
+        print(f'Flag file {combination_output_flag_file} exists, skipping')
+        return
+    # Avoid the operation if already evaluated
+    evaluation_output_folder = os.path.join(evaluations_folder, operation_name)
+    # Check if the evaluation has already been performed
+    if os.path.exists(os.path.join(evaluation_output_folder, 'aggregated_metrics.csv')):
+        print(f'Evaluation already performed for {operation_name}, skipping')
+        return
+    os.makedirs(combination_output_folder, exist_ok=True)
+    operation = union_callers if operation_symbol == UNION_SYMBOL else intersect_callers
+    sample_names = config['sample_name'].tolist()
     for sample in sample_names:
-        caller_1_prefix = os.path.join(caller_1_folder, sample + '/')
-        caller_2_prefix = os.path.join(caller_2_folder, sample + '/')
-        output_prefix = os.path.join(output_folder, sample, os.path.basename(output_folder))
+        caller_1_prefix = os.path.join(combination_element_1_folder, sample + '/')
+        caller_2_prefix = os.path.join(combination_element_2_folder, sample + '/')
+        output_prefix = os.path.join(combination_output_folder, sample, operation_name)
         # If the output folder already exists and is not empty, skip
         output_files = get_vcf_files(output_prefix)
-        if len(output_files) > 0 and all([os.path.getsize(output_file) > 0 for output_file in output_files]):
+        if len(output_files) > 0 and all(os.path.getsize(output_file) > 0 for output_file in output_files):
             print(f'Output folder {output_prefix} already exists and is not empty, skipping sample: {sample}')
             continue
         os.makedirs(os.path.dirname(output_prefix), exist_ok=True)
-        written_data = operation(caller_1_prefix, caller_2_prefix, output_prefix, **kwargs)
+        written_data = operation(caller_1_prefix, caller_2_prefix, output_prefix, fasta_ref=kwargs['fasta_ref'],
+                                 indel_threshold=kwargs['indel_threshold'], window_radius=kwargs['window_radius'])
         if not written_data:
-            print(f'{output_folder}: no data written for sample: {sample}')
-            shutil.rmtree(output_folder)
-            break
+            print(f'{combination_output_folder}: no data written for sample: {sample}')
+            shutil.rmtree(combination_output_folder)
+            # Write a file with the operation name to avoid repeating the operation
+            with open(combination_output_flag_file, 'w') as f:
+                f.write('')
+            # If no data was written, skip the rest of the samples
+            return
+    # Evaluate the result
+    os.makedirs(evaluation_output_folder, exist_ok=True)
+    evaluate_caller(combination_output_folder, config, evaluation_output_folder, threads, indel_threshold=kwargs['indel_threshold'],
+                    window_radius=kwargs['window_radius'], sv_size_bins=kwargs['sv_size_bins'], contigs=kwargs['contigs'])
+    # Check for improvement with the new combination
+    evaluation_element_1_folder = os.path.join(evaluations_folder, element_1_name)
+    evaluation_element_2_folder = os.path.join(evaluations_folder, element_2_name)
+    improved_metrics_df = check_improvement(evaluation_output_folder, evaluation_element_1_folder, evaluation_element_2_folder, operation_symbol, kwargs['loss_margin'])
+    # If there is no improvement, remove the combination folder
+    if len(improved_metrics_df) == 0:
+        shutil.rmtree(combination_output_folder)
+        shutil.rmtree(evaluation_output_folder)
+        # Write a file with the operation name to avoid repeating the operation
+        with open(combination_output_flag_file, 'w') as f:
+            f.write('')
 
 
-def execute_operations(operations: List[str], folder: str, processes: int, **kwargs):
+def execute_operations(operations: List[str], combinations_folder: str, evaluations_folder: str, processes: int, config: pd.DataFrame, **kwargs):
     operations_to_execute = []
-    for operation in operations:
+    for operation_str in operations:
         # Split the operation into the elements and the operation symbol
-        element_1, operation_symbol, element_2 = split_operation(operation)
-        operations_to_execute.append((element_1, operation_symbol, element_2, operation))
+        element_1, operation_symbol, element_2 = split_operation(operation_str, UNION_SYMBOL, INTERSECTION_SYMBOL)
+        operations_to_execute.append((element_1, operation_symbol, element_2, operation_str))
     pool = ProcessPoolExecutor(max_workers=processes)
     # Execute operations in batches of number of parentheses
     max_parentheses = max([operation[-1].count('(') for operation in operations_to_execute])
-    operations_batches = [[] for _ in range(max_parentheses + 1)]  # type: ignore
+    operations_batches = [[] for _ in range(max_parentheses)]  # type: ignore
     for operation in operations_to_execute:
-        operations_batches[operation[-1].count('(')].append(operation)
+        operations_batches[operation[-1].count('(') - 1].append(operation)
     futures = []
 
     for operation_batch in operations_batches:
+        threads_per_operation = max(1, processes // len(operation_batch))
         for operation in operation_batch:
-            element_1, operation_symbol, element_2, operation_str = operation
-            # Get folders of the elements
-            element_1_folder = os.path.join(folder, element_1) if element_1.count('(') == 0 else os.path.join(folder, element_1[1:-1])
-            element_2_folder = os.path.join(folder, element_2) if element_2.count('(') == 0 else os.path.join(folder, element_2[1:-1])
-            # If any folder does not exist, skip
-            if not os.path.exists(element_1_folder):
-                print(f'Folder {element_1_folder} does not exist, skipping operation: {operation_str}')
-                continue
-            if not os.path.exists(element_2_folder):
-                print(f'Folder {element_2_folder} does not exist, skipping operation: {operation_str}')
-                continue
-            output_folder = os.path.join(folder, operation_str[1:-1])
-            # Perform the operation
-            operation = union_callers if operation_symbol == ADDITION_SYMBOL else intersect_callers
-            futures.append(pool.submit(op_callers_with_samples, element_1_folder,
-                           element_2_folder, operation, output_folder, **kwargs))
+            futures.append(pool.submit(op_callers_with_samples, operation, combinations_folder,
+                           evaluations_folder, threads_per_operation, config, **kwargs))
         # Wait for the operations to finish
         for future in as_completed(futures):
             future.result()
@@ -206,7 +247,7 @@ def create_improvement_list(evaluation_callers_folders: List[str], output_folder
         # Add a column with the operation name at the start of the dataframe
         operation = os.path.basename(caller_folder)
         df.insert(0, 'operation', operation)
-        num_callers = operation.count(ADDITION_SYMBOL) + operation.count(INTERSECTION_SYMBOL)
+        num_callers = operation.count(UNION_SYMBOL) + operation.count(INTERSECTION_SYMBOL)
         df['num_callers'] = num_callers + 1
         return df
     pool = ThreadPoolExecutor(max_workers=processes)
@@ -310,21 +351,17 @@ def main(args):
     # Define all the possible the operations (intersections and/or unions) to perform between callers of the same variant type
     callers_operations_by_variant_type = {}
     for variant_type, callers in callers_variant_types.items():
-        callers_operations_by_variant_type[variant_type] = generate_combinations(callers, args.max_combinations)
+        callers_operations_by_variant_type[variant_type] = generate_combinations(
+            callers, args.max_combinations, UNION_SYMBOL, INTERSECTION_SYMBOL)
     # Perform the operations
     for operations in callers_operations_by_variant_type.values():
         if len(operations) == 0:
             continue
-        execute_operations(operations, output_combinations, args.processes, sample_names=sample_names, fasta_ref=args.fasta_ref,
-                           indel_threshold=args.indel_threshold, window_radius=args.window_radius)
-    # Evaluate the combinations
-    combinations_prefixes = list(set(os.listdir(output_combinations)) - set(callers_folders))
-    combinations_folders = [os.path.join(output_combinations, combination_prefix) for combination_prefix in combinations_prefixes]
-    evaluate_callers(combinations_folders, config, output_evaluations, args.processes,
-                     indel_threshold=args.indel_threshold, window_radius=args.window_radius,
-                     sv_size_bins=args.sv_size_bins, contigs=args.contigs)
+        execute_operations(operations, output_combinations, output_evaluations, args.processes, config, fasta_ref=args.fasta_ref,
+                           indel_threshold=args.indel_threshold, window_radius=args.window_radius,
+                           sv_size_bins=args.sv_size_bins, contigs=args.contigs, loss_margin=args.loss_margin)
 
-    evaluation_callers_folders = [os.path.join(output_evaluations, name) for name in os.listdir(output_combinations)]
+    evaluation_callers_folders = glob.glob(os.path.join(output_evaluations, '*'))
     output_list_folder = os.path.join(args.output, 'improvement_list')
     os.makedirs(output_list_folder, exist_ok=True)
     create_improvement_list(evaluation_callers_folders, output_list_folder, args.processes)
@@ -339,6 +376,7 @@ if __name__ == '__main__':
     parser.add_argument('-rs', '--recall-samples', type=str, required=True, nargs='+', help='Recall samples names')
     parser.add_argument('-ps', '--precision-samples', type=str, required=True,
                         nargs='+', help='Precision samples names')
+    parser.add_argument('-lm', '--loss-margin', type=float, default=0.05, help='Loss margin for improvement')
     parser.add_argument('-it', '--indel-threshold',
                         help=f'Indel threshold, inclusive (default={DEFAULT_INDEL_THRESHOLD})', default=DEFAULT_INDEL_THRESHOLD, type=int)
     parser.add_argument('-wr', '--window-radius',
@@ -351,6 +389,4 @@ if __name__ == '__main__':
     parser.add_argument('--max-combinations', type=int, default=-1,
                         help='Maximum number of combinations to perform (-1) for all')
 
-    args = parser.parse_args()
-
-    main(args)
+    main(parser.parse_args())
