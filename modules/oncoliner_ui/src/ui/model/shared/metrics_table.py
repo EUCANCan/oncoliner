@@ -79,5 +79,4 @@ class MetricsTable():
         low_recall_total = low_recall - no_truth - no_predicted
         if len(low_recall_total) > 0:
             warning_dict['low_recall'] = sorted(list(low_recall_total))
-        print(warning_dict)
         return warning_dict

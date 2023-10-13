@@ -2,7 +2,9 @@ from typing import List, Union
 import os
 from jinja2 import Environment, FileSystemLoader
 from markupsafe import Markup
-import minify_html
+from htmlmin.minify import html_minify
+import rjsmin
+import rcssmin
 
 from .assesment_tab import AssesmentTab
 from .improvement_tab import ImprovementTab
@@ -22,7 +24,14 @@ def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pi
 
     # Load operations
     def include_raw(name):
-        return Markup(loader.get_source(env, name)[0])
+        source = loader.get_source(env, name)[0]
+        # Minify JS
+        if name.endswith('.js'):
+            return Markup(rjsmin.jsmin(source))
+        # Minify CSS
+        elif name.endswith('.css'):
+            return Markup(rcssmin.cssmin(source))
+        return Markup(source)
 
     def include_cooked(template_path, **context):
         template = env.get_template(template_path)
@@ -108,4 +117,4 @@ def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pi
 
     with open(os.path.join(output_file), "w") as f:
         output_str = template.render(main_tabs=main_tabs)
-        f.write(minify_html.minify(output_str, minify_js=True, minify_css=True))
+        f.write(html_minify(output_str))
