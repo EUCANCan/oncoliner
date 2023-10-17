@@ -98,13 +98,13 @@
       "protein_affected_genes":{
          "name":"Prot. genes",
          "tooltip":"Genes whose proteins are affected by discovered variants (only TP)",
-         "legend": "Warning: Oncoliner does not compute genes linked to false positives.",
+         "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
          "sortable": true
       },
       "protein_affected_driver_genes":{
          "name":"Cancer driver prot. genes",
          "tooltip":"Cancer driver genes whose proteins are affected by discovered variants (only TP)",
-         "legend": "Warning: Oncoliner does not compute genes linked to false positives.",
+         "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
          "sortable": true
       },
       "added_callers":{

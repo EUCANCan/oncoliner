@@ -3,7 +3,7 @@ import argparse
 from _internal.recommendator import main
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Oncoliner Improvement')
+    parser = argparse.ArgumentParser(description='ONCOLINER Improvement')
     parser.add_argument('-e', '--evaluation-results', type=str, required=True,
                         help='Pipeline evaluation results folder path')
     parser.add_argument('-c', '--callers-folder', type=str, required=True, help='Callers folder path')

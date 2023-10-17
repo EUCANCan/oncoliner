@@ -1,6 +1,6 @@
-# Oncoliner: Improvement module <!-- omit in toc -->
+# ONCOLINER: Improvement module <!-- omit in toc -->
 
-![Oncoliner logo](../../docs/images/ONCOLINER_LOGO_COLOR.png)
+![ONCOLINER logo](../../docs/images/ONCOLINER_LOGO_COLOR.png)
 
 WIP
 
@@ -11,7 +11,7 @@ WIP
 
 
 ## Dependencies
-Oncoliner's improvement module makes use of the following Python modules:
+ONCOLINER's improvement module makes use of the following Python modules:
 * [`pandas`](https://pandas.pydata.org/)
 * [`pysam`](https://github.com/pysam-developers/pysam)
 * [`variant-extractor`](https://github.com/EUCANCan/variant-extractor)
@@ -21,14 +21,14 @@ You may install them using pip:
 pip3 install pandas pysam variant-extractor
 ```
 
-However, we recommend using the provided [Dockerfile](../../Dockerfile)/[Singularity recipe](../../singularity.def) for building the whole Oncoliner suite to avoid dependency issues.
+However, we recommend using the provided [Dockerfile](../../Dockerfile)/[Singularity recipe](../../singularity.def) for building the whole ONCOLINER suite to avoid dependency issues.
 
 
 ## Usage
 ```
 usage: main.py [-h] -e EVALUATION_RESULTS -c CALLERS_FOLDER -o OUTPUT -rs RECALL_SAMPLES [RECALL_SAMPLES ...] -ps PRECISION_SAMPLES [PRECISION_SAMPLES ...] [-lm LOSS_MARGIN] [-wr WINDOW_RADIUS] [-p PROCESSES]
 
-Oncoliner Improvement
+ONCOLINER Improvement
 
 options:
   -h, --help            show this help message and exit

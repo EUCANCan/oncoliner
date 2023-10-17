@@ -1,10 +1,10 @@
 # Pipeline Designer<!-- omit in toc -->
 
-Pipeline Designer is a standalone tool that allows the user to combine the results of different variant callers to improve the results of a variant calling pipeline. Pipeline Designer outputs the list of the best combinations of variant callers for each variant type and size, including SNVs, indels and SVs. Pipeline Designer also displays the F1-score, precision, recall and the number and names of genes discovered (if provided) of each combination (see [Oncoliner's assesment module](../../modules/oncoliner_assesment/) for more information about the evaluation process).
+Pipeline Designer is a standalone tool that allows the user to combine the results of different variant callers to improve the results of a variant calling pipeline. Pipeline Designer outputs the list of the best combinations of variant callers for each variant type and size, including SNVs, indels and SVs. Pipeline Designer also displays the F1-score, precision, recall and the number and names of genes discovered (if provided) of each combination (see [ONCOLINER's assesment module](../../modules/oncoliner_assesment/) for more information about the evaluation process).
 
 The user just needs to provide the VCF files of the variant callers they want to combine as well as the truth files of the samples. The user must also specify which samples should be used to compute recall related metrics and which samples should be used to compute precision related metrics. Pipeline Designer will automatically combine the variant callers and evaluate the results. Check the [Use case example](#use-case-example) section for more information.
 
-Pipeline Designer is part of the [Oncoliner suite](../../README.md) and is provided as a standalone command line tool. It is available as in the [Docker image](../../Dockerfile) and [Singularity image](../../singularity.def) of Oncoliner.
+Pipeline Designer is part of the [ONCOLINER suite](../../README.md) and is provided as a standalone command line tool. It is available as in the [Docker image](../../Dockerfile) and [Singularity image](../../singularity.def) of ONCOLINER.
 
 ## Table of contents<!-- omit in toc -->
 - [Dependencies](#dependencies)
@@ -15,7 +15,7 @@ Pipeline Designer is part of the [Oncoliner suite](../../README.md) and is provi
 
 
 ## Dependencies
-Oncoliner's pipeline designer makes use of the following Python modules:
+ONCOLINER's pipeline designer makes use of the following Python modules:
 * [`pandas`](https://pandas.pydata.org/)
 * [`pysam`](https://github.com/pysam-developers/pysam)
 * [`pysam`](https://github.com/pysam-developers/pysam)
@@ -25,7 +25,7 @@ You may install them using pip:
 pip3 install pandas pysam variant-extractor
 ```
 
-However, we recommend using the provided [Dockerfile](../../Dockerfile)/[Singularity recipe](../../singularity.def) for building the whole Oncoliner suite to avoid dependency issues.
+However, we recommend using the provided [Dockerfile](../../Dockerfile)/[Singularity recipe](../../singularity.def) for building the whole ONCOLINER suite to avoid dependency issues.
 
 ## Usage
 

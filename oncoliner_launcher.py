@@ -99,7 +99,7 @@ def check_samples_folders(pipeline_folder_path: str, sample_names: Set[str]) -> 
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Oncoliner')
+    parser = argparse.ArgumentParser(description='ONCOLINER')
     parser.add_argument('-c', '--config', type=str, required=True, help='Path to config file')
     parser.add_argument('-pf', '--pipelines-folders', type=str, required=True, nargs='+', help='Paths to pipelines folders')
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to output folder')
@@ -173,4 +173,4 @@ if __name__ == '__main__':
     run_ui(pipelines_evaluation_folder_paths, pipeline_improvements_folder_paths,
            args.callers_folder, output_harmonization_folder, ui_output_file)
 
-    logging.info(f'Oncoliner report available at {ui_output_file}')
+    logging.info(f'ONCOLINER report available at {ui_output_file}')

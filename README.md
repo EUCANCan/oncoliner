@@ -1,6 +1,6 @@
-# Oncoliner<!-- omit in toc -->
+# ONCOLINER<!-- omit in toc -->
 
-![Oncoliner logo](/docs/images/ONCOLINER_LOGO_COLOR.png)
+![ONCOLINER logo](/docs/images/ONCOLINER_LOGO_COLOR.png)
 
 WIP
 
@@ -18,7 +18,7 @@ WIP
 
 ## Installation
 
-It is highly recommended to use Oncoliner with Docker or Singularity (we recommend using [`singularity-ce`](https://github.com/sylabs/singularity) with a version higher than 3.9.0). However, you may also install it locally.
+It is highly recommended to use ONCOLINER with Docker or Singularity (we recommend using [`singularity-ce`](https://github.com/sylabs/singularity) with a version higher than 3.9.0). However, you may also install it locally.
 
 ### Docker / Singularity
 
@@ -34,11 +34,11 @@ singularity build oncoliner.sif singularity.def
 
 ### Local installation
 
-You may also install Oncoliner locally using the same instructions as provided in the [Dockerfile](/Dockerfile).
+You may also install ONCOLINER locally using the same instructions as provided in the [Dockerfile](/Dockerfile).
 
 ## Usage
 
-Assuming you have a singularity image called `oncoliner.sif`, you can run Oncoliner as follows:
+Assuming you have a singularity image called `oncoliner.sif`, you can run ONCOLINER as follows:
 
 ```bash
 singularity exec oncoliner.sif oncoliner/main.py -c config.tsv -pf pipelines_1_folder pipelines_2_folder -o output_folder --max-processes 48
@@ -48,7 +48,7 @@ singularity exec oncoliner.sif oncoliner/main.py -c config.tsv -pf pipelines_1_f
 ```
 usage: main.py [-h] -c CONFIG -pf PIPELINES_FOLDERS [PIPELINES_FOLDERS ...] -o OUTPUT [-cf CALLERS_FOLDER] [--max-processes MAX_PROCESSES]
 
-Oncoliner
+ONCOLINER
 
 options:
   -h, --help            show this help message and exit
@@ -80,11 +80,11 @@ You can check an example of configuration file in [`example/example_config.tsv`]
 
 ### Normalization
 
-It is recommended to normalize indels and SNVs before executing Oncoliner. For this purpose, we recommend using pre.py from [Illumina's Haplotype Comparison Tools (hap.py)](https://github.com/Illumina/hap.py). We provide an standalone and containerized **[EUCANCan's pre.py wrapper](https://github.com/EUCANCan/prepy-wrapper)** for this purpose, specially the bulk version of the wrapper. You can check an example of usage in [`example/example_prepy.sh`](/example/example_prepy.sh).
+It is recommended to normalize indels and SNVs before executing ONCOLINER. For this purpose, we recommend using pre.py from [Illumina's Haplotype Comparison Tools (hap.py)](https://github.com/Illumina/hap.py). We provide an standalone and containerized **[EUCANCan's pre.py wrapper](https://github.com/EUCANCan/prepy-wrapper)** for this purpose, specially the bulk version of the wrapper. You can check an example of usage in [`example/example_prepy.sh`](/example/example_prepy.sh).
 
 ## Tools
 
-Along with Oncoliner, in this repository you can find some tools that may be useful.
+Along with ONCOLINER, in this repository you can find some tools that may be useful.
 
 ### Pipeline designer
 
@@ -96,7 +96,7 @@ WIP
 
 ## Modularity
 
-Oncoliner is divided into three functional modules (assesment, improvement and harmonization) and a UI module. For more information about each module, check the corresponding README file in the [`modules`](/modules) folder:
+ONCOLINER is divided into three functional modules (assesment, improvement and harmonization) and a UI module. For more information about each module, check the corresponding README file in the [`modules`](/modules) folder:
 
 * [Assesment README](/modules/oncoliner_assesment/README.md)
 * [Improvement README](/modules/oncoliner_improvement/README.md)
