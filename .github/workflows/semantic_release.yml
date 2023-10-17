@@ -1,0 +1,99 @@
+name: Semantic Release
+
+on: workflow_dispatch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    concurrency: release
+    permissions:
+      id-token: write
+      contents: write
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+      version: ${{ steps.release.outputs.version }}
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Python Semantic Release
+      id: release
+      uses: python-semantic-release/python-semantic-release@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Publish package distributions to GitHub Releases
+      uses: python-semantic-release/upload-to-gh-release@main
+      if: steps.release.outputs.released == 'true'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-container:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+
+    name: Build Singularity container
+    steps:
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
+        id: go
+
+      - name: Install Singularity dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            build-essential \
+            libssl-dev \
+            uuid-dev \
+            libgpgme11-dev \
+            squashfs-tools \
+            libseccomp-dev \
+            pkg-config
+
+      - name: Install Singularity
+        env:
+          SINGULARITY_VERSION: 3.9.0
+          GOPATH: /tmp/go
+      
+        run: |
+          mkdir -p $GOPATH
+          sudo mkdir -p /usr/local/var/singularity/mnt && \
+          mkdir -p $GOPATH/src/github.com/sylabs && \
+          cd $GOPATH/src/github.com/sylabs && \
+          wget -qO- https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-ce-${SINGULARITY_VERSION}.tar.gz | \
+          tar xzv && \
+          cd singularity-ce-${SINGULARITY_VERSION} && \
+          ./mconfig -p /usr/local && \
+          make -C builddir && \
+          sudo make -C builddir install          
+
+      - name: Check out code for the container build
+        uses: actions/checkout@v2
+
+      - name: Login to GitHub package registry
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | singularity remote login -u ${{ github.actor }} --password-stdin oras://ghcr.io
+
+      - name: Build and deploy Singularity container
+        run: |
+            recipe=singularity.def
+            basename=oncoliner
+            tag=${{ needs.release.outputs.version }}
+            # Check if container exists
+            base64token=$(echo ${{ secrets.GITHUB_TOKEN }} | base64)
+            echo "Checking if container $basename:$tag already exists"
+            if curl -s -H "Authorization: Bearer $base64token" https://ghcr.io/v2/${{ github.repository_owner }}/${basename}/tags/list | grep $tag; then
+                echo "Container $basename:$tag already exists, skipping build"
+                continue
+            fi
+            # Build container
+            sudo -E singularity build $basename.sif $recipe
+            # Push container and name by tag
+            url="oras://ghcr.io/${{ github.repository_owner }}/${basename}:${tag}"
+            echo "Pushing container to $url"
+            singularity push $basename.sif $url
+            rm $basename.sif
