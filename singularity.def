@@ -4,7 +4,9 @@ Stage: spython-base
 
 %files
 modules /oncoliner/modules
-main.py /oncoliner/main.py
+shared /oncoliner/shared
+tools /oncoliner/tools
+oncoliner_launcher.py /oncoliner/oncoliner_launcher.py
 %labels
 author="Rodrigo Martin <rodrigo.martin@bsc.es>"
 %post
@@ -21,9 +23,9 @@ libbz2-dev \
 liblzma-dev
 
 # Python dependencies
-pip install pysam pandas variant-extractor
+pip install pysam pandas variant-extractor jinja2 markupsafe rjsmin rcssmin django-htmlmin
 
-# Copy modules and main script
+# Copy modules and launcher script
 %runscript
 exec /bin/bash "$@"
 %startscript

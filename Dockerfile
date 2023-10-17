@@ -13,8 +13,10 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     liblzma-dev
 
 # Python dependencies
-RUN pip install pysam pandas variant-extractor
+RUN pip install pysam pandas variant-extractor jinja2 markupsafe rjsmin rcssmin django-htmlmin
 
-# Copy modules and main script
+# Copy modules and launcher script
 COPY modules /oncoliner/modules
-COPY main.py /oncoliner/main.py
+COPY shared /oncoliner/shared
+COPY tools /oncoliner/tools
+COPY oncoliner_launcher.py /oncoliner/oncoliner_launcher.py
