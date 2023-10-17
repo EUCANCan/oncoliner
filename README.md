@@ -6,8 +6,8 @@ WIP
 
 ## Table of contents<!-- omit in toc -->
 - [Installation](#installation)
-  - [Docker / Singularity](#docker--singularity)
-  - [Local installation](#local-installation)
+  - [Singularity](#singularity)
+  - [Docker](#docker)
 - [Usage](#usage)
   - [Interface](#interface)
   - [Normalization](#normalization)
@@ -18,23 +18,31 @@ WIP
 
 ## Installation
 
-It is highly recommended to use ONCOLINER with Docker or Singularity (we recommend using [`singularity-ce`](https://github.com/sylabs/singularity) with a version higher than 3.9.0). However, you may also install it locally.
+It is highly recommended to use ONCOLINER with Docker or Singularity. However, you may also install it locally following the instructions in the [Dockerfile](/Dockerfile).
 
-### Docker / Singularity
+### Singularity
+We recommend using [`singularity-ce`](https://github.com/sylabs/singularity) with a version higher than 3.9.0. You can download the Singularity container using the following command (does not require root privileges):
 
-You may use the [Dockerfile](/Dockerfile) to build a Docker image or the [singularity.def](/singularity.def) file to build a Singularity image.
-
-```bash
-# Build Docker image
-docker build -t oncoliner .
-
-# Build Singularity image
-singularity build oncoliner.sif singularity.def
+```
+singularity pull oncoliner.sif oras://ghcr.io/eucancan/oncoliner:latest
 ```
 
-### Local installation
+If you want to build the container yourself, you can use the [`singularity.def`](singularity.def) file (requires root privileges):
+```
+sudo singularity build --force oncoliner.sif singularity.def
+```
 
-You may also install ONCOLINER locally using the same instructions as provided in the [Dockerfile](/Dockerfile).
+### Docker
+You can download the Docker image using the following command:
+```
+docker pull ghcr.io/eucancan/oncoliner:latest
+```
+
+You can build the Docker container with the following command (requires root privileges):
+
+```
+docker build -t oncoliner .
+```
 
 ## Usage
 

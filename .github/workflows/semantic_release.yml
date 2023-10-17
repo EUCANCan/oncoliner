@@ -96,4 +96,8 @@ jobs:
             url="oras://ghcr.io/${{ github.repository_owner }}/${basename}:${tag}"
             echo "Pushing container to $url"
             singularity push $basename.sif $url
+            # Push container to latest tag
+            url="oras://ghcr.io/${{ github.repository_owner }}/${basename}:latest"
+            echo "Pushing container to $url"
+            singularity push $basename.sif $url
             rm $basename.sif
