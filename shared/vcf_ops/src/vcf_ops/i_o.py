@@ -96,9 +96,8 @@ def write_vcf(variants_df: pd.DataFrame, output_vcf, fasta_ref=None, command=Non
         header.add_meta('vcf_ops', command)
     # Get contig order
     contig_order = _get_contig_order(header, fasta_ref)
-    variants_df = variants_df.copy()
     # Add contig_order column
-    variants_df['contig_order'] = variants_df['start_chrom'].map(contig_order)
+    variants_df = variants_df.assign(contig_order=variants_df['start_chrom'].map(contig_order))
     # Sort by chromosome and position
     variants_df.sort_values(by=['contig_order', 'start'], inplace=True)
     # Check if all variants have the same format fields

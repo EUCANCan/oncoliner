@@ -184,10 +184,6 @@ def _group_combinations(improvements_combinations_metrics):
 
 
 def main(input_pipelines_improvements, output, window_radius=None, processes=1):
-    # Convert to absolute paths
-    input_pipelines_improvements = [os.path.abspath(p) for p in input_pipelines_improvements]
-    output = os.path.abspath(output)
-
     # Create output folder
     os.makedirs(output, exist_ok=True)
 

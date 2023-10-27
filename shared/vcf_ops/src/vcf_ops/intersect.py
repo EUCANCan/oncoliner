@@ -28,19 +28,41 @@ def _combine_gene_annotations(df_tp: pd.DataFrame):
         add_gene_annotation_to_variant_record(row['variant_record_obj'], truth_protein_affected_genes[idx])
 
 
-def intersect(df_truth, df_test, indel_threshold, window_radius, combine_gene_annotations=True):
-    # Intersect for SNV and indels comparing position, alt, length and type
-    snv_indel_truth_mask = snv_mask(df_truth) | indel_mask(df_truth, indel_threshold)
-    snv_indel_test_mask = snv_mask(df_test) | indel_mask(df_test, indel_threshold)
-    snv_indel_truth = df_truth[snv_indel_truth_mask]
-    snv_indel_test = df_test[snv_indel_test_mask]
-    snv_indel_tp, snv_indel_tp_dup, snv_indel_fp, snv_indel_fp_dup, snv_indel_fn, snv_indel_fn_dup = \
-        intersect_exact(snv_indel_truth, snv_indel_test, ['start_chrom', 'start', 'alt', 'length', 'type_inferred'])
-    # Remove from the rest of the benchmark
-    df_truth = df_truth[~snv_indel_truth_mask]
-    df_test = df_test[~snv_indel_test_mask]
+def intersect(df_truth, df_test, indel_threshold, window_radius, combine_gene_annotations=False):
+    # Intersect SNVs comparing start position and alt
+    snv_truth_mask = snv_mask(df_truth)
+    snv_test_mask = snv_mask(df_test)
+    snv_truth = df_truth[snv_truth_mask]
+    snv_test = df_test[snv_test_mask]
+    snv_tp, snv_tp_dup, snv_fp, snv_fp_dup, snv_fn, snv_fn_dup = \
+        intersect_exact(snv_truth, snv_test, ['start_chrom', 'start', 'alt'])
+    # Remove from the rest from the intersection
+    df_truth = df_truth[~snv_truth_mask]
+    df_test = df_test[~snv_test_mask]
 
-    # Benchmark INS comparing start position and length
+    # Intersect indel ins/dup start position and alt
+    indel_ins_truth_mask = indel_mask(df_truth, indel_threshold) & (df_truth['type_inferred'] != VariantType.DEL.name)
+    indel_ins_test_mask = indel_mask(df_test, indel_threshold) & (df_test['type_inferred'] != VariantType.DEL.name)
+    indel_ins_truth = df_truth[indel_ins_truth_mask]
+    indel_ins_test = df_test[indel_ins_test_mask]
+    indel_ins_tp, indel_ins_tp_dup, indel_ins_fp, indel_ins_fp_dup, indel_ins_fn, indel_ins_fn_dup = \
+        intersect_exact(indel_ins_truth, indel_ins_test, ['start_chrom', 'start', 'alt'])
+    # Remove from the rest from the intersection
+    df_truth = df_truth[~indel_ins_truth_mask]
+    df_test = df_test[~indel_ins_test_mask]
+
+    # Intersect indel deletions comparing start position and length
+    indel_del_truth_mask = indel_mask(df_truth, indel_threshold) & (df_truth['type_inferred'] == VariantType.DEL.name)
+    indel_del_test_mask = indel_mask(df_test, indel_threshold) & (df_test['type_inferred'] == VariantType.DEL.name)
+    indel_del_truth = df_truth[indel_del_truth_mask]
+    indel_del_test = df_test[indel_del_test_mask]
+    indel_del_tp, indel_del_tp_dup, indel_del_fp, indel_del_fp_dup, indel_del_fn, indel_del_fn_dup = \
+        intersect_exact(indel_del_truth, indel_del_test, ['start_chrom', 'start', 'length'])
+    # Remove from the rest from the intersection
+    df_truth = df_truth[~indel_del_truth_mask]
+    df_test = df_test[~indel_del_test_mask]
+
+    # Intersect INS comparing start position and length with a window
     ins_truth_mask = df_truth['type_inferred'] == VariantType.INS.name
     ins_test_mask = df_test['type_inferred'] == VariantType.INS.name
     ins_truth = df_truth[ins_truth_mask]
@@ -49,23 +71,23 @@ def intersect(df_truth, df_test, indel_threshold, window_radius, combine_gene_an
         ins_fp, ins_fp_dup,\
         ins_fn, ins_fn_dup = intersect_window(ins_truth, ins_test, ['start_chrom'],
                                               ['start', 'length'], window_radius)
-    # Remove from the rest of the benchmark
+    # Remove from the rest from the intersection
     df_truth = df_truth[~ins_truth_mask]
     df_test = df_test[~ins_test_mask]
 
-    # Benchmark rest of SVs comparing start and end positions
+    # Intersect rest of SVs comparing start and end positions with a window
     sv_tp, sv_tp_dup,\
         sv_fp, sv_fp_dup,\
         sv_fn, sv_fn_dup = intersect_window(df_truth, df_test, ['start_chrom', 'end_chrom', 'brackets'],
                                             ['start', 'end'], window_radius)
 
     # Concatenate all results
-    df_tp = pd.concat([snv_indel_tp, ins_tp, sv_tp])
-    df_tp_dup = pd.concat([snv_indel_tp_dup, ins_tp_dup, sv_tp_dup])
-    df_fp = pd.concat([snv_indel_fp, ins_fp, sv_fp])
-    df_fp_dup = pd.concat([snv_indel_fp_dup, ins_fp_dup, sv_fp_dup])
-    df_fn = pd.concat([snv_indel_fn, ins_fn, sv_fn])
-    df_fn_dup = pd.concat([snv_indel_fn_dup, ins_fn_dup, sv_fn_dup])
+    df_tp = pd.concat([snv_tp, indel_ins_tp, indel_del_tp, ins_tp, sv_tp])
+    df_tp_dup = pd.concat([snv_tp_dup, indel_ins_tp_dup, indel_del_tp_dup, ins_tp_dup, sv_tp_dup])
+    df_fp = pd.concat([snv_fp, indel_ins_fp, indel_del_fp, ins_fp, sv_fp])
+    df_fp_dup = pd.concat([snv_fp_dup, indel_ins_fp_dup, indel_del_fp_dup, ins_fp_dup, sv_fp_dup])
+    df_fn = pd.concat([snv_fn, indel_ins_fn, indel_del_fn, ins_fn, sv_fn])
+    df_fn_dup = pd.concat([snv_fn_dup, indel_ins_fn_dup, indel_del_fn_dup, ins_fn_dup, sv_fn_dup])
 
     if combine_gene_annotations:
         _combine_gene_annotations(df_tp)

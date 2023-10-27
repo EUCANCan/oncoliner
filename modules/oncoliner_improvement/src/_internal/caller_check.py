@@ -56,7 +56,7 @@ def _execute_intersection(user_sample_folder, caller_sample_folder, indel_thresh
     tp_df_caller = read_vcfs(tp_caller_path)
     # Intersect TP files
     tp_df_tp, _, _, _, tp_df_fn, _ = \
-        intersect(tp_df_caller, tp_df_user, indel_threshold, window_radius)
+        intersect(tp_df_caller, tp_df_user, indel_threshold, window_radius, True)
 
     # Read FP files
     fp_user_path = glob.glob(os.path.join(user_sample_folder, '*fp.*'))
@@ -65,7 +65,7 @@ def _execute_intersection(user_sample_folder, caller_sample_folder, indel_thresh
     fp_df_caller = read_vcfs(fp_caller_path)
     # Intersect FP files
     fp_df_tp, _, _, _, _, _ = \
-        intersect(fp_df_caller, fp_df_user, indel_threshold, window_radius)
+        intersect(fp_df_caller, fp_df_user, indel_threshold, window_radius, False)
 
     # Read FN files
     fn_user_path = glob.glob(os.path.join(user_sample_folder, '*fn.*'))
@@ -122,7 +122,7 @@ def _execute_union(user_sample_folder, caller_sample_folder, indel_threshold, wi
     fn_df_caller = read_vcfs(glob.glob(os.path.join(caller_sample_folder, '*fn.*')))
     # Intersect FN files
     fn_df_tp, _, _, _, _, _ = \
-        intersect(fn_df_caller, fn_df_user, indel_threshold, window_radius)
+        intersect(fn_df_caller, fn_df_user, indel_threshold, window_radius, False)
 
     # Construct output dataframes
     df_tp = tp_df_tp

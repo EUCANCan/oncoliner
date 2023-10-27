@@ -12,6 +12,8 @@ if __name__ == '__main__':
                         help=f'Indel threshold, inclusive (default={DEFAULT_INDEL_THRESHOLD})', default=DEFAULT_INDEL_THRESHOLD, type=int)
     parser.add_argument('-wr', '--window-radius',
                         help=f'Window radius (default={DEFAULT_WINDOW_RADIUS})', default=DEFAULT_WINDOW_RADIUS, type=float)
+    parser.add_argument('--combine-genes-annotations', action='store_true',
+                        help='Combine genes and annotations from the input VCF files')
     args = parser.parse_args()
 
     # Read the input files
@@ -19,7 +21,7 @@ if __name__ == '__main__':
     df_test = read_vcfs(args.files_2)
 
     # Intersect
-    df_tp, df_tp_dup, df_fp, df_fp_dup, df_fn, df_fn_dup = intersect(df_truth, df_test, args.indel_threshold, args.window_radius)
+    df_tp, df_tp_dup, df_fp, df_fp_dup, df_fn, df_fn_dup = intersect(df_truth, df_test, args.indel_threshold, args.window_radius, args.combine_genes_annotations)
 
     # Write VCF files
     if len(df_tp) > 0:
