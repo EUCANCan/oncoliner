@@ -2,6 +2,7 @@
 # Author: Rodrigo Martín
 # BSC Dual License
 from typing import List, Tuple
+from collections import OrderedDict
 import gzip
 import pandas as pd
 import pysam
@@ -23,29 +24,37 @@ def _extract_header(vcf_files: List[str]) -> Tuple[pysam.VariantHeader, bool]:
     return main_header, same_samples
 
 
-def _get_contig_order(header: pysam.VariantHeader, fasta_ref=None):
-    # Set contigs from fasta_ref
-    contig_order = dict()
+def _get_contigs(header: pysam.VariantHeader, fasta_ref=None):
+    contigs = OrderedDict()
     if fasta_ref:
-        added_contigs = set()
         with open(fasta_ref + '.fai') as f:
             for i, line in enumerate(f):
                 chrom, length = line.split()[:2]
-                added_contigs.add(chrom)
-                contig_order[chrom.replace('chr', '')] = i
-                if chrom in header.contigs:
-                    continue
-                header.contigs.add(chrom, length=int(length))
-        for contig in header.contigs:
-            if contig not in added_contigs:
-                header.contigs.remove_header(contig)
+                contigs[chrom] = length
     else:
-        for i, contig in enumerate(header.contigs):
-            contig_order[str(contig).replace('chr', '')] = i
+        for contig in header.contigs:
+            contigs[contig] = contig.length
+    return contigs
+
+
+def _get_contig_order(contigs: OrderedDict):
+    # Set contigs from fasta_ref
+    contig_order = dict()
+    for i, contig in enumerate(contigs):
+        contig_order[contig] = i
     return contig_order
 
+def _set_contigs(header: pysam.VariantHeader, contigs: OrderedDict, remove_chr: bool):
+    if remove_chr:
+        contigs = OrderedDict((contig.replace('chr', ''), length) for contig, length in contigs.items())
+    for contig, length in contigs.items():
+        if contig not in header.contigs:
+            header.contigs.add(contig, length)
+    for contig in header.contigs:
+        if contig not in contigs:
+            header.contigs.remove_header(contig)
 
-def _write_raw_file(f, header: pysam.VariantHeader, variants_obj_df, same_samples: bool, same_formats: bool):
+def _write_raw_file(f, header: pysam.VariantHeader, variants_obj_df, same_samples: bool, same_formats: bool, remove_chr: bool):
     # Remove all format fields except GT for compatibility between VCFs
     if not same_formats or not same_samples:
         for format_ in header.formats:
@@ -70,7 +79,14 @@ def _write_raw_file(f, header: pysam.VariantHeader, variants_obj_df, same_sample
             variant_record_obj.format = ['GT']
         if not same_samples:
             variant_record_obj.samples = dummy_samples
-        f.write(str(variant_record_obj) + '\n')
+        if remove_chr:
+            # Remove chr from the first 4 fields
+            variant_record_split = str(variant_record_obj).split('\t')
+            variant_record_str = '\t'.join([variant_record_split[0].replace('chr', '')] + variant_record_split[1:4] +
+                                           [variant_record_split[4].replace('chr', '')] + variant_record_split[5:])
+        else:
+            variant_record_str = str(variant_record_obj)
+        f.write(variant_record_str + '\n')
 
 
 def write_masked_vcfs(variants_df, output_path_prefix: str, indel_threshold: int, fasta_ref=None, command=None, gzip=True):
@@ -94,12 +110,27 @@ def write_vcf(variants_df: pd.DataFrame, output_vcf, fasta_ref=None, command=Non
     # Add meta field with the command used to generate the VCF
     if command:
         header.add_meta('vcf_ops', command)
+    # Get contigs
+    contigs = _get_contigs(header, fasta_ref)
     # Get contig order
-    contig_order = _get_contig_order(header, fasta_ref)
+    contig_order = _get_contig_order(contigs)
     # Add contig_order column
     variants_df = variants_df.assign(contig_order=variants_df['start_chrom'].map(contig_order))
     # Sort by chromosome and position
     variants_df.sort_values(by=['contig_order', 'start'], inplace=True)
+    # Check if there are chr and non-chr contigs mixed
+    # Get all unique contigs in variants
+    variants_contigs = set(variants_df['variant_record_obj'].map(lambda x: x.contig))
+    remove_chr = False
+    for variants_contig in variants_contigs:
+        if (variants_contig.startswith('chr') and variants_contig.replace('chr', '') in variants_contigs) or \
+            (not variants_contig.startswith('chr') and 'chr' + variants_contig in variants_contigs) or \
+            (variants_contig not in contigs and
+             (variants_contig.replace('chr', '') in contigs or 'chr' + variants_contig in contigs)):
+            remove_chr = True
+            break
+    # Apply contigs to header
+    _set_contigs(header, contigs, remove_chr)
     # Check if all variants have the same format fields
     formats = variants_df.iloc[0]['variant_record_obj'].format
     same_formats = True
@@ -114,7 +145,7 @@ def write_vcf(variants_df: pd.DataFrame, output_vcf, fasta_ref=None, command=Non
     else:
         f = open(output_vcf, 'w')
     # Write the file
-    _write_raw_file(f, header, variants_df['variant_record_obj'], same_samples, same_formats)
+    _write_raw_file(f, header, variants_df['variant_record_obj'], same_samples, same_formats, remove_chr)
     f.close()
 
 
