@@ -33,6 +33,30 @@ def flatten_dict(dict_, key_limit=None):
     return items
 
 
+def flatten_dict_keys(dict_, value_key, depth=0, key=None, concat_key=""):
+    items = []
+
+    if not concat_key:
+        concat_key = key;
+    elif key:
+        concat_key = concat_key + " ; " + key
+
+    currDict = {'key': key, 'depth': depth, 'concat_key': concat_key}
+
+    if value_key in dict_:
+        currDict[value_key] = dict_[value_key]
+        items.append(currDict)
+    else:
+        if '_all_' in dict_:
+            items.append({'key': key, 'depth': depth, 'concat_key': concat_key, value_key: dict_['_all_'][value_key]})
+        for k in dict_:
+            v = dict_[k]
+            if isinstance(v, MutableMapping) and k != '_all_':
+                items.extend(flatten_dict_keys(v, value_key, depth + 1, k, concat_key))
+
+    return items
+
+
 def get_conf():
     global config
     if not config:

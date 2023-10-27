@@ -71,3 +71,9 @@ function formatTemplateFromMatrix(template, matrix) {
 	return output;
 }
 
+function changeAttributeValue(id, attributeName, attributeValue) {
+	var element = document.querySelector('#' + id);
+	if (element && element[attributeName]) {
+		element[attributeName] = attributeValue;
+	}
+}

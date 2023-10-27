@@ -1,0 +1,13 @@
+
+<div id="ddt_{{prefix_id}}" style="margin:20px;">
+	<div class="dropdown viz-dropdown-tree">
+	  <button class="form-select" type="button" id="dropdownMenuButton_{{prefix_id}}" data-bs-toggle="dropdown" aria-expanded="false" style="text-align: left">
+	    {{data[0]['concat_key']}}
+	  </button>
+	  <div class="dropdown-menu scrollbar" aria-labelledby="dropdownMenuButton_{{prefix_id}}">
+		{% for d in data %}
+		<a class="dropdown-item" href="#" style="padding-left:{{20*d.depth}}px" onclick="toggleTabFromGroup('{{d.id}}_tab', '{{target_group}}'); changeAttributeValue('dropdownMenuButton_{{prefix_id}}', 'innerText', '{{d.concat_key}}')">{{d['key']}}</a>
+		{% endfor %}
+	  </div>
+	</div>
+</div>
