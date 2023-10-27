@@ -17,9 +17,11 @@ def read_config(config_path: str) -> pd.DataFrame:
     Reads the config file and returns a dataframe
     """
     config = pd.read_csv(config_path, sep='\t')
-    config['truth_vcf_paths'] = config['truth_vcf_paths'].map(lambda x: x.split(','))
-    config['test_vcf_paths'] = config['test_vcf_paths'].map(lambda x: x.split(','))
-    config['sample_types'] = config['sample_types'].map(lambda x: set(x.split(',')))
+    # Strip all strings
+    config = config.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    config['truth_vcf_paths'] = config['truth_vcf_paths'].map(lambda x: [f.strip() for f in x.split(',')])
+    config['test_vcf_paths'] = config['test_vcf_paths'].map(lambda x: [f.strip() for f in x.split(',')])
+    config['sample_types'] = config['sample_types'].map(lambda x: set([f.strip() for f in x.split(',')]))
     # There must be at least one recall and one precision sample
     if len(config[config['sample_types'].map(lambda x: 'recall' in x)]) == 0:
         raise ValueError('There must be at least one recall sample')

@@ -118,17 +118,17 @@ if __name__ == '__main__':
         args.callers_folder = os.path.abspath(args.callers_folder)
     # Check if the environment variables are set, set them if not
     if 'ASSESMENT_COMMAND' not in os.environ:
-        logging.info('ASSESMENT_COMMAND environment variable is not set')
-        os.environ['ASSESMENT_COMMAND'] = 'python3 modules/oncoliner_assesment/src/assesment_bulk.py'
+        assesment_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules', 'oncoliner_assesment', 'src', 'assesment_bulk.py')
+        os.environ['ASSESMENT_COMMAND'] = 'python3 ' + assesment_command_default_path
     if 'UI_COMMAND' not in os.environ:
-        logging.info('UI_COMMAND environment variable is not set')
-        os.environ['UI_COMMAND'] = 'python3 modules/oncoliner_ui/src/ui_main.py'
+        ui_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules', 'oncoliner_ui', 'src', 'ui_main.py')
+        os.environ['UI_COMMAND'] = 'python3 ' + ui_command_default_path
     if args.callers_folder and 'IMPROVEMENT_COMMAND' not in os.environ:
-        logging.info('IMPROVEMENT_COMMAND environment variable is not set')
-        os.environ['IMPROVEMENT_COMMAND'] = 'python3 modules/oncoliner_improvement/src/improvement_main.py'
+        improvement_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules', 'oncoliner_improvement', 'src', 'improvement_main.py')
+        os.environ['IMPROVEMENT_COMMAND'] = 'python3 ' + improvement_command_default_path
     if args.callers_folder and len(args.pipelines_folders) > 1 and 'HARMONIZATION_COMMAND' not in os.environ:
-        logging.info('HARMONIZATION_COMMAND environment variable is not set')
-        os.environ['HARMONIZATION_COMMAND'] = 'python3 modules/oncoliner_harmonization/src/harmonization_main.py'
+        harmonization_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules', 'oncoliner_harmonization', 'src', 'harmonization_main.py')
+        os.environ['HARMONIZATION_COMMAND'] = 'python3 ' + harmonization_command_default_path
     # Make sure the basenames of the pipelines folders are unique
     if len(args.pipelines_folders) != len(set([os.path.basename(folder) for folder in args.pipelines_folders])):
         raise Exception('The basenames of the pipelines folders must be unique')

@@ -1,5 +1,4 @@
-import os
-import sys
+import pandas as pd
 import pysam
 
 from vcf_ops import VariantType  # noqa
@@ -8,14 +7,14 @@ from vcf_ops import VariantType  # noqa
 SV_REGEX = r'[\[\]<>.]'
 
 
-def _variant_record_obj(row, chrom_preffix):
+def _variant_record_obj(row: pd.Series, chrom_preffix: str):
     original_obj = row['variant_record_obj']
     new_contig = chrom_preffix + original_obj.contig.replace('chr', '')
     new_obj = original_obj._replace(contig=new_contig, pos=row['start'], end=row['end'], ref=row['ref'], alt=row['alt'])
     return new_obj
 
 
-def _get_chrom_preffix(fasta):
+def _get_chrom_preffix(fasta: pysam.FastaFile):
     # Fix chr1 vs 1
     chrom_preffix = ''
     if fasta.references[0].startswith('chr'):
@@ -23,7 +22,7 @@ def _get_chrom_preffix(fasta):
     return chrom_preffix
 
 
-def convert_svs(variants_df, fasta_ref):
+def indel_to_sv(variants_df: pd.DataFrame, fasta_ref: str):
     if len(variants_df) == 0:
         return variants_df
 
@@ -34,7 +33,7 @@ def convert_svs(variants_df, fasta_ref):
 
     # Check all chromosomes are in the reference
     for chrom in variants_df['start_chrom'].unique():
-        if chrom_preffix+chrom not in fasta.references:
+        if chrom_preffix + chrom not in fasta.references:
             raise ValueError(f'Chromosome {chrom} not in FASTA references {fasta.references}')
 
     def convert_row(row):
@@ -42,7 +41,7 @@ def convert_svs(variants_df, fasta_ref):
         # Ignore INS with <INS> in the ALF field
         # Check if the INS is actually a DUP
         # Search if the ALT sequence is repeated in the reference
-        if row['alt'] == fasta.fetch(chrom_preffix+row['start_chrom'], row['start']-1, row['start']+row['length']):
+        if row['alt'] == fasta.fetch(chrom_preffix + row['start_chrom'], row['start'] - 1, row['start'] + row['length']):
             row['type_inferred'] = VariantType.DUP.name
             # Change to bracket notation offsetting 1 from start
             row['start'] += 1
@@ -54,15 +53,14 @@ def convert_svs(variants_df, fasta_ref):
             row['variant_record_obj'] = _variant_record_obj(row, chrom_preffix)
         return row
 
-    variants_df.loc[
-        (variants_df['type_inferred'] == VariantType.INS.name) &
-        (variants_df['alt'] != '<INS>'), :].apply(convert_row, axis=1)
-    return variants_df
+    variants_mask = (variants_df['type_inferred'] == VariantType.INS.name) & \
+        (variants_df['alt'] != '<INS>')
+    return pd.concat([variants_df[~variants_mask], variants_df.loc[variants_mask, :].apply(convert_row, axis=1)], ignore_index=True)
 
 
-def convert_indels(variants_df, fasta_ref):
+def sv_to_indel(variants_df: pd.DataFrame, fasta_ref: str):
     if len(variants_df) == 0:
-        return variants_df
+        return
 
     fasta = pysam.FastaFile(fasta_ref)
 
@@ -71,29 +69,23 @@ def convert_indels(variants_df, fasta_ref):
 
     # Check all chromosomes are in the reference
     for chrom in variants_df['start_chrom'].unique():
-        if chrom_preffix+chrom not in fasta.references:
+        if chrom_preffix + chrom not in fasta.references:
             raise ValueError(f'Chromosome {chrom} not in FASTA references {fasta.references}')
 
     def convert_row(row):
-        if row['type_inferred'] == VariantType.DEL.name:
-            new_ref = fasta.fetch(chrom_preffix+row['start_chrom'], row['start']-1, row['end']).upper()
-            new_alt = new_ref[0]
+        if row['type_inferred'] == VariantType.DUP.name:
+            row['start'] -= 1
+            row['length'] += 1
+            new_alt = fasta.fetch(chrom_preffix + row['start_chrom'], row['start'] - 1, row['start'] + row['length']).upper()
+            row['end'] = row['start']
             row['alt'] = new_alt
-            row['ref'] = new_ref
-            row['variant_record_obj'] = _variant_record_obj(row, chrom_preffix)
-        elif row['type_inferred'] == VariantType.DUP.name:
-            new_ref = fasta.fetch(chrom_preffix+row['start_chrom'], row['end']-1, row['end'])
-            new_alt = new_ref + fasta.fetch(chrom_preffix+row['start_chrom'], row['start']-1, row['end']-1).upper()
-            row['start'] = row['end']
-            row['alt'] = new_alt
-            row['ref'] = new_ref
+            row['ref'] = new_alt[0]
             row['variant_record_obj'] = _variant_record_obj(row, chrom_preffix)
         else:
             raise ValueError('Unknown variant type: ' + row['type_inferred'])
         return row
 
-    variants_df.loc[
-        (variants_df['type_inferred'] != VariantType.INS.name) &
-        (variants_df['type_inferred'] != VariantType.SNV.name) &
-        (variants_df['alt'].str.contains(SV_REGEX)), :].apply(convert_row, axis=1)
-    return variants_df
+    variants_mask = (variants_df['type_inferred'] == VariantType.DUP.name) & \
+        (variants_df['alt'].str.contains(SV_REGEX))
+    # Return the updated dataframe
+    return pd.concat([variants_df[~variants_mask], variants_df.loc[variants_mask, :].apply(convert_row, axis=1)], ignore_index=True)

@@ -41,7 +41,6 @@ def compute_improvements(callers_folders, user_folder, results_output_folder, re
         # Remove sample folder if it exists
         shutil.rmtree(baseline_sample_folder, ignore_errors=True)
         shutil.copytree(user_sample_folder, baseline_sample_folder)
-    # TODO: Check removing callers from baseline
     # Calculate number of processes per caller
     num_processes = [int(max_processes / len(callers_folders))] * len(callers_folders)
     for i in range(max_processes % len(callers_folders)):
@@ -84,32 +83,31 @@ def group_improvements(improvement_list):
 def main(evaluation_results, callers_folder, output, recall_samples, precision_samples, loss_margin=0.05, window_radius=None, processes=1):
     logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
-    # Covert all paths to absolute paths
-    evaluation_results = os.path.abspath(evaluation_results)
-    callers_folder = os.path.abspath(callers_folder)
-    output = os.path.abspath(output)
+    # Get callers names
+    callers_names = os.listdir(callers_folder)
+    callers_folders = [os.path.join(callers_folder, caller) for caller in callers_names]
+
+    # Check that all samples in callers_folders are present for each caller
+    for sample in recall_samples + precision_samples:
+        for caller_folder in callers_folders:
+            if not glob.glob(os.path.join(caller_folder, 'samples', sample, '*metrics.csv')):
+                raise Exception(f'Sample {sample} not found in {caller_folder}')
 
     # Create output folder if it does not exist
     os.makedirs(output, exist_ok=True)
 
-    # Get callers names
-    callers_names = os.listdir(callers_folder)
     # callers_names = ['shimmer_', 'delly_1_1_6_']
     # Extract indel threshold, window ratio, window limit and sv_size_bins from metrics (supposing that all the samples have the same metrics)
-    dummy_metrics = pd.read_csv(glob.glob(os.path.join(callers_folder, callers_names[0], 'samples', '*', '*metrics.csv'))[0])
+    dummy_metrics = pd.read_csv(glob.glob(os.path.join(callers_folders[0], 'samples', '*', '*metrics.csv'))[0])
     indel_threshold, window_radius, sv_size_bins = \
         infer_parameters_from_metrics(dummy_metrics, window_radius)
 
     # Compute improvements
-    callers_folders = [os.path.join(callers_folder, caller) for caller in callers_names]
     results_output_folder = os.path.join(output, 'results')
     os.makedirs(results_output_folder, exist_ok=True)
-    import time
-    start_time = time.time()
     improvement_list = compute_improvements(callers_folders, evaluation_results, results_output_folder, recall_samples, precision_samples,
                                             processes, loss_margin=loss_margin, indel_threshold=indel_threshold, window_radius=window_radius,
                                             sv_size_bins=sv_size_bins)
-    print(f'--- {time.time() - start_time} seconds ---')
     # Create improvement_group
     improvement_groups = group_improvements(improvement_list)
     # print(improvement_groups)

@@ -13,7 +13,7 @@ from vcf_ops.masks import snv_mask, indel_mask  # noqa
 from vcf_ops.intersect import intersect  # noqa
 from vcf_ops.metrics import compute_metrics  # noqa
 from vcf_ops.constants import DEFAULT_CONTIGS, DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS  # noqa
-from indel_sv_converter import convert_indels, convert_svs  # noqa
+from indel_sv_converter import sv_to_indel, indel_to_sv  # noqa
 
 def _ingest(truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, contigs, keep_intermediates=False):
     # Load truth and test VCFs
@@ -44,10 +44,10 @@ def _ingest(truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, co
     df_test_sv = df_test[~indel_snv_test_mask]
 
     # Convert everything to indel or sv representation
-    df_truth_indel = convert_indels(df_truth_indel, fasta_ref)
-    df_test_indel = convert_indels(df_test_indel, fasta_ref)
-    df_truth_sv = convert_svs(df_truth_sv, fasta_ref)
-    df_test_sv = convert_svs(df_test_sv, fasta_ref)
+    df_truth_indel = sv_to_indel(df_truth_indel, fasta_ref)
+    df_test_indel = sv_to_indel(df_test_indel, fasta_ref)
+    df_truth_sv = indel_to_sv(df_truth_sv, fasta_ref)
+    df_test_sv = indel_to_sv(df_test_sv, fasta_ref)
 
     # Write CSVs if necessary
     if keep_intermediates:
@@ -63,11 +63,11 @@ def _ingest(truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, co
     return df_truth, df_test, df_skipped_truth, df_skipped_test
 
 
-def main(truth_vcfs, test_vcfs, output_prefix, fasta_ref, indel_threshold=DEFAULT_INDEL_THRESHOLD, window_radius=DEFAULT_WINDOW_RADIUS,
+def main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_ref, indel_threshold=DEFAULT_INDEL_THRESHOLD, window_radius=DEFAULT_WINDOW_RADIUS,
          sv_size_bins=DEFAULT_SV_BINS, contigs=DEFAULT_CONTIGS, keep_intermediates=False, no_gzip=False):
     # Get files from the truth and test vcfs
-    truth_vcfs = [file for file_pattern in truth_vcfs for file in glob.glob(file_pattern)]
-    test_vcfs = [file for file_pattern in test_vcfs for file in glob.glob(file_pattern)]
+    truth_vcfs = [file for file_pattern in truth_vcf_paths for file in glob.glob(file_pattern)]
+    test_vcfs = [file for file_pattern in test_vcf_paths for file in glob.glob(file_pattern)]
 
     # Sort bins
     sv_size_bins.sort()
@@ -77,6 +77,11 @@ def main(truth_vcfs, test_vcfs, output_prefix, fasta_ref, indel_threshold=DEFAUL
     # Read the input files
     df_truth, df_test, df_skipped_truth, df_skipped_test = _ingest(
         truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, contigs, keep_intermediates)
+
+    if len(df_truth) == 0:
+        raise ValueError(f'No truth VCF variants found in {truth_vcf_paths}')
+    if len(df_test) == 0:
+        raise ValueError(f'No test VCF variants found in {test_vcf_paths}')
 
     # Run benchmark
     df_tp, df_tp_dup, \
