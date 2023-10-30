@@ -99,7 +99,7 @@ def main(evaluation_results, callers_folder, output, recall_samples, precision_s
     # callers_names = ['shimmer_', 'delly_1_1_6_']
     # Extract indel threshold, window ratio, window limit and sv_size_bins from metrics (supposing that all the samples have the same metrics)
     dummy_metrics = pd.read_csv(glob.glob(os.path.join(callers_folders[0], 'samples', '*', '*metrics.csv'))[0])
-    indel_threshold, window_radius, sv_size_bins = \
+    indel_threshold, window_radius, sv_size_bins, variant_types = \
         infer_parameters_from_metrics(dummy_metrics, window_radius)
 
     # Compute improvements
@@ -107,7 +107,7 @@ def main(evaluation_results, callers_folder, output, recall_samples, precision_s
     os.makedirs(results_output_folder, exist_ok=True)
     improvement_list = compute_improvements(callers_folders, evaluation_results, results_output_folder, recall_samples, precision_samples,
                                             processes, loss_margin=loss_margin, indel_threshold=indel_threshold, window_radius=window_radius,
-                                            sv_size_bins=sv_size_bins)
+                                            sv_size_bins=sv_size_bins, variant_types=variant_types)
     # Create improvement_group
     improvement_groups = group_improvements(improvement_list)
     # print(improvement_groups)

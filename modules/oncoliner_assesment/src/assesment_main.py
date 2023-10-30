@@ -12,28 +12,58 @@ from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
 from vcf_ops.masks import snv_mask, indel_mask  # noqa
 from vcf_ops.intersect import intersect  # noqa
 from vcf_ops.metrics import compute_metrics  # noqa
-from vcf_ops.constants import DEFAULT_CONTIGS, DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS  # noqa
+from vcf_ops.constants import DEFAULT_CONTIGS, DEFAULT_VARIANT_TYPES, DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS  # noqa
 from indel_sv_converter import sv_to_indel, indel_to_sv  # noqa
 
-def _ingest(truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, contigs, keep_intermediates=False):
+
+def _ingest(truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, contigs, variant_types, keep_intermediates=False):
     # Load truth and test VCFs
     df_truth = read_vcfs(truth_vcfs)
     df_test = read_vcfs(test_vcfs)
 
     contigs = set(contigs)
-    # Skip SGL, 0-length variants and variants without contig in contigs list
+    # Skip 0-length variants, variants without contig in contigs list and variants without variant type in variant_types list
     contigs_truth_mask = df_truth['start_chrom'].isin(contigs) & df_truth['end_chrom'].isin(contigs)
     contigs_test_mask = df_test['start_chrom'].isin(contigs) & df_test['end_chrom'].isin(contigs)
-    sgl_truth_mask = df_truth['type_inferred'] == VariantType.SGL.name
-    sgl_test_mask = df_test['type_inferred'] == VariantType.SGL.name
     length_truth_mask = (df_truth['length'] == 0) & \
-        (df_truth['type_inferred'] != VariantType.SNV.name) & (df_truth['type_inferred'] != VariantType.TRA.name)
+        (df_truth['type_inferred'] != VariantType.SNV.name) & (df_truth['type_inferred'] != VariantType.TRA.name) & (df_truth['type_inferred'] != VariantType.SGL.name)
     length_test_mask = (df_test['length'] == 0) & \
-        (df_test['type_inferred'] != VariantType.SNV.name) & (df_test['type_inferred'] != VariantType.TRA.name)
-    df_skipped_truth = df_truth[sgl_truth_mask | length_truth_mask | ~contigs_truth_mask]
-    df_skipped_test = df_test[sgl_test_mask | length_test_mask | ~contigs_test_mask]
-    df_truth = df_truth[~sgl_truth_mask & ~length_truth_mask & contigs_truth_mask]
-    df_test = df_test[~sgl_test_mask & ~length_test_mask & contigs_test_mask]
+        (df_test['type_inferred'] != VariantType.SNV.name) & (df_test['type_inferred'] != VariantType.TRA.name) & (df_test['type_inferred'] != VariantType.SGL.name)
+    # Initialize masks for included variants to all false
+    variant_types_truth_mask = pd.Series([False] * len(df_truth))
+    variant_types_test_mask = pd.Series([False] * len(df_test))
+    for variant_type in variant_types:
+        variant_type_split = variant_type.split('-')
+        if len(variant_type_split) == 1:
+            variant_types_truth_mask |= df_truth['type_inferred'] == variant_type
+            variant_types_test_mask |= df_test['type_inferred'] == variant_type
+        elif len(variant_type_split) == 2:
+            general_variant_type, specific_variant_type = variant_type_split
+            # INV and TRA do not need to filter size
+            if specific_variant_type.upper() == 'INV' or specific_variant_type.upper() == 'TRA':
+                variant_types_truth_mask |= df_truth['type_inferred'] == specific_variant_type
+                variant_types_test_mask |= df_test['type_inferred'] == specific_variant_type
+                continue
+            if general_variant_type.upper() == 'SV':
+                temp_truth_mask = df_truth['length'] > indel_threshold
+                temp_test_mask = df_test['length'] > indel_threshold
+            elif general_variant_type.upper() == 'INDEL':
+                temp_truth_mask = df_truth['length'] <= indel_threshold
+                temp_test_mask = df_test['length'] <= indel_threshold
+            else:
+                raise ValueError(f'Invalid variant type {variant_type}')
+            variant_types_truth_mask |= temp_truth_mask & (df_truth['type_inferred'] == specific_variant_type)
+            variant_types_test_mask |= temp_test_mask & (df_test['type_inferred'] == specific_variant_type)
+        else:
+            raise ValueError(f'Invalid variant type {variant_type}')
+    print(df_test[variant_types_test_mask])
+
+    skipped_truth_mask = length_truth_mask | ~contigs_truth_mask | ~variant_types_truth_mask
+    skipped_test_mask = length_test_mask | ~contigs_test_mask | ~variant_types_test_mask
+    df_skipped_truth = df_truth[skipped_truth_mask]
+    df_skipped_test = df_test[skipped_test_mask]
+    df_truth = df_truth[~skipped_truth_mask]
+    df_test = df_test[~skipped_test_mask]
 
     # Separate indels and SNVs from SVs
     indel_snv_truth_mask = snv_mask(df_truth) | indel_mask(df_truth, indel_threshold)
@@ -63,8 +93,7 @@ def _ingest(truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, co
     return df_truth, df_test, df_skipped_truth, df_skipped_test
 
 
-def main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_ref, indel_threshold=DEFAULT_INDEL_THRESHOLD, window_radius=DEFAULT_WINDOW_RADIUS,
-         sv_size_bins=DEFAULT_SV_BINS, contigs=DEFAULT_CONTIGS, keep_intermediates=False, no_gzip=False):
+def main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_ref, indel_threshold, window_radius, sv_size_bins, contigs, variant_types, keep_intermediates, no_gzip):
     # Get files from the truth and test vcfs
     truth_vcfs = [file for file_pattern in truth_vcf_paths for file in glob.glob(file_pattern)]
     test_vcfs = [file for file_pattern in test_vcf_paths for file in glob.glob(file_pattern)]
@@ -76,7 +105,7 @@ def main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_ref, indel_thresh
 
     # Read the input files
     df_truth, df_test, df_skipped_truth, df_skipped_test = _ingest(
-        truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, contigs, keep_intermediates)
+        truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, contigs, variant_types, keep_intermediates)
 
     if len(df_truth) == 0:
         raise ValueError(f'No truth VCF variants found in {truth_vcf_paths}')
@@ -119,7 +148,7 @@ def main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_ref, indel_thresh
         print(f'Skipped truth variants can be found in {output_prefix}skipped_truth.*')
 
     # Compute metrics
-    metrics_df = compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size_bins)
+    metrics_df = compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size_bins, variant_types)
     # Write CSV with metrics
     metrics_df.to_csv(f'{output_prefix}metrics.csv', index=False)
 
@@ -147,8 +176,10 @@ if __name__ == '__main__':
                         help=f'Window ratio (default={DEFAULT_WINDOW_RADIUS})', default=DEFAULT_WINDOW_RADIUS, type=int)
     parser.add_argument(
         '--sv-size-bins', help=f'SV size bins for the output_prefix metrics (default={DEFAULT_SV_BINS})', nargs='+', default=DEFAULT_SV_BINS, type=int)
-    parser.add_argument(
-        '--contigs', help=f'Contigs to process (default={DEFAULT_CONTIGS})', nargs='+', default=DEFAULT_CONTIGS, type=str)
+    parser.add_argument('--contigs', nargs='+', default=DEFAULT_CONTIGS, type=str,
+                        help=f'Contigs to process (default={DEFAULT_CONTIGS})')
+    parser.add_argument('--variant-types', nargs='+', default=DEFAULT_VARIANT_TYPES, type=str,
+                        help=f'Variant types to process (default={DEFAULT_VARIANT_TYPES})')
     parser.add_argument('--keep-intermediates',
                         help='Keep intermediate CSV/VCF files from input VCF files', action='store_true', default=False)
     parser.add_argument('--no-gzip', help='Do not gzip output_prefix VCF files', action='store_true', default=False)
@@ -161,4 +192,4 @@ if __name__ == '__main__':
     args.output_prefix = os.path.abspath(args.output_prefix)
 
     main(args.truths, args.tests, args.output_prefix, args.fasta_ref, args.indel_threshold,
-         args.window_radius, args.sv_size_bins, args.contigs, args.keep_intermediates, args.no_gzip)
+         args.window_radius, args.sv_size_bins, args.contigs, args.variant_types, args.keep_intermediates, args.no_gzip)

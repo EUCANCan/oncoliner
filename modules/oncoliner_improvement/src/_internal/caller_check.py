@@ -48,7 +48,7 @@ def _caller_masked_variants(df, masked_metrics):
     return final_mask
 
 
-def _execute_intersection(user_sample_folder, caller_sample_folder, indel_threshold, window_radius, sv_size_bins):
+def _execute_intersection(user_sample_folder, caller_sample_folder, indel_threshold, window_radius, sv_size_bins, variant_types):
     # Read TP files
     tp_user_path = glob.glob(os.path.join(user_sample_folder, '*tp.*'))
     tp_df_user = read_vcfs(tp_user_path)
@@ -77,7 +77,7 @@ def _execute_intersection(user_sample_folder, caller_sample_folder, indel_thresh
     df_fn = pd.concat([tp_df_fn, fn_df_user], ignore_index=True)
 
     # Calculate metrics
-    metrics = compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size_bins)
+    metrics = compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size_bins, variant_types)
 
     def save_results_vcfs(output_folder, caller_mask):
         masked_metrics = metrics[caller_mask]
@@ -93,13 +93,13 @@ def _execute_intersection(user_sample_folder, caller_sample_folder, indel_thresh
         write_masked_vcfs(df_fn, os.path.join(output_folder, 'fn.'), indel_threshold)
         # Save metrics
         concat_metrics = compute_metrics(df_tp_concat, df_fp_concat, df_fn,
-                                         indel_threshold, window_radius, sv_size_bins)
+                                         indel_threshold, window_radius, sv_size_bins, variant_types)
         concat_metrics.to_csv(os.path.join(output_folder, 'metrics.csv'), index=False)
 
     return metrics, save_results_vcfs
 
 
-def _execute_union(user_sample_folder, caller_sample_folder, indel_threshold, window_radius, sv_size_bins):
+def _execute_union(user_sample_folder, caller_sample_folder, indel_threshold, window_radius, sv_size_bins, variant_types):
     # Read TP files
     tp_user_path = glob.glob(os.path.join(user_sample_folder, '*tp.*'))
     tp_df_user = read_vcfs(tp_user_path)
@@ -130,7 +130,7 @@ def _execute_union(user_sample_folder, caller_sample_folder, indel_threshold, wi
     df_fn = fn_df_tp
 
     # Calculate metrics
-    metrics = compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size_bins)
+    metrics = compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size_bins, variant_types)
 
     def save_results_vcfs(output_folder, _):
         # Save TP
@@ -160,12 +160,12 @@ class CallerChecker:
         if num_processes > 1:
             self.__pool = ThreadPoolExecutor(num_processes)
 
-    def _execute_operation(self, op, sample_names, indel_threshold, window_radius, sv_size_bins):
+    def _execute_operation(self, op, sample_names, indel_threshold, window_radius, sv_size_bins, variant_types):
         # Iterate over samples
         if self.__num_processes > 1:
             results = self.__pool.map(lambda p: op(*p), [(
                 os.path.join(self.__user_folder, sample),
-                os.path.join(self.__caller_samples_folder, sample), indel_threshold, window_radius, sv_size_bins)
+                os.path.join(self.__caller_samples_folder, sample), indel_threshold, window_radius, sv_size_bins, variant_types)
                 for sample in sample_names])
             results = list(results)
         else:
@@ -173,7 +173,7 @@ class CallerChecker:
             for sample in sample_names:
                 results.append(op(
                     os.path.join(self.__user_folder, sample),
-                    os.path.join(self.__caller_samples_folder, sample), indel_threshold, window_radius, sv_size_bins))
+                    os.path.join(self.__caller_samples_folder, sample), indel_threshold, window_radius, sv_size_bins, variant_types))
 
         def save_vcf_results(output_folder):
             samples_output_folder = os.path.join(output_folder, 'samples')

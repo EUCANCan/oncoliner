@@ -12,7 +12,7 @@ import pandas as pd
 # Add vcf-ops to the path
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', 'shared', 'vcf_ops', 'src'))
 
-from vcf_ops.constants import DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS, DEFAULT_CONTIGS  # noqa
+from vcf_ops.constants import DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS, DEFAULT_CONTIGS, DEFAULT_VARIANT_TYPES  # noqa
 from vcf_ops.intersect import intersect  # noqa
 from vcf_ops.union import union  # noqa
 from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
@@ -66,7 +66,7 @@ def check_improvement(combination_evaluation_folder: str, evaluation_element_1_f
     return combination_metrics
 
 
-def evaluate_caller(caller_folder, config, output_folder, processes, indel_threshold, window_radius, sv_size_bins, contigs):
+def evaluate_caller(caller_folder, config, output_folder, processes, indel_threshold, window_radius, sv_size_bins, contigs, variant_types, no_gzip=False):
     pipelines_vcf_paths = config['sample_name'].apply(
         lambda sample_name: ','.join([os.path.join(caller_folder, sample_name, '*.vcf.gz'),
                                       os.path.join(caller_folder, sample_name, '*.vcf'),
@@ -87,8 +87,11 @@ def evaluate_caller(caller_folder, config, output_folder, processes, indel_thres
          '-it', str(indel_threshold),
          '-wr', str(window_radius),
          '--sv-size-bins'] + \
-        [str(bin) for bin in sv_size_bins] +\
-        ['--contigs'] + contigs
+        [str(bin) for bin in sv_size_bins] + \
+        ['--contigs'] + contigs + \
+        ['--variant-types'] + variant_types
+    if no_gzip:
+        args.append('--no-gzip')
     subprocess.check_call(args, stdout=subprocess.DEVNULL)
 
 
@@ -201,11 +204,12 @@ def op_callers_with_samples(operation_tuple, combinations_folder: str, evaluatio
     # Evaluate the result
     os.makedirs(evaluation_output_folder, exist_ok=True)
     evaluate_caller(combination_output_folder, config, evaluation_output_folder, threads, indel_threshold=kwargs['indel_threshold'],
-                    window_radius=kwargs['window_radius'], sv_size_bins=kwargs['sv_size_bins'], contigs=kwargs['contigs'])
+                    window_radius=kwargs['window_radius'], sv_size_bins=kwargs['sv_size_bins'], contigs=kwargs['contigs'], variant_types=kwargs['variant_types'])
     # Check for improvement with the new combination
     evaluation_element_1_folder = os.path.join(evaluations_folder, element_1_name)
     evaluation_element_2_folder = os.path.join(evaluations_folder, element_2_name)
-    improved_metrics_df = check_improvement(evaluation_output_folder, evaluation_element_1_folder, evaluation_element_2_folder, operation_symbol, kwargs['loss_margin'])
+    improved_metrics_df = check_improvement(evaluation_output_folder, evaluation_element_1_folder,
+                                            evaluation_element_2_folder, operation_symbol, kwargs['loss_margin'])
     # If there is no improvement, remove the combination folder
     if len(improved_metrics_df) == 0:
         shutil.rmtree(combination_output_folder)
@@ -273,7 +277,7 @@ def create_improvement_list(evaluation_callers_folders: List[str], output_folder
 
 def _create_config(truth_folder: str, fasta_ref: str, recall_samples: List[str], precision_samples: List[str]) -> pd.DataFrame:
     entries = []
-    for sample in set(recall_samples).union(precision_samples):
+    for sample in sorted(set(recall_samples).union(precision_samples)):
         sample_types = []
         if sample in recall_samples:
             sample_types.append('recall')
@@ -322,7 +326,7 @@ def main(args):
     original_caller_folders = [os.path.join(args.test, caller_name) for caller_name in callers_names]
     evaluate_callers(original_caller_folders, config, output_evaluations, args.processes,
                      indel_threshold=args.indel_threshold, window_radius=args.window_radius,
-                     sv_size_bins=args.sv_size_bins, contigs=args.contigs)
+                     sv_size_bins=args.sv_size_bins, contigs=args.contigs, variant_types=args.variant_types, no_gzip=args.no_gzip)
 
     # Copy each variant caller TP+FP files to its corresponding output_combinations folder
     for caller_name in callers_names:
@@ -336,8 +340,6 @@ def main(args):
                 if 'tp.' not in file and 'fp.' not in file:
                     continue
                 shutil.copy(file, caller_combination_sample_folder)
-    # Get callers prefixes
-    callers_folders = [os.path.join(output_combinations, caller_name) for caller_name in callers_names]
     # Get the variant types for each caller
     # Create a dict variant_type -> callers
     callers_variant_types = {
@@ -358,8 +360,8 @@ def main(args):
         if len(operations) == 0:
             continue
         execute_operations(operations, output_combinations, output_evaluations, args.processes, config, fasta_ref=args.fasta_ref,
-                           indel_threshold=args.indel_threshold, window_radius=args.window_radius,
-                           sv_size_bins=args.sv_size_bins, contigs=args.contigs, loss_margin=args.loss_margin)
+                           indel_threshold=args.indel_threshold, window_radius=args.window_radius, sv_size_bins=args.sv_size_bins,
+                           contigs=args.contigs, variant_types=args.variant_types, loss_margin=args.loss_margin)
 
     evaluation_callers_folders = glob.glob(os.path.join(output_evaluations, '*'))
     output_list_folder = os.path.join(args.output, 'improvement_list')
@@ -383,8 +385,11 @@ if __name__ == '__main__':
                         help=f'Window ratio (default={DEFAULT_WINDOW_RADIUS})', default=DEFAULT_WINDOW_RADIUS, type=int)
     parser.add_argument(
         '--sv-size-bins', help=f'SV size bins for the output_prefix metrics (default={DEFAULT_SV_BINS})', nargs='+', default=DEFAULT_SV_BINS, type=int)
-    parser.add_argument(
-        '--contigs', help=f'Contigs to process (default={DEFAULT_CONTIGS})', nargs='+', default=DEFAULT_CONTIGS, type=str)
+    parser.add_argument('--contigs', nargs='+', default=DEFAULT_CONTIGS, type=str,
+                        help=f'Contigs to process (default={DEFAULT_CONTIGS})')
+    parser.add_argument('--variant-types', nargs='+', default=DEFAULT_VARIANT_TYPES, type=str,
+                        help=f'Variant types to process (default={DEFAULT_VARIANT_TYPES})')
+    parser.add_argument('--no-gzip', action='store_true', help='Do not gzip the output VCF files')
     parser.add_argument('-p', '--processes', type=int, default=1, help='Number of processes to use')
     parser.add_argument('--max-combinations', type=int, default=-1,
                         help='Maximum number of combinations to perform (-1) for all')

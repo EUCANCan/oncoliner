@@ -22,7 +22,7 @@ def _get_chrom_preffix(fasta: pysam.FastaFile):
     return chrom_preffix
 
 
-def indel_to_sv(variants_df: pd.DataFrame, fasta_ref: str):
+def indel_to_sv(variants_df: pd.DataFrame, fasta_ref: str) -> pd.DataFrame:
     if len(variants_df) == 0:
         return variants_df
 
@@ -58,7 +58,7 @@ def indel_to_sv(variants_df: pd.DataFrame, fasta_ref: str):
     return pd.concat([variants_df[~variants_mask], variants_df.loc[variants_mask, :].apply(convert_row, axis=1)], ignore_index=True)
 
 
-def sv_to_indel(variants_df: pd.DataFrame, fasta_ref: str):
+def sv_to_indel(variants_df: pd.DataFrame, fasta_ref: str) -> pd.DataFrame:
     if len(variants_df) == 0:
         return
 

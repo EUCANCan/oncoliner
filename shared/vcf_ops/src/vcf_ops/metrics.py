@@ -9,7 +9,7 @@ METRICS_COLUMNS = ['variant_type', 'variant_size', 'window_radius', 'recall', 'p
                    'protein_affected_genes_count', 'protein_affected_driver_genes_count', 'protein_affected_genes', 'protein_affected_driver_genes']
 
 
-def infer_parameters_from_metrics(metrics, window_radius=None):
+def infer_parameters_from_metrics(metrics: pd.DataFrame, window_radius=None):
     # Infer indel threshold
     indel_threshold = int(metrics[metrics['variant_type'] == 'INDEL']['variant_size'].iloc[0].split('-')[-1])
     # Infer window ratio from INV
@@ -20,7 +20,29 @@ def infer_parameters_from_metrics(metrics, window_radius=None):
     for _, row in metrics[metrics['variant_type'] == 'INV'].iloc[2:-1].iterrows():
         _, size_2 = row['variant_size'].split('-')
         sv_size_bins.append(int(size_2))
-    return indel_threshold, window_radius, sv_size_bins
+    # Infer variant_types from metrics
+    variant_types = []
+    for _, row in metrics.iterrows():
+        if 'SV' == row['variant_type'] or 'INDEL' == row['variant_type']:
+            continue
+        elif 'SNV' == row['variant_type']:
+            variant_types.append(row['variant_type'])
+            continue
+        elif 'INV' == row['variant_type'] or 'TRA' == row['variant_type']:
+            general_type = 'SV'
+        elif len(row['variant_size'].split('-')) > 1 and int(row['variant_size'].split('-')[1].strip()) == indel_threshold:
+            general_type = 'INDEL'
+        else:
+            general_type = 'SV'
+
+        if len(row['variant_type'].split('/')) > 1:
+            for specific_type in row['variant_type'].split('/'):
+                variant_types.append(f'{general_type}-{specific_type.strip()}')
+        else:
+            variant_types.append(f'{general_type}-{row["variant_type"]}')
+    # Remove duplicates but keep the order
+    variant_types = list(dict.fromkeys(variant_types))
+    return indel_threshold, window_radius, sv_size_bins, variant_types
 
 
 def aggregate_metrics(metrics_list):
@@ -75,28 +97,15 @@ def combine_precision_recall_metrics(recall_df, precision_df):
     return df
 
 
-def compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size_bins):
+def compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size_bins, variant_types):
     # Add temporal benchmark column
-    df_tp['benchmark'] = 'TP'
-    df_fp['benchmark'] = 'FP'
-    df_fn['benchmark'] = 'FN'
+    df_tp = df_tp.assign(benchmark='TP')
+    df_fp = df_fp.assign(benchmark='FP')
+    df_fn = df_fn.assign(benchmark='FN')
 
     df = pd.concat([df_tp, df_fp, df_fn], ignore_index=True)
 
-    # Remove temporal benchmark column
-    df_tp.drop('benchmark', axis=1, inplace=True)
-    df_fp.drop('benchmark', axis=1, inplace=True)
-    df_fn.drop('benchmark', axis=1, inplace=True)
-
-    # Setup bin names
-    bin_names = [VariantType.SNV.name, 'INDEL', VariantType.INS.name + ' / ' + VariantType.DUP.name, VariantType.DEL.name] + \
-        ['SV'] + [VariantType.TRA.name] + \
-        [VariantType.INV.name] * (len(sv_size_bins) + 3) + \
-        [VariantType.INS.name] * (len(sv_size_bins) + 2) + \
-        [VariantType.DEL.name] * (len(sv_size_bins) + 2) + \
-        [VariantType.DUP.name] * (len(sv_size_bins) + 2)
-
-    # Setup bin sizes names
+    # Setup repeated bin sizes
     repeated_bin_sizes = []
     for i in range(len(sv_size_bins) + 1):
         if i == 0:
@@ -106,12 +115,46 @@ def compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size
         else:
             size_text = f'{sv_size_bins[i-1]+1} - {sv_size_bins[i]}'
         repeated_bin_sizes.append(size_text)
-    bin_sizes_names = ['1'] + [f'1 - {indel_threshold}'] * 3 + \
-        ['ALL', VariantType.TRA.name] + \
-        ['> 0', f'1 - {indel_threshold}'] + repeated_bin_sizes + \
-        [f'> {indel_threshold}'] + repeated_bin_sizes + \
-        [f'> {indel_threshold}'] + repeated_bin_sizes + \
-        [f'> {indel_threshold}'] + repeated_bin_sizes
+    # Setup bin names
+    bin_names = []
+    bin_sizes_names = []
+    # Setup bin sizes names
+    for variant_type in variant_types:
+        variant_type_split = variant_type.split('-')
+        if len(variant_type_split) == 1:
+            general_variant_type = variant_type_split[0]
+            specific_variant_type = variant_type_split[0]
+        elif len(variant_type_split) == 2:
+            general_variant_type, specific_variant_type = variant_type_split
+        else:
+            raise ValueError(f'Invalid variant type: {variant_type}')
+        if general_variant_type == VariantType.SNV.name:
+            bin_names.append(VariantType.SNV.name)
+            bin_sizes_names.append('1')
+        elif general_variant_type == 'INDEL':
+            if 'INDEL' not in bin_names:
+                bin_names.append('INDEL')
+                bin_sizes_names.append(f'1 - {indel_threshold}')
+            # Put INDEL INS and DUP in the same bin
+            if specific_variant_type == VariantType.INS.name or specific_variant_type == VariantType.DUP.name:
+                specific_variant_type = 'INS/DUP'
+            if specific_variant_type in bin_names:
+                continue
+            bin_names.append(specific_variant_type)
+            bin_sizes_names.append(f'1 - {indel_threshold}')
+        elif general_variant_type == 'SV':
+            if 'SV' not in bin_names:
+                bin_names.append('SV')
+                bin_sizes_names.append('ALL')
+            if specific_variant_type == VariantType.TRA.name:
+                bin_names.append(VariantType.TRA.name)
+                bin_sizes_names.append(VariantType.TRA.name)
+            elif specific_variant_type == VariantType.INV.name:
+                bin_names.extend([VariantType.INV.name] * (len(sv_size_bins) + 3))
+                bin_sizes_names.extend(['> 0', f'1 - {indel_threshold}'] + repeated_bin_sizes)
+            else:
+                bin_names.extend([specific_variant_type] * (len(sv_size_bins) + 2))
+                bin_sizes_names.extend([f'> {indel_threshold}'] + repeated_bin_sizes)
 
     # Setup window sizes names
     window_radius_names = []
@@ -183,37 +226,3 @@ def compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size
 
     return pd.DataFrame(rows, columns=METRICS_COLUMNS)
 
-
-if __name__ == '__main__':
-    import argparse
-    from .i_o import read_vcfs
-    from .constants import DEFAULT_INDEL_THRESHOLD, DEFAULT_SV_BINS, DEFAULT_WINDOW_RATIO, DEFAULT_WINDOW_LIMIT
-
-    parser = argparse.ArgumentParser(description='Compute metrics from VCF files')
-    parser.add_argument('-tp', type=str, nargs='*', default=[], help='True Positives VCF files')
-    parser.add_argument('-fp', type=str, nargs='*', default=[], help='False Positives VCF files')
-    parser.add_argument('-fn', type=str, nargs='*', default=[], help='False Negatives VCF files')
-    parser.add_argument('-o', '--output', required=True, type=str, help='Output CSV file')
-    parser.add_argument('-it', '--indel-threshold',
-                        help=f'Indel threshold, inclusive (default={DEFAULT_INDEL_THRESHOLD})', default=DEFAULT_INDEL_THRESHOLD, type=int)
-    parser.add_argument('-wr', '--window-ratio',
-                        help=f'Window ratio used for the evaluation (default={DEFAULT_WINDOW_RATIO})', default=DEFAULT_WINDOW_RATIO, type=float)
-    parser.add_argument('-wl', '--window-limit',
-                        help=f'Window limit used for the evaluation (default={DEFAULT_WINDOW_LIMIT})', default=DEFAULT_WINDOW_LIMIT, type=int)
-    parser.add_argument(
-        '--sv-size-bins', help=f'SV size bins for the output metrics (default={DEFAULT_SV_BINS})', nargs='+', default=DEFAULT_SV_BINS, type=int)
-
-    args = parser.parse_args()
-    # Read VCFs
-    df_tp = read_vcfs(args.tp) if len(args.tp) > 0 else pd.DataFrame()
-    df_fp = read_vcfs(args.fp) if len(args.fp) > 0 else pd.DataFrame()
-    df_fn = read_vcfs(args.fn) if len(args.fn) > 0 else pd.DataFrame()
-
-    # Compute metrics
-    metrics_df = compute_metrics(df_tp, df_fp, df_fn, args.indel_threshold,
-                                 args.window_ratio, args.window_limit, args.sv_size_bins)
-    # Write to file
-    metrics_df.to_csv(args.output, index=False)
-
-    # Print metrics
-    print(metrics_df.to_string(index=False))

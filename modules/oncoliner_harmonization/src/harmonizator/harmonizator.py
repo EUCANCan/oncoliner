@@ -134,7 +134,7 @@ def _check_pipelines_combinations(pipelines_folders, window_radius=None, process
                     if os.path.isdir(f)]
     # Get indel_threshold, window_radius from the first pipeline metrics
     metrics = pd.read_csv(glob.glob(os.path.join(improvements_combinations[0][0], 'samples', '*', '*metrics.csv'))[0])
-    indel_threshold, window_radius, _ = infer_parameters_from_metrics(metrics, window_radius=window_radius)
+    indel_threshold, window_radius, _, _ = infer_parameters_from_metrics(metrics, window_radius=window_radius)
     # Compute overlap for each combination
     pool = multiprocessing.Pool(processes=processes)
     # Calculate number of processes per combination

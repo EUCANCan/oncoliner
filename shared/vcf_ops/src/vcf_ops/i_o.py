@@ -33,7 +33,7 @@ def _get_contigs(header: pysam.VariantHeader, fasta_ref=None):
                 contigs[chrom] = length
     else:
         for contig in header.contigs:
-            contigs[contig] = contig.length
+            contigs[contig] = None
     return contigs
 
 

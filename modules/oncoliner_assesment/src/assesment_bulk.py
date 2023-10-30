@@ -5,7 +5,7 @@ import glob
 from concurrent.futures import ProcessPoolExecutor
 
 from assesment_main import main  # noqa
-from vcf_ops.constants import DEFAULT_CONTIGS, DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS  # noqa
+from vcf_ops.constants import DEFAULT_CONTIGS, DEFAULT_VARIANT_TYPES, DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS  # noqa
 from vcf_ops.metrics import aggregate_metrics, combine_precision_recall_metrics  # noqa
 
 import pandas as pd
@@ -30,7 +30,7 @@ def read_config(config_path: str) -> pd.DataFrame:
     return config
 
 
-def run_evaluator_sample(output_folder: str, sample: pd.Series, indel_threshold: int, window_radius: int, sv_size_bins: List[str], contigs: List[str], keep_intermediates: bool, no_gzip: bool) -> None:
+def run_evaluator_sample(output_folder: str, sample: pd.Series, indel_threshold: int, window_radius: int, sv_size_bins: List[str], contigs: List[str], variant_types: List[str], keep_intermediates: bool, no_gzip: bool) -> None:
     """
     Runs the evaluator for a single sample
     """
@@ -46,7 +46,7 @@ def run_evaluator_sample(output_folder: str, sample: pd.Series, indel_threshold:
         logging.info(f'Skipping {sample_name} evaluation because the metrics file already exists')
         return
     main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_path, indel_threshold,
-         window_radius, sv_size_bins, contigs, keep_intermediates, no_gzip)
+         window_radius, sv_size_bins, contigs, variant_types, keep_intermediates, no_gzip)
 
 
 def aggregate_metrics_from_samples(output_file: str, samples_folder: str, recall_samples: Iterable[str], precision_samples: Iterable[str]):
@@ -76,8 +76,10 @@ if __name__ == '__main__':
                         help=f'Window radius (default={DEFAULT_WINDOW_RADIUS})', default=DEFAULT_WINDOW_RADIUS, type=int)
     parser.add_argument(
         '--sv-size-bins', help=f'SV size bins for the output_prefix metrics (default={DEFAULT_SV_BINS})', nargs='+', default=DEFAULT_SV_BINS, type=int)
-    parser.add_argument(
-        '--contigs', help=f'Contigs to process (default={DEFAULT_CONTIGS})', nargs='+', default=DEFAULT_CONTIGS, type=str)
+    parser.add_argument('--contigs', nargs='+', default=DEFAULT_CONTIGS, type=str,
+                        help=f'Contigs to process (default={DEFAULT_CONTIGS})')
+    parser.add_argument('--variant-types', nargs='+', default=DEFAULT_VARIANT_TYPES, type=str,
+                        help=f'Variant types to process (default={DEFAULT_VARIANT_TYPES})')
     parser.add_argument('--keep-intermediates',
                         help='Keep intermediate CSV/VCF files from input VCF files', action='store_true', default=False)
     parser.add_argument('--no-gzip', help='Do not gzip output_prefix VCF files', action='store_true', default=False)
@@ -96,7 +98,7 @@ if __name__ == '__main__':
     futures = []
     for _, sample in config.iterrows():
         futures.append(pool.submit(run_evaluator_sample, samples_output_folder, sample, args.indel_threshold, args.window_radius,
-                       args.sv_size_bins, args.contigs, args.keep_intermediates, args.no_gzip))
+                       args.sv_size_bins, args.contigs, args.variant_types, args.keep_intermediates, args.no_gzip))
     for future in futures:
         future.result()
 
