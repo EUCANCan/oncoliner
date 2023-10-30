@@ -110,7 +110,6 @@ def main(evaluation_results, callers_folder, output, recall_samples, precision_s
                                             sv_size_bins=sv_size_bins, variant_types=variant_types)
     # Create improvement_group
     improvement_groups = group_improvements(improvement_list)
-    # print(improvement_groups)
     # Create improvement_list folder
     improvement_list_folder = os.path.join(output, 'improvement_list')
     os.makedirs(improvement_list_folder, exist_ok=True)

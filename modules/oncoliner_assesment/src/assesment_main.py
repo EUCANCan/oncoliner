@@ -56,7 +56,6 @@ def _ingest(truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, co
             variant_types_test_mask |= temp_test_mask & (df_test['type_inferred'] == specific_variant_type)
         else:
             raise ValueError(f'Invalid variant type {variant_type}')
-    print(df_test[variant_types_test_mask])
 
     skipped_truth_mask = length_truth_mask | ~contigs_truth_mask | ~variant_types_truth_mask
     skipped_test_mask = length_test_mask | ~contigs_test_mask | ~variant_types_test_mask
