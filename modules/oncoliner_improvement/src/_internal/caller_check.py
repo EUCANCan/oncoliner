@@ -153,7 +153,7 @@ class CallerChecker:
         self.__recall_samples = recall_samples
         self.__precision_samples = precision_samples
         self.__loss_margin = loss_margin
-        self.__user_folder = user_folder
+        self.__user_folder = os.path.join(user_folder, 'samples')
         self.__baseline_metrics = baseline_metrics
         self.__caller_mask = _caller_metrics_mask(self.__caller_samples_folder, self.__recall_samples, self.__precision_samples)
         self.__num_processes = num_processes
