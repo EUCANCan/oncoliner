@@ -65,8 +65,8 @@ def compute_improvements(callers_folders, user_folder, results_output_folder, re
 
 
 def group_improvements(improvement_list):
-    # Find baseline metrics
-    baseline_metrics = [x for x in improvement_list if x['operation'].iloc[0] == 'baseline'][0]
+    # Find baseline metrics, if all operations are baseline
+    baseline_metrics = [x for x in improvement_list if set(x['operation']) == {'baseline'}][0]
     # Create one dataframe for each of variants
     improvement_groups_dict = dict()
     for idx, row in baseline_metrics.iterrows():

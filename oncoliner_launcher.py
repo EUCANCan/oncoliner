@@ -109,8 +109,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
+    
+    ui_output_file = os.path.join(args.output, 'oncoliner_report.html')
+    # Remove the UI output file if it already exists
+    if os.path.exists(ui_output_file):
+        os.remove(ui_output_file)
 
-    # Make sure the paths are absolute
+    # Transform the paths to absolute paths
     args.config = os.path.abspath(args.config)
     args.pipelines_folders = [os.path.abspath(folder) for folder in args.pipelines_folders]
     args.output = os.path.abspath(args.output)
@@ -169,7 +174,6 @@ if __name__ == '__main__':
         run_harmonizator(pipeline_improvements_folder_result_paths, output_harmonization_folder, args.max_processes)
 
     # Run the UI
-    ui_output_file = os.path.join(args.output, 'oncoliner_report.html')
     run_ui(pipelines_evaluation_folder_paths, pipeline_improvements_folder_paths,
            args.callers_folder, output_harmonization_folder, ui_output_file)
 
