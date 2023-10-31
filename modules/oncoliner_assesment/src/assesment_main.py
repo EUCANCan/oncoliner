@@ -30,8 +30,8 @@ def _ingest(truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, co
     length_test_mask = (df_test['length'] == 0) & \
         (df_test['type_inferred'] != VariantType.SNV.name) & (df_test['type_inferred'] != VariantType.TRA.name) & (df_test['type_inferred'] != VariantType.SGL.name)
     # Initialize masks for included variants to all false
-    variant_types_truth_mask = pd.Series([False] * len(df_truth))
-    variant_types_test_mask = pd.Series([False] * len(df_test))
+    variant_types_truth_mask = pd.Series([False] * len(df_truth), dtype=bool)
+    variant_types_test_mask = pd.Series([False] * len(df_test), dtype=bool)
     for variant_type in variant_types:
         variant_type_split = variant_type.split('-')
         if len(variant_type_split) == 1:
@@ -114,7 +114,7 @@ def main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_ref, indel_thresh
     # Run benchmark
     df_tp, df_tp_dup, \
         df_fp, df_fp_dup, \
-        df_fn, df_fn_dup = intersect(df_truth, df_test, indel_threshold, window_radius)
+        df_fn, df_fn_dup = intersect(df_truth, df_test, indel_threshold, window_radius, True)
 
     # Write VCF files
     command = ' '.join(sys.argv)
@@ -158,7 +158,7 @@ def main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_ref, indel_thresh
     print(f'Total truth variants analyzed: {len(df_truth)} + {len(df_skipped_truth)} skipped')
     print(f'Total test variants analyzed: {len(df_test)} + {len(df_skipped_test)} skipped')
     print('Benchmark metrics:')
-    print(metrics_df.to_string(index=False))
+    print(metrics_df.drop(['protein_affected_genes', 'protein_affected_driver_genes'], axis=1).to_string(index=False))
     print(f'Benchmark metrics can be found in {output_prefix}metrics.csv')
 
 
