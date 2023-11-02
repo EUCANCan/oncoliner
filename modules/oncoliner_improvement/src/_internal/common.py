@@ -1,18 +1,15 @@
 import re
 
 from vcf_ops.metrics import combine_precision_recall_metrics  # noqa
-from vcf_ops.constants import UNION_SYMBOL, INTERSECTION_SYMBOL, REMOVE_SYMBOL  # noqa
+from vcf_ops.constants import UNION_SYMBOL, INTERSECTION_SYMBOL  # noqa
 
 
 def build_result_dataframe(operation, mask, precision_df, recall_df):
     df = combine_precision_recall_metrics(recall_df, precision_df)
     df = df[mask]
     added_callers = operation.count(UNION_SYMBOL) + operation.count(INTERSECTION_SYMBOL)
-    removed_callers = operation.count(REMOVE_SYMBOL)
     df.insert(0, 'operation', operation)
     df['added_callers'] = added_callers
-    df['removed_callers'] = removed_callers
-    df['total_changed_callers'] = added_callers + removed_callers
     return df
 
 

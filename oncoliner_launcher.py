@@ -67,7 +67,7 @@ def run_harmonizator(pipeline_improvements_folder_paths: List[str], output_folde
         return
     harmonizer_command = os.environ['HARMONIZATION_COMMAND']
     harmonizer_command_split = harmonizer_command.split()
-    args = harmonizer_command_split + ['-i', *pipeline_improvements_folder_paths, '-o', output_folder, '-p', str(max_processes)]
+    args = harmonizer_command_split + ['-i', *pipeline_improvements_folder_paths, '-o', output_folder, '-t', str(max_processes)]
     subprocess.check_call(args)
 
 
@@ -170,8 +170,7 @@ if __name__ == '__main__':
     if len(args.pipelines_folders) > 1 and pipeline_improvements_folder_paths:
         output_harmonization_folder = os.path.join(args.output, 'harmonization')
         os.makedirs(output_harmonization_folder, exist_ok=True)
-        pipeline_improvements_folder_result_paths = [os.path.join(folder, 'results') for folder in pipeline_improvements_folder_paths]
-        run_harmonizator(pipeline_improvements_folder_result_paths, output_harmonization_folder, args.max_processes)
+        run_harmonizator(pipeline_improvements_folder_paths, output_harmonization_folder, args.max_processes)
 
     # Run the UI
     run_ui(pipelines_evaluation_folder_paths, pipeline_improvements_folder_paths,
