@@ -150,8 +150,11 @@ def write_vcf(variants_df: pd.DataFrame, output_vcf, fasta_ref=None, command=Non
 
 
 def _extract_variants(vcf_file) -> pd.DataFrame:
-    extractor = VariantExtractor(vcf_file, pass_only=True)
-    variants_df = extractor.to_dataframe()
+    try:
+        extractor = VariantExtractor(vcf_file, pass_only=True)
+        variants_df = extractor.to_dataframe()
+    except Exception as e:
+        raise Exception(f'Error reading VCF file {vcf_file}') from e
     variants_df['vcf_file'] = vcf_file
     return variants_df
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import os
 import subprocess
 import sys
@@ -151,6 +151,7 @@ def union_callers(caller_1_prefix: str, caller_2_prefix: str, output_prefix: str
 
 def op_callers_with_samples(operation_tuple, combinations_folder: str, evaluations_folder: str, threads: int, config: pd.DataFrame, **kwargs):
     element_1, operation_symbol, element_2, operation_str = operation_tuple
+    print(f'Executing combination: {element_1} <{operation_symbol}> {element_2}')
     # Get names of the elements
     element_1_name = element_1 if element_1.count('(') == 0 else element_1[1:-1]
     element_2_name = element_2 if element_2.count('(') == 0 else element_2[1:-1]
@@ -182,6 +183,7 @@ def op_callers_with_samples(operation_tuple, combinations_folder: str, evaluatio
     operation = union_callers if operation_symbol == UNION_SYMBOL else intersect_callers
     sample_names = config['sample_name'].tolist()
     for sample in sample_names:
+        fasta_ref = config[config['sample_name'] == sample]['reference_fasta_path'].iloc[0]
         caller_1_prefix = os.path.join(combination_element_1_folder, sample + '/')
         caller_2_prefix = os.path.join(combination_element_2_folder, sample + '/')
         output_prefix = os.path.join(combination_output_folder, sample, operation_name)
@@ -191,10 +193,10 @@ def op_callers_with_samples(operation_tuple, combinations_folder: str, evaluatio
             print(f'Output folder {output_prefix} already exists and is not empty, skipping sample: {sample}')
             continue
         os.makedirs(os.path.dirname(output_prefix), exist_ok=True)
-        written_data = operation(caller_1_prefix, caller_2_prefix, output_prefix, fasta_ref=kwargs['fasta_ref'],
+        written_data = operation(caller_1_prefix, caller_2_prefix, output_prefix, fasta_ref=fasta_ref,
                                  indel_threshold=kwargs['indel_threshold'], window_radius=kwargs['window_radius'])
         if not written_data:
-            print(f'{combination_output_folder}: no data written for sample: {sample}')
+            print(f'{operation_str}: no data written for sample: {sample}. Skipping the rest of the samples.')
             shutil.rmtree(combination_output_folder)
             # Write a file with the operation name to avoid repeating the operation
             with open(combination_output_flag_file, 'w') as f:
@@ -275,44 +277,30 @@ def create_improvement_list(evaluation_callers_folders: List[str], output_folder
         improvement_df.to_csv(output_file, index=False)
 
 
-def _create_config(truth_folder: str, fasta_ref: str, recall_samples: List[str], precision_samples: List[str]) -> pd.DataFrame:
-    entries = []
-    for sample in sorted(set(recall_samples).union(precision_samples)):
-        sample_types = []
-        if sample in recall_samples:
-            sample_types.append('recall')
-        if sample in precision_samples:
-            sample_types.append('precision')
-        truth_files = get_vcf_files(os.path.join(truth_folder, sample, ''))
-        entries.append([
-            sample,
-            ','.join(sample_types),
-            fasta_ref,
-            ','.join(truth_files)
-        ])
-    config = pd.DataFrame(entries, columns=['sample_name', 'sample_types', 'reference_fasta_path', 'truth_vcf_paths'])
-    return config
+def get_recall_precision_samples(config: pd.DataFrame) -> Tuple[List[str], List[str]]:
+    sample_type_set = config['sample_types'].map(lambda x: set(x.split(',')))
+    recall_samples = config[sample_type_set.apply(lambda x: 'recall' in x)]['sample_name'].tolist()
+    precision_samples = config[sample_type_set.apply(lambda x: 'precision' in x)]['sample_name'].tolist()
+    return recall_samples, precision_samples
 
 
 def main(args):
+    # Read the config file
+    config = pd.read_csv(args.config, sep='\t')
+
     # Get callers names
-    callers_names = os.listdir(args.test)
+    callers_names = os.listdir(args.variant_callers)
     callers_names.sort()
 
     # Get sample names
-    sample_names = list(set(args.recall_samples).union(args.precision_samples))
-    sample_names.sort()
+    recall_samples, precision_samples = get_recall_precision_samples(config)
+    sample_names = sorted(set(recall_samples).union(precision_samples))
 
     # All test folders (callers) must contain the same subfolders (samples)
     for caller_folder in callers_names:
         for sample in sample_names:
-            if not os.path.exists(os.path.join(args.test, caller_folder, sample)):
+            if not os.path.exists(os.path.join(args.variant_callers, caller_folder, sample)):
                 raise Exception(f'Caller {caller_folder} is missing sample {sample} subfolder')
-            if not os.path.exists(os.path.join(args.truth, sample)):
-                raise Exception(f'Truth folder is missing sample {sample} subfolder')
-
-    # Create config
-    config = _create_config(args.truth, args.fasta_ref, args.recall_samples, args.precision_samples)
 
     # Create output folder
     os.makedirs(args.output, exist_ok=True)
@@ -323,7 +311,8 @@ def main(args):
     output_combinations = os.path.join(args.output, 'combinations')
     os.makedirs(output_combinations, exist_ok=True)
     # Evaluate the callers
-    original_caller_folders = [os.path.join(args.test, caller_name) for caller_name in callers_names]
+    print('Evaluating callers...')
+    original_caller_folders = [os.path.join(args.variant_callers, caller_name) for caller_name in callers_names]
     evaluate_callers(original_caller_folders, config, output_evaluations, args.processes,
                      indel_threshold=args.indel_threshold, window_radius=args.window_radius,
                      sv_size_bins=args.sv_size_bins, contigs=args.contigs, variant_types=args.variant_types, no_gzip=args.no_gzip)
@@ -350,34 +339,36 @@ def main(args):
     for caller_name in callers_names:
         for variant_type in get_caller_variant_type(os.path.join(output_evaluations, caller_name)):
             callers_variant_types[variant_type].append(caller_name)
+    print(f'Callers variant types: {callers_variant_types}')
     # Define all the possible the operations (intersections and/or unions) to perform between callers of the same variant type
+    print('Generating combinations...')
     callers_operations_by_variant_type = {}
     for variant_type, callers in callers_variant_types.items():
         callers_operations_by_variant_type[variant_type] = generate_combinations(
             callers, args.max_combinations, UNION_SYMBOL, INTERSECTION_SYMBOL)
     # Perform the operations
     for operations in callers_operations_by_variant_type.values():
+        print(f'Executing {len(operations)} combinations...')
         if len(operations) == 0:
             continue
-        execute_operations(operations, output_combinations, output_evaluations, args.processes, config, fasta_ref=args.fasta_ref,
+        execute_operations(operations, output_combinations, output_evaluations, args.processes, config,
                            indel_threshold=args.indel_threshold, window_radius=args.window_radius, sv_size_bins=args.sv_size_bins,
                            contigs=args.contigs, variant_types=args.variant_types, loss_margin=args.loss_margin)
 
+    # Create improvement list
+    print('Creating improvement list...')
     evaluation_callers_folders = glob.glob(os.path.join(output_evaluations, '*'))
     output_list_folder = os.path.join(args.output, 'improvement_list')
     os.makedirs(output_list_folder, exist_ok=True)
     create_improvement_list(evaluation_callers_folders, output_list_folder, args.processes)
+    print('Improvement list in folder: ' + output_list_folder)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Pipeline designer')
-    parser.add_argument('-t', '--truth', help='Path to the VCF truth folder', required=True, type=str)
-    parser.add_argument('-v', '--test', help='Path to the VCF test folder', required=True, type=str)
+    parser.add_argument('-c', '--config', help='Path to the config file', required=True, type=str)
+    parser.add_argument('-vc', '--variant-callers', help='Path to the variant callers folder', required=True, type=str)
     parser.add_argument('-o', '--output', help='Path to the output folder', required=True, type=str)
-    parser.add_argument('-f', '--fasta-ref', help='Path to reference FASTA file', required=True, type=str)
-    parser.add_argument('-rs', '--recall-samples', type=str, required=True, nargs='+', help='Recall samples names')
-    parser.add_argument('-ps', '--precision-samples', type=str, required=True,
-                        nargs='+', help='Precision samples names')
     parser.add_argument('-lm', '--loss-margin', type=float, default=0.05, help='Loss margin for improvement')
     parser.add_argument('-it', '--indel-threshold',
                         help=f'Indel threshold, inclusive (default={DEFAULT_INDEL_THRESHOLD})', default=DEFAULT_INDEL_THRESHOLD, type=int)
@@ -391,7 +382,6 @@ if __name__ == '__main__':
                         help=f'Variant types to process (default={DEFAULT_VARIANT_TYPES})')
     parser.add_argument('--no-gzip', action='store_true', help='Do not gzip the output VCF files')
     parser.add_argument('-p', '--processes', type=int, default=1, help='Number of processes to use')
-    parser.add_argument('--max-combinations', type=int, default=-1,
-                        help='Maximum number of combinations to perform (-1) for all')
-
+    parser.add_argument('--max-combinations', type=int, default=4,
+                        help='Maximum number of combinations to perform (-1) for all combinations')
     main(parser.parse_args())
