@@ -1,7 +1,7 @@
 # Copyright 2023 - Barcelona Supercomputing Center
 # Author: Rodrigo Martín
 # BSC Dual License
-from typing import Set
+from typing import List, Set
 import os
 import pandas as pd
 
@@ -19,6 +19,13 @@ def _read_genes_file(genes_tsv_file_path: str):
     # Get all the genes in the "symbol" column
     return frozenset(df['symbol'].unique())
 
+def _extract_annotations(variant_record_obj, annotation_field_name: str) -> List[str]:
+    annotations = variant_record_obj.info[annotation_field_name]
+    if annotations is None:
+        return []
+    elif isinstance(annotations, str):
+        annotations = [annotations]
+    return annotations
 
 def get_cancer_census_genes():
     # Lazy load CANCER_CENSUS_GENES
@@ -30,13 +37,12 @@ def get_cancer_census_genes():
 
 def _extract_protein_affected_genes_from_oncoliner(variant_record_obj) -> Set[str]:
     # Extract protein coding genes from ONCOLINER annotation
-    protein_affected_genes = set(variant_record_obj.info[ONCOLINER_INFO_FIELD_NAME])
-    return protein_affected_genes
+    return set(_extract_annotations(variant_record_obj, ONCOLINER_INFO_FIELD_NAME))
 
 def _extract_protein_affected_genes_from_funnsv(variant_record_obj) -> Set[str]:
     # Extract protein coding genes from funnSV annotation
     protein_affected_genes = set()
-    for annotation in variant_record_obj.info['FUNNSV_ANNOTATIONS']:
+    for annotation in _extract_annotations(variant_record_obj, 'FUNNSV_ANNOTATIONS'):
         for ann in annotation.split('|'):
             if ann in _PROTEIN_CODING_GENES:
                 protein_affected_genes.add(ann)
@@ -48,7 +54,7 @@ def _extract_protein_affected_genes_from_vep(variant_record_obj) -> Set[str]:
     protein_affected_consequences = set(['stop_gained', 'frameshift_variant', 'stop_lost', 'start_lost', 'inframe_insertion',
                                         'inframe_deletion', 'missense_variant', 'protein_altering_variant', 'coding_sequence_variant', 'coding_transcript_variant'])
     protein_affected_genes = set()
-    for vep_annotation in variant_record_obj.info['CSQ']:
+    for vep_annotation in  _extract_annotations(variant_record_obj, 'CSQ'):
         # Find an annotation with a protein affecting consequence
         found = False
         for ann in vep_annotation.split('|'):
@@ -90,6 +96,8 @@ def combine_genes_symbols(genes_symbols_sets: pd.Series) -> Set[str]:
 
 
 def add_gene_annotation_to_variant_record(variant_record_obj, genes_symbols: Set[str]):
+    if len(genes_symbols) == 0:
+        return
     variant_record_obj.info[ONCOLINER_INFO_FIELD_NAME] = list(genes_symbols)
 
 

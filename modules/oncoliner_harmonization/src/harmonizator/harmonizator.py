@@ -54,7 +54,7 @@ def _get_pipelines_combinations(pipelines_folders: List[str], threads: int) -> D
     return pipelines_combinations
 
 
-def _group_combinations(improvements_combinations_metrics: Dict[str, Dict[str, pd.DataFrame]]) -> Dict[str, pd.DataFrame]:
+def _group_combinations(improvements_combinations_metrics: Dict[str, Dict[str, pd.DataFrame]]):
     first_pipeline_improvements = list(improvements_combinations_metrics.values())[0]
     combinations_groups_dict = dict()
     for variant_type_size in first_pipeline_improvements.keys():

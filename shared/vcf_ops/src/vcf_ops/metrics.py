@@ -216,7 +216,7 @@ def compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size
         protein_affected_genes = set()
         protein_affected_driver_genes = set()
         if is_test_annotated.any():
-            protein_affected_genes = combine_genes_symbols(tp_df['variant_record_obj'].apply(extract_protein_affected_genes))
+            protein_affected_genes = combine_genes_symbols(tp_df[is_test_annotated]['variant_record_obj'].apply(extract_protein_affected_genes))
             protein_affected_driver_genes = protein_affected_genes & get_cancer_census_genes()
         row.append(len(protein_affected_genes))
         row.append(len(protein_affected_driver_genes))
