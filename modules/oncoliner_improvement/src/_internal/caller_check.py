@@ -146,13 +146,14 @@ def _execute_union(user_sample_folder, caller_sample_folder, indel_threshold, wi
 
 
 class CallerChecker:
-    def __init__(self, results_output_folder, num_processes, baseline_metrics, caller_folder, user_folder, recall_samples, precision_samples, loss_margin):
+    def __init__(self, results_output_folder, num_processes, baseline_metrics, caller_folder, user_folder, recall_samples, precision_samples, loss_margin, gain_margin):
         self.__results_output_folder = results_output_folder
         self.__caller_samples_folder = os.path.join(caller_folder, 'samples')
         self.__caller_name = os.path.basename(caller_folder)
         self.__recall_samples = recall_samples
         self.__precision_samples = precision_samples
         self.__loss_margin = loss_margin
+        self.__gain_margin = gain_margin
         self.__user_folder = os.path.join(user_folder, 'samples')
         self.__baseline_metrics = baseline_metrics
         self.__caller_mask = _caller_metrics_mask(self.__caller_samples_folder, self.__recall_samples, self.__precision_samples)
@@ -211,7 +212,7 @@ class CallerChecker:
         union_recall_metrics, save_vcf_results_recall = \
             self._execute_operation(_execute_union, self.__recall_samples, **kwargs)
         # Get the rows where the caller union recall is better than baseline in union_viable
-        union_better = (union_recall_metrics['recall'] > self.__baseline_metrics['recall']) & union_viable
+        union_better = (union_recall_metrics['recall'] > self.__baseline_metrics['recall'] + self.__gain_margin) & union_viable
         if not union_better.any():
             return None
         return union_precision_metrics, union_recall_metrics, save_vcf_results_precision, save_vcf_results_recall
@@ -230,7 +231,7 @@ class CallerChecker:
             self._execute_operation(_execute_intersection, self.__precision_samples, **kwargs)
         # Get the rows where the caller intersection precision is better than baseline in intersection_viable
         intersection_better = (intersection_precision_metrics['precision'] >
-                               self.__baseline_metrics['precision']) & intersection_viable
+                               self.__baseline_metrics['precision'] + self.__gain_margin) & intersection_viable
         if not intersection_better.any():
             return None
         return intersection_precision_metrics, intersection_recall_metrics, save_vcf_results_precision, save_vcf_results_recall
@@ -246,7 +247,7 @@ class CallerChecker:
             output_folder = os.path.join(self.__results_output_folder, operation_name)
             agg_file = os.path.join(output_folder, 'aggregated_metrics.csv')
             if os.path.exists(output_flag_file) or (os.path.exists(agg_file) and os.path.getsize(agg_file) > 0):
-                logging.info(f'Skipping {union_operation_name} because it was already done')
+                logging.info(f'Skipping {operation_name} computation because it was already done')
                 continue
             output = op(**kwargs)
             if output is None:
@@ -265,7 +266,7 @@ class CallerChecker:
 
 
 def execute_caller_check(results_output_folder, num_processes, baseline_metrics,
-                         caller_folder, user_folder, recall_samples, precision_samples, loss_margin, **kwargs):
+                         caller_folder, user_folder, recall_samples, precision_samples, loss_margin, gain_margin, **kwargs):
     caller_checker = CallerChecker(results_output_folder, num_processes, baseline_metrics,
-                                   caller_folder, user_folder, recall_samples, precision_samples, loss_margin)
+                                   caller_folder, user_folder, recall_samples, precision_samples, loss_margin, gain_margin)
     caller_checker.execute(**kwargs)
