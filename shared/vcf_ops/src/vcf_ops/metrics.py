@@ -49,15 +49,13 @@ def aggregate_metrics(metrics_list):
     concat_metrics = pd.concat(metrics_list, ignore_index=True)
     # Aggregate metrics
     # Convert to set (if not NaN)
+    # Coding genes are splitted by GENE_SPLIT_SYMBOL, create a set of all coding genes and then join them again
     concat_metrics['protein_affected_genes_sets'] = concat_metrics['protein_affected_genes'].apply(
         lambda x: set(x.split(GENE_SPLIT_SYMBOL) if not pd.isna(x) else []))
     agg_metrics = concat_metrics.groupby(['variant_type', 'variant_size', 'window_radius'], sort=False).agg(
         tp=pd.NamedAgg(column='tp', aggfunc='sum'),
         fp=pd.NamedAgg(column='fp', aggfunc='sum'),
         fn=pd.NamedAgg(column='fn', aggfunc='sum'),
-        # Coding genes are splitted by GENE_SPLIT_SYMBOL, create a set of all coding genes and then join them again
-        protein_affected_genes_count=pd.NamedAgg(column='protein_affected_genes_count', aggfunc='sum'),
-        protein_affected_driver_genes_count=pd.NamedAgg(column='protein_affected_driver_genes_count', aggfunc='sum'),
         protein_affected_genes=pd.NamedAgg(column='protein_affected_genes_sets', aggfunc=combine_genes_symbols),
     ).reset_index()
     agg_metrics['recall'] = agg_metrics['tp'] / (agg_metrics['tp'] + agg_metrics['fn'])
@@ -68,11 +66,13 @@ def aggregate_metrics(metrics_list):
     agg_metrics['recall'].fillna(0, inplace=True)
     agg_metrics['precision'].fillna(0, inplace=True)
     agg_metrics['f1_score'].fillna(0, inplace=True)
+    agg_metrics['protein_affected_genes_count'] = agg_metrics['protein_affected_genes'].apply(lambda x: len(x))
     # Add protein_affected_driver_genes
-    agg_metrics['protein_affected_driver_genes'] = agg_metrics['protein_affected_genes'].apply(
-        lambda x: GENE_SPLIT_SYMBOL.join(x.intersection(get_cancer_census_genes())))
+    agg_metrics['protein_affected_driver_genes'] = agg_metrics['protein_affected_genes'].apply(lambda x: x.intersection(get_cancer_census_genes()))
+    agg_metrics['protein_affected_driver_genes_count'] = agg_metrics['protein_affected_driver_genes'].apply(lambda x: len(x))
     # Convert to string
     agg_metrics['protein_affected_genes'] = agg_metrics['protein_affected_genes'].apply(lambda x: GENE_SPLIT_SYMBOL.join(x))
+    agg_metrics['protein_affected_driver_genes'] = agg_metrics['protein_affected_driver_genes'].apply(lambda x: GENE_SPLIT_SYMBOL.join(x))
     # Reorder columns
     agg_metrics = agg_metrics[METRICS_COLUMNS]
     return agg_metrics

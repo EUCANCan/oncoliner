@@ -1,20 +1,13 @@
 from typing import List, Dict
 import os
-import sys
 import glob
 import itertools
+import functools
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 
-# Add vcf-ops to the path
-sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', '..', 'shared', 'vcf_ops', 'src'))
-
-from vcf_ops.union import union  # noqa
-from vcf_ops.i_o import read_vcfs  # noqa
-from vcf_ops.metrics import infer_parameters_from_metrics  # noqa
-from vcf_ops.masks import indel_mask, snv_mask  # noqa
 from .utils import cleanup_text  # noqa
 
 
@@ -23,7 +16,12 @@ def _read_pipeline_improvements(pipeline_folder: str) -> Dict[str, pd.DataFrame]
     csv_files = glob.glob(os.path.join(pipeline_folder, 'improvement_list', '*.csv'))
     if len(csv_files) == 0:
         raise Exception(f'No improvement files found in {pipeline_folder}')
-    pipeline_improvements = map(pd.read_csv, csv_files)
+    # Get the first row of the first file to get the column names
+    first_row = pd.read_csv(csv_files[0], nrows=1)
+    # Get the columns and remove all those that end with _genes
+    selected_columns = [column for column in first_row.columns if not column.endswith('_genes')]
+    # Read all the improvements
+    pipeline_improvements = [pd.read_csv(csv_file, usecols=selected_columns) for csv_file in csv_files]
     # Concatenate all the improvements into a single dataframe
     pipeline_improvements = pd.concat(pipeline_improvements, ignore_index=True)
     # Create a dict with the variant_type and variant_size
@@ -56,12 +54,18 @@ def _get_pipelines_combinations(pipelines_folders: List[str], threads: int) -> D
 
 def _group_combinations(improvements_combinations_metrics: Dict[str, Dict[str, pd.DataFrame]]):
     first_pipeline_improvements = list(improvements_combinations_metrics.values())[0]
-    combinations_groups_dict = dict()
     for variant_type_size in first_pipeline_improvements.keys():
+        # Calculate the total number of combinations
+        total_combinations = functools.reduce(lambda x, y: x * y,
+                                                [len(pipeline_improvements[variant_type_size]['operation'].unique())
+                                                 for pipeline_improvements in improvements_combinations_metrics.values()])
+        if total_combinations > 100000:
+            raise Exception(f'Too many possible combinations ({total_combinations}) for variant type and size {variant_type_size}. '
+                            f'Please, reduce the number of operations for each pipeline')
         # Combine all the operation possibilities for each pipeline
-        operations_combinations = list(itertools.product(*[[f'{pipeline_name};{op}'
-                                                           for op in pipeline_improvements[variant_type_size]['operation'].unique()]
-                                                           for pipeline_name, pipeline_improvements in improvements_combinations_metrics.items()]))
+        operations_combinations = itertools.product(*[[f'{pipeline_name};{op}'
+                                                      for op in pipeline_improvements[variant_type_size]['operation'].unique()]
+                                                      for pipeline_name, pipeline_improvements in improvements_combinations_metrics.items()])
         # For each combination, get the metrics
         combinations_rows = []
         for operations_combination in operations_combinations:
@@ -87,7 +91,8 @@ def _group_combinations(improvements_combinations_metrics: Dict[str, Dict[str, p
                 # Calculate the metrics for the current operation
                 for combinations_row_key in combinations_row.keys():
                     if combinations_row_key.endswith('_avg'):
-                        combinations_row[combinations_row_key] += metrics[combinations_row_key.replace('_avg', '')] / len(operations_combination)
+                        combinations_row[combinations_row_key] += \
+                            metrics[combinations_row_key.replace('_avg', '')] / len(operations_combination)
                     elif combinations_row_key.endswith('_sum'):
                         combinations_row[combinations_row_key] += metrics[combinations_row_key.replace('_sum', '')]
             combinations_rows.append(combinations_row)

@@ -26,7 +26,7 @@ def get_recall_precision_samples(config: pd.DataFrame) -> Tuple[List[str], List[
 def run_evaluator(pipeline_folder_path: str, output_folder: str, config: pd.DataFrame, max_processes: int) -> None:
     # If output_folder/aggregated_metrics.csv already exists and it is not empty, skip the assesment
     if os.path.exists(os.path.join(output_folder, 'aggregated_metrics.csv')) and os.path.getsize(os.path.join(output_folder, 'aggregated_metrics.csv')) > 0:
-        logging.warning(f'The assesment file {os.path.join(output_folder, "aggregated_metrics.csv")} already exists.\nSkipping the assesment for pipeline {pipeline_folder_path}')
+        logging.info(f'The assesment file {os.path.join(output_folder, "aggregated_metrics.csv")} already exists.\nSkipping the assesment for pipeline {pipeline_folder_path}')
         return
     pipelines_vcf_paths = config['sample_name'].apply(
         lambda sample_name: ','.join([os.path.join(pipeline_folder_path, sample_name, '*.vcf.gz'),
@@ -48,7 +48,7 @@ def run_evaluator(pipeline_folder_path: str, output_folder: str, config: pd.Data
 def run_improver(pipeline_evaluations_folder_path: str, output_folder: str, callers_folder: str, config: pd.DataFrame, max_processes: int) -> None:
     # If the output_folder/improvement_list folder already exists and it is not empty, skip the improvement
     if os.path.exists(os.path.join(output_folder, 'improvement_list')) and os.listdir(os.path.join(output_folder, 'improvement_list')):
-        logging.warning(f'The improvement folder {os.path.join(output_folder, "improvement_list")} already exists and it is not empty.\nSkipping the improvement for pipeline {pipeline_evaluations_folder_path}')
+        logging.info(f'The improvement folder {os.path.join(output_folder, "improvement_list")} already exists and it is not empty.\nSkipping the improvement for pipeline {pipeline_evaluations_folder_path}')
         return
     improver_command = os.environ['IMPROVEMENT_COMMAND']
     improver_command_split = improver_command.split()
@@ -63,7 +63,7 @@ def run_improver(pipeline_evaluations_folder_path: str, output_folder: str, call
 def run_harmonizator(pipeline_improvements_folder_paths: List[str], output_folder: str, max_processes: int) -> None:
     # If the output folder already exists and it is not empty, skip the harmonization
     if os.path.exists(output_folder) and os.listdir(output_folder):
-        logging.warning(f'The harmonization folder {output_folder} already exists and it is not empty. Skipping the harmonization.')
+        logging.info(f'The harmonization folder {output_folder} already exists and it is not empty. Skipping the harmonization.')
         return
     harmonizer_command = os.environ['HARMONIZATION_COMMAND']
     harmonizer_command_split = harmonizer_command.split()
