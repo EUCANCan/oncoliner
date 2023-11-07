@@ -22,7 +22,7 @@ if __name__ == '__main__':
                         'provided that --loss-margin is also satisfied. '\
                         'Increasing this value will reduce the number of recommendations and execution time')
     parser.add_argument('-mr', '--max-recommendations', type=float, default=1,
-                        help='Maximun number of recommendations to provide for each performance metric per variant type and size and number of variant callers added (default: 1)')
+                        help='Maximun number of recommendations to provide for each performance metric per variant type and size and number of variant callers added (default: 1). Set to -1 to provide all recommendations')
     parser.add_argument('-wr', '--window-radius',
                         help='Window radius used for the evaluation. It will be inferred automatically by default', type=int)
     parser.add_argument('-p', '--processes', type=int, default=1, help='Number of processes to use (default: 1)')

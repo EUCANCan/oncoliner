@@ -39,7 +39,7 @@ def extract_vcfs(path_prefix: str) -> pd.DataFrame:
     return read_vcfs(files)
 
 
-def check_improvement(combination_evaluation_folder: str, evaluation_element_1_folder: str, evaluation_element_2_folder: str, operation_symbol: str, loss_margin: float) -> bool:
+def check_improvement(combination_evaluation_folder: str, evaluation_element_1_folder: str, evaluation_element_2_folder: str, operation_symbol: str, loss_margin: float, gain_margin: float) -> bool:
     # Get the aggregated metrics for all the folders
     combination_metrics = pd.read_csv(glob.glob(os.path.join(combination_evaluation_folder, '*aggregated_metrics.csv'))[0])
     element_1_metrics = pd.read_csv(glob.glob(os.path.join(evaluation_element_1_folder, '*aggregated_metrics.csv'))[0])
@@ -59,8 +59,8 @@ def check_improvement(combination_evaluation_folder: str, evaluation_element_1_f
     element_1_metrics = element_1_metrics[loss_mask]
     element_2_metrics = element_2_metrics[loss_mask]
     # Get all the rows where the combination has improved
-    improve_mask_1 = combination_metrics[metric_improve] - element_1_metrics[metric_improve] > 0.01
-    improve_mask_2 = combination_metrics[metric_improve] - element_2_metrics[metric_improve] > 0.01
+    improve_mask_1 = combination_metrics[metric_improve] - element_1_metrics[metric_improve] > gain_margin
+    improve_mask_2 = combination_metrics[metric_improve] - element_2_metrics[metric_improve] > gain_margin
     improve_mask = improve_mask_1 | improve_mask_2
     combination_metrics = combination_metrics[improve_mask]
     return combination_metrics
@@ -78,6 +78,9 @@ def evaluate_caller(caller_folder, config, output_folder, processes, indel_thres
     config_path = os.path.join(output_folder, 'config.tsv')
     config_with_pipeline_vcf_paths.to_csv(config_path, sep='\t', index=False)
     # Execute the assesment
+    if 'ASSESMENT_COMMAND' not in os.environ:
+        assesment_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'modules', 'oncoliner_assesment', 'src', 'assesment_bulk.py')
+        os.environ['ASSESMENT_COMMAND'] = 'python3 ' + assesment_command_default_path
     assesment_command = os.environ['ASSESMENT_COMMAND']
     evaluator_command_split = assesment_command.split()
     args = evaluator_command_split + \
@@ -211,7 +214,7 @@ def op_callers_with_samples(operation_tuple, combinations_folder: str, evaluatio
     evaluation_element_1_folder = os.path.join(evaluations_folder, element_1_name)
     evaluation_element_2_folder = os.path.join(evaluations_folder, element_2_name)
     improved_metrics_df = check_improvement(evaluation_output_folder, evaluation_element_1_folder,
-                                            evaluation_element_2_folder, operation_symbol, kwargs['loss_margin'])
+                                            evaluation_element_2_folder, operation_symbol, kwargs['loss_margin'], kwargs['gain_margin'])
     # If there is no improvement, remove the combination folder
     if len(improved_metrics_df) == 0:
         shutil.rmtree(combination_output_folder)
@@ -246,7 +249,25 @@ def execute_operations(operations: List[str], combinations_folder: str, evaluati
     pool.shutdown(wait=True)
 
 
-def create_improvement_list(evaluation_callers_folders: List[str], output_folder: str, processes: int):
+def filter_operations(df: pd.DataFrame, loss_margin: float, max_recommendations: int):
+    result = set()
+    ranking_columns = ['f1_score', 'recall', 'precision']
+    for num_callers in df['num_callers'].unique():
+        df_temp = df[df['num_callers'] == num_callers]
+        for i, ranking_column in enumerate(ranking_columns):
+            sort_columns = [ranking_column] + ranking_columns[:i] + ranking_columns[i+1:]
+            # Filter all rows with the max element for each column - loss_margin
+            for column in sort_columns:
+                df_temp = df_temp[df_temp[column] >= df_temp[column].max() - loss_margin]
+            # Sort by the ranking column
+            df_temp = df_temp.sort_values(ranking_column, ascending=False)
+            if max_recommendations > 0:
+                df_temp = df_temp.head(max_recommendations)
+            result.update(df_temp['operation'].unique())
+    return result
+
+
+def write_improvement_lists(evaluation_callers_folders: List[str], loss_margin: float, max_recommendations: int, output_folder: str, processes: int):
     # Read all aggregated metrics files in each thread
     def read_aggregated_metrics(caller_folder):
         df = pd.read_csv(glob.glob(os.path.join(caller_folder, '*aggregated_metrics.csv'))[0])
@@ -265,16 +286,34 @@ def create_improvement_list(evaluation_callers_folders: List[str], output_folder
         all_dfs.append(future.result())
     pool.shutdown(wait=True)
     # Create a dataframe with all the aggregated metrics for each row of the first aggregated metrics file
+    selected_operations = set()
     for idx, row in all_dfs[0].iterrows():
-        name = cleanup_text(f'{row["variant_type"]}_{row["variant_size"]}')
-        output_file = os.path.join(output_folder, name + '.csv')
         improvement_group_list = []
         for df in all_dfs:
             improvement_group_list.append(df.loc[idx])
         improvement_df = pd.DataFrame(improvement_group_list)
         # Filter out the rows without minimum recall
         improvement_df = improvement_df[improvement_df['recall'] >= MIN_RECALL]
+        # Filter out the rows with best
+        selected_operations.update(filter_operations(improvement_df, loss_margin, max_recommendations))
+
+    selected_dfs = [x for x in all_dfs if x['operation'].isin(selected_operations).any()]
+    for idx, row in selected_dfs[0].iterrows():
+        name = cleanup_text(f'{row["variant_type"]}_{row["variant_size"]}')
+        output_file = os.path.join(output_folder, name + '.csv')
+        improvement_group_list = []
+        for df in selected_dfs:
+            improvement_group_list.append(df.loc[idx])
+        improvement_df = pd.DataFrame(improvement_group_list)
+        # Filter out the rows without minimum recall
+        improvement_df = improvement_df[improvement_df['recall'] >= MIN_RECALL]
         improvement_df.to_csv(output_file, index=False)
+        if len(improvement_df) == 0:
+            continue
+        print()
+        print(f'{row["variant_type"]} ({row["variant_size"]}): All combinations available at {output_file}')
+        for metric in ['f1_score', 'recall', 'precision']:
+            print(f'{row["variant_type"]} ({row["variant_size"]}): Best {metric.upper()}: {improvement_df.sort_values(metric, ascending=False).iloc[0]["operation"]}')
 
 
 def get_recall_precision_samples(config: pd.DataFrame) -> Tuple[List[str], List[str]]:
@@ -353,15 +392,14 @@ def main(args):
             continue
         execute_operations(operations, output_combinations, output_evaluations, args.processes, config,
                            indel_threshold=args.indel_threshold, window_radius=args.window_radius, sv_size_bins=args.sv_size_bins,
-                           contigs=args.contigs, variant_types=args.variant_types, loss_margin=args.loss_margin)
+                           contigs=args.contigs, variant_types=args.variant_types, loss_margin=args.loss_margin, gain_margin=args.gain_margin)
 
     # Create improvement list
     print('Creating improvement list...')
     evaluation_callers_folders = glob.glob(os.path.join(output_evaluations, '*'))
     output_list_folder = os.path.join(args.output, 'improvement_list')
     os.makedirs(output_list_folder, exist_ok=True)
-    create_improvement_list(evaluation_callers_folders, output_list_folder, args.processes)
-    print('Improvement list in folder: ' + output_list_folder)
+    write_improvement_lists(evaluation_callers_folders, args.loss_margin, args.max_recommendations, output_list_folder, args.processes)
 
 
 if __name__ == '__main__':
@@ -369,7 +407,20 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', help='Path to the config file', required=True, type=str)
     parser.add_argument('-vc', '--variant-callers', help='Path to the variant callers folder', required=True, type=str)
     parser.add_argument('-o', '--output', help='Path to the output folder', required=True, type=str)
-    parser.add_argument('-lm', '--loss-margin', type=float, default=0.05, help='Loss margin for improvement')
+    parser.add_argument('-lm', '--loss-margin', type=float, default=0.05,
+                        help='Maximum performance loss in a metric to consider a recommendation (default: 0.05). '\
+                        'A value of 0.05 means that a recommendation will be provided if the performance loss (in any metric) is less than 5%% over the baseline, '\
+                        'provided that --gain-margin is also satisfied. '\
+                        'Increasing this value will increase the number of recommendations and execution time')
+    parser.add_argument('-gm', '--gain-margin', type=float, default=0.01,
+                        help='Minimum performance gain in a metric to consider a recommendation (default: 0.01). '\
+                        'A value of 0.05 means that a recommendation will be provided if the performance gain (in any metric) is greater than 5%% over the baseline, '\
+                        'provided that --loss-margin is also satisfied. '\
+                        'Increasing this value will reduce the number of recommendations and execution time')
+    parser.add_argument('-mr', '--max-recommendations', type=float, default=1,
+                        help='Maximun number of recommendations to provide for each performance metric per variant type and size and number of variant callers added (default: 1). Set to -1 to provide all recommendations')
+    parser.add_argument('--max-combinations', type=int, default=4,
+                        help='Maximum number of combinations of variant callers to test (default: 4). Set to -1 to test all combinations')
     parser.add_argument('-it', '--indel-threshold',
                         help=f'Indel threshold, inclusive (default={DEFAULT_INDEL_THRESHOLD})', default=DEFAULT_INDEL_THRESHOLD, type=int)
     parser.add_argument('-wr', '--window-radius',
@@ -382,6 +433,4 @@ if __name__ == '__main__':
                         help=f'Variant types to process (default={DEFAULT_VARIANT_TYPES})')
     parser.add_argument('--no-gzip', action='store_true', help='Do not gzip the output VCF files')
     parser.add_argument('-p', '--processes', type=int, default=1, help='Number of processes to use')
-    parser.add_argument('--max-combinations', type=int, default=4,
-                        help='Maximum number of combinations to perform (-1) for all combinations')
     main(parser.parse_args())
