@@ -77,6 +77,32 @@ def aggregate_metrics(metrics_list):
     agg_metrics = agg_metrics[METRICS_COLUMNS]
     return agg_metrics
 
+def filter_metrics_recommendations(df: pd.DataFrame, loss_margin: float, max_recommendations: int, num_callers_column='num_callers', ranking_columns=['f1_score', 'recall', 'precision']):
+    if len(df) == 0:
+        return df
+    selected_dfs = []
+    for i, ranking_column in enumerate(ranking_columns):
+        sort_columns = [ranking_column] + ranking_columns[:i] + ranking_columns[i+1:]
+        # Filter all rows with the max element for each column - loss_margin
+        df_temp = df
+        for column in sort_columns:
+            df_temp = df_temp[df_temp[column] >= df_temp[column].max() - loss_margin]
+        # Get the minimum number of callers within the loss margin
+        min_num_callers = df_temp[num_callers_column].min()
+        # Start filtering
+        for i in range(min_num_callers, -1, -1):
+            df_filtered = df[df[num_callers_column] == i]
+            for column in sort_columns:
+                df_filtered = df_filtered[df_filtered[column] >= df_filtered[column].max() - loss_margin]
+            # Get the top max_recommendations rows
+            if len(df_filtered) > max_recommendations:
+                # Sort by the ranking column
+                df_filtered = df_filtered.sort_values(by=sort_columns, ascending=False)
+                df_filtered = df_filtered.head(max_recommendations)
+            selected_dfs.append(df_filtered)
+
+    return pd.concat(selected_dfs, ignore_index=True)
+
 
 def combine_precision_recall_metrics(recall_df, precision_df):
     df = pd.DataFrame()

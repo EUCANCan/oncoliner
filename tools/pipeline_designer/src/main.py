@@ -13,6 +13,7 @@ import pandas as pd
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', 'shared', 'vcf_ops', 'src'))
 
 from vcf_ops.constants import DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS, DEFAULT_CONTIGS, DEFAULT_VARIANT_TYPES  # noqa
+from vcf_ops.metrics import filter_metrics_recommendations  # noqa
 from vcf_ops.intersect import intersect  # noqa
 from vcf_ops.union import union  # noqa
 from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
@@ -250,21 +251,7 @@ def execute_operations(operations: List[str], combinations_folder: str, evaluati
 
 
 def filter_operations(df: pd.DataFrame, loss_margin: float, max_recommendations: int):
-    result = set()
-    ranking_columns = ['f1_score', 'recall', 'precision']
-    for num_callers in df['num_callers'].unique():
-        df_temp = df[df['num_callers'] == num_callers]
-        for i, ranking_column in enumerate(ranking_columns):
-            sort_columns = [ranking_column] + ranking_columns[:i] + ranking_columns[i+1:]
-            # Filter all rows with the max element for each column - loss_margin
-            for column in sort_columns:
-                df_temp = df_temp[df_temp[column] >= df_temp[column].max() - loss_margin]
-            # Sort by the ranking column
-            df_temp = df_temp.sort_values(ranking_column, ascending=False)
-            if max_recommendations > 0:
-                df_temp = df_temp.head(max_recommendations)
-            result.update(df_temp['operation'].unique())
-    return result
+    return filter_metrics_recommendations(df, loss_margin, max_recommendations, 'num_callers', ['f1_score', 'recall', 'precision'])['operation'].unique()
 
 
 def write_improvement_lists(evaluation_callers_folders: List[str], loss_margin: float, max_recommendations: int, output_folder: str, processes: int):
