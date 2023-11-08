@@ -54,10 +54,9 @@ function _initComplete() {
 
 /**
  * @param {string} tableId
- * @param {boolean} paginate
  * @param {number} [defaultSortColumnIndex]
  */
-function makeTableDynamic(tableId, paginate, defaultSortColumnIndex) {
+function makeTableDynamic(tableId, defaultSortColumnIndex) {
     // Set the table width to 100%
     document.querySelector(`#${tableId}`).style.width = "100%";
     // Get the table header
@@ -76,8 +75,7 @@ function makeTableDynamic(tableId, paginate, defaultSortColumnIndex) {
         orderCellsTop: true,
         fixedHeader: true,
         responsive: true,
-        bPaginate: paginate,
-        pageLength: 50,
+        bPaginate: false,
         columnDefs: [
             {
                 targets: sortableColumns,

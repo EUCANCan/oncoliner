@@ -83,10 +83,20 @@
          "legend": "Recall is calculated exclusively using the true positives and false negatives from the recall samples.",
          "sortable": true
       },
+      "recall_avg":{
+         "name":"Recall avg.",
+         "tooltip":"Average recall",
+         "sortable": true
+      },
       "precision":{
          "name":"Precision",
          "tooltip":"Precision = TP / (TP + FP)",
          "legend": "Precision is calculated exclusively using the true positives and false positives from the precision samples.",
+         "sortable": true
+      },
+      "precision_avg":{
+         "name":"Precision avg.",
+         "tooltip":"Average precision",
          "sortable": true
       },
       "f1_score":{
@@ -95,13 +105,18 @@
          "legend": "F1-score is calculated using the precision and recall values from the precision and recall samples respectively.",
          "sortable": true
       },
-      "protein_affected_genes":{
+      "f1_score_avg":{
+         "name":"F1 score avg.",
+         "tooltip":"Average F1-score",
+         "sortable": true
+      },
+      "protein_affected_genes_count":{
          "name":"Prot. genes",
          "tooltip":"Genes whose proteins are affected by discovered variants (only TP)",
          "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
          "sortable": true
       },
-      "protein_affected_driver_genes":{
+      "protein_affected_driver_genes_count":{
          "name":"Cancer driver prot. genes",
          "tooltip":"Cancer driver genes whose proteins are affected by discovered variants (only TP)",
          "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
@@ -111,48 +126,6 @@
          "name":"Added callers",
          "tooltip":"Number of callers added to the pipeline",
          "filterable": true,
-         "sortable": true
-      },
-      "removed_callers":{
-         "name":"Removed callers",
-         "tooltip":"Number of callers removed from the pipeline",
-         "filterable": true,
-         "sortable": true
-      },
-      "total_changed_callers":{
-         "name":"Total changer callers",
-         "tooltip":"Total number of callers added and removed from the pipeline",
-         "filterable": true,
-         "sortable": true
-      },
-      "total_variants":{
-         "name":"Total variants",
-         "tooltip":"blabla total_variants",
-         "sortable": true
-      },
-      "overlapping_variants":{
-         "name":"Overlapping variants",
-         "tooltip":"blabla overlapping_variants",
-         "sortable": true
-      },
-      "overlapping_variants_ratio":{
-         "name":"Overlapping variants ratio",
-         "tooltip":"blabla overlapping_variants_ratio",
-         "sortable": true
-      },
-      "total_genes":{
-         "name":"Total genes",
-         "tooltip":"blabla total_genes",
-         "sortable": true
-      },
-      "overlapping_genes":{
-         "name":"Overlapping genes",
-         "tooltip":"blabla overlapping_genes",
-         "sortable": true
-      },
-      "overlapping_genes_ratio":{
-         "name":"Overlapping genes ratio",
-         "tooltip":"blabla overlapping_genes_ratio",
          "sortable": true
       }
    }

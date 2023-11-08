@@ -3,6 +3,7 @@ import glob
 import os
 import re
 from ...utils import clean_string, to_sorted_dict
+from .metrics_table import read_csv
 
 
 class TableFromListDAO():
@@ -10,12 +11,11 @@ class TableFromListDAO():
         self._dfs = []
         self.tree = None
         for file in glob.glob(os.path.join(list_folder, '*.csv')):
-            self._dfs.append(pd.read_csv(file))
+            self._dfs.append(read_csv(file))
         concat_df = pd.concat(self._dfs)
         # Find indel_threshold
         self._indel_threshold = int(concat_df[concat_df['variant_type'] == 'INDEL']
                                     ['variant_size'].iloc[0].split('-')[-1].strip())
-        self.columns_to_drop = ['window_radius']
 
     def get_tree(self, prefix_id):
         if self.tree:
@@ -63,7 +63,7 @@ class TableFromListDAO():
                 last_dict = last_dict[tree_level]
             last_dict['id'] = clean_string(f'{prefix_id}_{variant_type}_{variant_size}')
             # Round all floats to 2 decimals
-            last_dict['data'] = df.drop(columns=self.columns_to_drop, errors='ignore').round(2)
+            last_dict['data'] = df.round(2)
 
         # Sort by variant size
         def extract_lower_limit_size(variant_size):

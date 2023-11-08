@@ -30,9 +30,9 @@
         {% endif %}
     </div>
 </div>
-<!-- TODO: Henri: The sort icons are not displayed in Firefox -->
+
 {% block javascript %}
 <script type="text/javascript">
-    makeTableDynamic("{{id}}", {{(data.values|length>50)|string|lower}}, {{data.columns.get_loc(default_sort_column) if default_sort_column else undefined}});
+    makeTableDynamic("{{id}}", {{data.columns.get_loc(default_sort_column) if default_sort_column else undefined}});
 </script>
 {% endblock %}

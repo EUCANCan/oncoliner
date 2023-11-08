@@ -13,19 +13,30 @@ def _get_columns_to_drop(table_types: List[str]) -> List[str]:
         columns_to_drop.update(PRECISION_DEPENDENT_COLUMNS)
     return list(columns_to_drop)
 
+def read_csv(csv_path: str, columns_to_drop: List[str] = []):
+    # Read the first line to get the column names
+    test_df = pd.read_csv(csv_path, nrows=1)
+    # Remove nedded columns
+    columns_to_drop_set = set(columns_to_drop)
+    columns_to_drop_set.add('window_radius')
+    # Drop all columns that end with _genes and window_radius
+    columns_to_drop_set.update([col for col in test_df.columns if col.endswith('_genes')])
+    used_columns = [col for col in test_df.columns if col not in columns_to_drop_set]
+    # Read the whole csv
+    return pd.read_csv(csv_path, usecols=used_columns)
+
 
 class MetricsTable():
     def __init__(self, csv_path: str, table_types: Optional[List[str]] = None):
-        self._df = pd.read_csv(csv_path)
+        columns_to_drop = _get_columns_to_drop(table_types) if table_types else []
+        self._df = read_csv(csv_path, columns_to_drop)
         # Round all floats to 2 decimals
         self._df = self._df.round(2)
         self._indel_threshold = int(self._df[self._df['variant_type'] == 'INDEL']
                                     ['variant_size'].iloc[0].split('-')[-1].strip())
-        self.columns_to_drop = _get_columns_to_drop(table_types) if table_types else []
-        self.columns_to_drop.append('window_radius')
 
     def get_df(self):
-        return self._df.drop(columns=self.columns_to_drop, errors='ignore').fillna('')
+        return self._df
 
     def get_snv_indel_sv(self):
         snv_mask = (self._df['variant_type'] == 'SNV')
@@ -57,7 +68,6 @@ class MetricsTable():
     def get_warnings(self):
         df = self.get_sv_subtypes()
         warning_dict = dict()
-        # TODO: What about INS?
         # Find variant types with truth variants == 0 (TP + FN == 0)
         no_truth = set(df[df['tp'] + df['fn'] == 0]['variant_type'].tolist())
         warning_dict['no_truth'] = sorted(list(no_truth))
