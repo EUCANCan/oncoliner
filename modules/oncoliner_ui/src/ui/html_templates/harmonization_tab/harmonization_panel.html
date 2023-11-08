@@ -2,7 +2,19 @@
     <div class="sub-tab-content tab-content" id="harmonizations_panel_content">
         <div class="viz-width-limited">
             <label>Select variant type and size</label>
-            {{ ctrl.render_dropdown_tree("harmonization", "harmonizations_panel_content") }}
+
+            <div id="ddat_harmonization" style="margin:20px;">
+                <div class="dropdown viz-dropdown-tree">
+                  <button class="form-select" type="button" id="ddat_dropdownMenuButton_harmonization" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    {{ctrl.get_tree().keys() | first}}
+                  </button>
+                  <div class="dropdown-menu scrollbar" aria-labelledby="ddat_dropdownMenuButton_harmonization" id="ddat_dropdownMenuButton_harmonization_menu">
+                    <div class="tab-pane" role="tablist" aria-orientation="vertical" id="harmonization_size_type">
+                        {{ ctrl.render_tree_branch(ctrl.get_tree(), 'harmonization', 'harmonizations_panel_content', click_callback={'function':'hideMenuAndUpdateSelected', 'params':['ddat_dropdownMenuButton_harmonization_menu', 'ddat_dropdownMenuButton_harmonization']}) }}
+                        </div>
+                  </div>
+                </div>
+            </div>
         </div>
 
         <div class="nav nav-tabs" id="nav-tab" role="tablist">

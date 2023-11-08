@@ -45,6 +45,6 @@ class ImprovementTab():
         self.default_id[pipeline_name] = data[0]['id']
         return template.render(ctrl=self, data=data, prefix_id=prefix_id, target_group=target_group)
 
-    def render_tree_branch(self, data, prefix_id, target_group, depth=0):
+    def render_tree_branch(self, data, prefix_id, target_group, depth=0, click_callback=None):
         template = self._env.get_template(os.path.join("shared", "tree", "wrapper_template.html"))
-        return template.render(ctrl=self, data=data, prefix_id=prefix_id, target_group=target_group, depth=depth)
+        return template.render(ctrl=self, data=data, prefix_id=prefix_id, target_group=target_group, depth=depth, click_callback=click_callback)

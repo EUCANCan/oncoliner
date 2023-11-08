@@ -18,15 +18,24 @@ def path_to_pipeline_name(path: str):
     return os.path.split(path)[-1]
 
 
-def flatten_dict(dict_, key_limit=None):
+def flatten_dict(dict_, key_limit=None, key=None, concat_key=""):
     items = []
+
+    if not concat_key:
+        concat_key = key;
+    elif key:
+        concat_key = concat_key + " ; " + key
+
+    # if concat_key and isinstance(dict_, MutableMapping) and '_all_' in dict_:
+    #     dict_['concat_key'] = concat_key
 
     if key_limit and key_limit in dict_:
         items.append(dict_)
     else:
-        for v in dict_.values():
+        for k in dict_:
+            v = dict_[k]
             if isinstance(v, MutableMapping):
-                items.extend(flatten_dict(v, key_limit))
+                items.extend(flatten_dict(v, key_limit, k, concat_key))
             else:
                 items.append(v)
 

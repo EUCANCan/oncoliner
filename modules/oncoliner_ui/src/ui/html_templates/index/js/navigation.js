@@ -73,7 +73,12 @@ function formatTemplateFromMatrix(template, matrix) {
 
 function changeAttributeValue(id, attributeName, attributeValue) {
 	var element = document.querySelector('#' + id);
-	if (element && element[attributeName]) {
+	if (element) {
 		element[attributeName] = attributeValue;
 	}
+}
+
+function hideMenuAndUpdateSelected(element, dataContext, menuId, selectedId) {
+	hideTab(document.querySelector('#' + menuId));
+	changeAttributeValue(selectedId, 'innerText', dataContext);
 }

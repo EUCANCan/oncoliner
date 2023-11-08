@@ -40,10 +40,12 @@ class HarmonizationTab():
     def get_tree(self):
         return self._harmonization_tree_dict
 
-    def render_tree_branch(self, data, prefix_id, target_group, depth=0):
+    def render_tree_branch(self, data, prefix_id, target_group, depth=0, click_callback=None):
         template = self._env.get_template(os.path.join("shared", "tree", "wrapper_template.html"))
-        return template.render(ctrl=self, data=data, prefix_id=prefix_id, target_group=target_group, depth=depth)
+        return template.render(ctrl=self, data=data, prefix_id=prefix_id, target_group=target_group, depth=depth, click_callback=click_callback)
     
     def get_harmonization_plot_data(self):
         harmonization_plot = HarmonizationPlot(self._harmonization_dao.get_operations_metrics())
         return harmonization_plot.get_plot_data()
+
+
