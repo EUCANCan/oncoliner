@@ -12,7 +12,7 @@ if __name__ == '__main__':
     parser.add_argument('-ps', '--precision-samples', type=str, required=True,
                         nargs='+', help='Precision samples names')
     parser.add_argument('-lm', '--loss-margin', type=float, default=0.05,
-                        help='Maximum performance loss in a metric to consider a recommendation (default: 0.05). '\
+                        help='Maximum performance loss in any metric to consider a recommendation (default: 0.05). '\
                         'A value of 0.05 means that a recommendation will be provided if the performance loss (in any metric) is less than 5%% over the baseline, '\
                         'provided that --gain-margin is also satisfied. '\
                         'Increasing this value will increase the number of recommendations and execution time')

@@ -81,7 +81,7 @@ def evaluate_caller(caller_folder, config, output_folder, processes, indel_thres
     # Execute the assesment
     if 'ASSESMENT_COMMAND' not in os.environ:
         assesment_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'modules', 'oncoliner_assesment', 'src', 'assesment_bulk.py')
-        os.environ['ASSESMENT_COMMAND'] = 'python3 ' + assesment_command_default_path
+        os.environ['ASSESMENT_COMMAND'] = 'python3 ' + os.path.relpath(assesment_command_default_path)
     assesment_command = os.environ['ASSESMENT_COMMAND']
     evaluator_command_split = assesment_command.split()
     args = evaluator_command_split + \
@@ -395,7 +395,7 @@ if __name__ == '__main__':
     parser.add_argument('-vc', '--variant-callers', help='Path to the variant callers folder', required=True, type=str)
     parser.add_argument('-o', '--output', help='Path to the output folder', required=True, type=str)
     parser.add_argument('-lm', '--loss-margin', type=float, default=0.05,
-                        help='Maximum performance loss in a metric to consider a recommendation (default: 0.05). '\
+                        help='Maximum performance loss in any metric to consider a recommendation (default: 0.05). '\
                         'A value of 0.05 means that a recommendation will be provided if the performance loss (in any metric) is less than 5%% over the baseline, '\
                         'provided that --gain-margin is also satisfied. '\
                         'Increasing this value will increase the number of recommendations and execution time')

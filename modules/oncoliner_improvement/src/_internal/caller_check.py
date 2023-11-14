@@ -237,9 +237,14 @@ class CallerChecker:
         return intersection_precision_metrics, intersection_recall_metrics, save_vcf_results_precision, save_vcf_results_recall
 
     def execute(self, **kwargs):
-        # Check for union performance
-        union_operation_name = f'baseline{UNION_SYMBOL}{self.__caller_name}'
-        intersection_operation_name = f'baseline{INTERSECTION_SYMBOL}{self.__caller_name}'
+        # Get operation names
+        # If the operation contains UNION_SYMBOL or INTERSECTION_SYMBOL, it must be surrounded by parentheses
+        if UNION_SYMBOL in self.__caller_name or INTERSECTION_SYMBOL in self.__caller_name:
+            union_operation_name = f'baseline{UNION_SYMBOL}({self.__caller_name})'
+            intersection_operation_name = f'baseline{INTERSECTION_SYMBOL}({self.__caller_name})'
+        else:
+            union_operation_name = f'baseline{UNION_SYMBOL}{self.__caller_name}'
+            intersection_operation_name = f'baseline{INTERSECTION_SYMBOL}{self.__caller_name}'
         for operation_name, op in zip([union_operation_name, intersection_operation_name], [self._execute_union_check, self._execute_intersection_check]):
             # Avoid the operation if operation_name.done exists
             output_flag_file = os.path.join(self.__results_output_folder, operation_name + '.done')

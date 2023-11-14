@@ -4,8 +4,8 @@
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##contig=<ID=1,length=249250621>
 ##contig=<ID=2,length=243199373>
-##vcf_ops=../../../modules/oncoliner_assesment/src/assesment_bulk.py -c ./output/evaluations/variant_caller_4/config.tsv -p 8 -o ./output/evaluations/variant_caller_4 -it 100 -wr 100 --sv-size-bins 500 --contigs 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X Y --variant-types SNV INDEL-INS INDEL-DUP INDEL-DEL SV-TRA SV-INV SV-DEL SV-DUP --no-gzip
+##vcf_ops=../../../modules/oncoliner_assesment/src/assesment_bulk.py -c ./output/evaluations/variant_caller_4/config.tsv -p 1 -o ./output/evaluations/variant_caller_4 -it 100 -wr 100 --sv-size-bins 500 --contigs 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X Y --variant-types SNV INDEL-INS INDEL-DUP INDEL-DEL SV-TRA SV-INV SV-DEL SV-DUP --no-gzip
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NORMAL	TUMOR
 1	10	.	A	C	.	PASS	SNV;CSQ=ENSG00000142611|ZSWIM7|protein_altering_variant,ENSG00000142611|PRDM16|protein_altering_variant	GT	0/0	0/1
 1	11	.	A	C	.	PASS	SNV	GT	0/0	0/1
-1	12	.	A	C	.	PASS	SNV	GT	0/0	0/1
+1	12	.	A	C	.	PASS	SNV;ONCOLINER_PROT_GENES=TARBP1	GT	0/0	0/1
