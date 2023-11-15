@@ -18,8 +18,9 @@ class HarmonizationDAO():
             pipeline_name = path_to_pipeline_name(pipeline_folder)
             if pipeline_name not in self._pipelines_operations_metrics_dict:
                 self._pipelines_operations_metrics_dict[pipeline_name] = dict()
-            # Iterate over all the subfolders in the results folder
-            for agg_metrics_file in glob.glob(os.path.join(results_folder, '*', 'aggregated_metrics.csv')):
+            # Iterate over the operation subfolders in the results folder
+            pipeline_operation_folders = self._table.get_df()[pipeline_name].unique()
+            for agg_metrics_file in [os.path.join(results_folder, operation_folder, 'aggregated_metrics.csv') for operation_folder in pipeline_operation_folders]:
                 op_name = os.path.basename(os.path.dirname(agg_metrics_file))
                 agg_metrics_table = MetricsTable(agg_metrics_file)
                 self._pipelines_operations_metrics_dict[pipeline_name][op_name] = agg_metrics_table

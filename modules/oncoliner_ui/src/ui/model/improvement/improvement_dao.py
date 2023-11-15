@@ -36,7 +36,8 @@ class ImprovementPipelineDAO():
         # Create a dict of operation_name -> metrics_table
         self._operations_dict = dict()
         # Iterate over all the aggregated_metrics.csv files
-        for agg_metrics_file in glob.glob(os.path.join(results_folder, '*', 'aggregated_metrics.csv')):
+        operation_list = self._table.get_df()['operation'].unique()
+        for agg_metrics_file in [os.path.join(results_folder, op, 'aggregated_metrics.csv') for op in operation_list]:
             agg_metrics_metrics_table = MetricsTable(agg_metrics_file)
             op_name = os.path.basename(os.path.dirname(agg_metrics_file))
             self._operations_dict[op_name] = agg_metrics_metrics_table

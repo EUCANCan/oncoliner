@@ -17,6 +17,9 @@ class TableFromListDAO():
         self._indel_threshold = int(concat_df[concat_df['variant_type'] == 'INDEL']
                                     ['variant_size'].iloc[0].split('-')[-1].strip())
 
+    def get_df(self):
+        return pd.concat(self._dfs)
+
     def get_tree(self, prefix_id):
         if self.tree:
             return self.tree
