@@ -5,7 +5,7 @@ import glob
 import itertools
 import functools
 from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pandas as pd
 
@@ -36,25 +36,26 @@ def _read_pipeline_improvements(pipeline_folder: str) -> Dict[str, pd.DataFrame]
     for variant_type, variant_size in variant_types_sizes.values:
         result[f'{variant_type};{variant_size}'] = pipeline_improvements[(
             pipeline_improvements['variant_type'] == variant_type) & (pipeline_improvements['variant_size'] == variant_size)]
-    return result
+    return result, pipeline_folder
 
 
 def _get_pipelines_combinations(pipelines_folders: List[str], threads: int) -> Dict[str, Dict[str, pd.DataFrame]]:
     # Each pipeline folder contains a list of .csv files with its possible improvements
     # Read all of them and concatenate them into a single dataframe
-    pool = ThreadPoolExecutor(max_workers=threads)
-    futures = []
-    for pipeline_folder in pipelines_folders:
-        futures.append(pool.submit(_read_pipeline_improvements, pipeline_folder))
-    pipeline_improvements = [f.result() for f in futures]
     # Create a dictionary with the pipeline name as key and the improvements dataframe as value
     pipelines_combinations = OrderedDict()
     pipeline_names = sorted([os.path.basename(pipeline_folder) for pipeline_folder in pipelines_folders])
     # Make sure the pipeline names are unique
     if len(pipeline_names) != len(set(pipeline_names)):
         raise Exception('Pipeline names (i.e. their subfolder) must be unique')
-    for pipeline_name, pipeline_improvement in zip(pipeline_names, pipeline_improvements):
-        pipelines_combinations[pipeline_name] = pipeline_improvement
+    pool = ThreadPoolExecutor(max_workers=threads)
+    futures = []
+    for pipeline_folder in pipelines_folders:
+        futures.append(pool.submit(_read_pipeline_improvements, pipeline_folder))
+    for future in as_completed(futures):
+        pipeline_improvements, pipeline_folder = future.result()
+        pipeline_name = os.path.basename(pipeline_folder)
+        pipelines_combinations[pipeline_name] = pipeline_improvements
     return pipelines_combinations
 
 
