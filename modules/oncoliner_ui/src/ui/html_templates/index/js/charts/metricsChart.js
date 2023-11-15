@@ -114,28 +114,49 @@ function _buildMetricsChart(ctx, chartData, title) {
     const labels = [];
     let showPrecision = false;
     let showFP = false;
+    /** @type {Map<string, number>} */
+    const fpScaleFactors = new Map();
+    /** @type {string | undefined} */
     let firstAxis = undefined;
     for (let i = 0, x = 0, currAxisId = ""; i < chartData.length; i++, x++) {
         const data = chartData[i];
         const yAxisID = `yAxis${data.axisId}`;
         const yAxisIDTruth = `yAxis${data.axisId}Truth`;
+        if (data.fp >= 0) {
+            showFP = true;
+            if (data.precision >= 0) showPrecision = true;
+        }
         // Add new scale
         if (data.axisId !== currAxisId) {
+            fpScaleFactors.set(data.axisId, 1);
             if (firstAxis === undefined) firstAxis = yAxisID;
-            // Calculate max value for this axis
+            // Calculate max value for this axis based on truth values
             const truthValues = chartData
                 .filter((d) => d.axisId === data.axisId)
                 .map((d) => d.tp + d.fn);
-            const fpValues = chartData
-                .filter((d) => d.axisId === data.axisId)
-                .map((d) => d.fp);
-            let maxValue = Math.max(...truthValues, ...fpValues);
-             // Add step value to make sure the tags are visible
-            maxValue += maxValue / STEP_COUNT;
+            const maxTruthValue = Math.max(...truthValues);
+            // Add step value to make sure the tags are visible
+            let maxValue = maxTruthValue + (maxTruthValue / STEP_COUNT);
             // Calculate max value for this axis to be multiple of STEP_COUNT
             const maxAxisValue = Math.ceil(maxValue / STEP_COUNT) * (STEP_COUNT);
+            const minAxisValue = showFP ? -maxAxisValue : 0;
             // Add empty label to make sure the axis is visible
             labels.push(undefined);
+            // Scale FP to match the same scale as truth
+            if (showFP) {
+                // Get the maximum value of FP
+                const fpValues = chartData
+                .filter((d) => d.axisId === data.axisId)
+                .map((d) => d.fp);
+                const maxFP = Math.max(...fpValues);
+                // Get the precision for the maximum value of FP
+                const maxPrecision = chartData
+                .filter((d) => d.axisId === data.axisId && d.fp === maxFP)
+                .map((d) => d.precision)[0];
+                // Calculate the scale factor so the maximum value of FP is the same as the maximum value of truth
+                const fpScaleFactor = (maxTruthValue / maxFP) * (1 - maxPrecision);
+                fpScaleFactors.set(data.axisId, fpScaleFactor);
+            }
             currAxisId = data.axisId;
             scales[yAxisID] = {
                 axis: "y",
@@ -148,13 +169,17 @@ function _buildMetricsChart(ctx, chartData, title) {
                 grid: {
                     display: x == 0,
                 },
-                min: -maxAxisValue,
+                min: minAxisValue,
                 max: maxAxisValue,
                 ticks: {
                     callback: function (value, index, values) {
                         if (value == 0 && firstAxis !== this.id)
                             return undefined;
-                        else return Math.abs(value);
+                        else if (value < 0) {
+                            // @ts-ignore
+                            return (-value / fpScaleFactors.get(data.axisId)).toFixed(0);
+                        }
+                        else return value;
                     },
                     align: "end",
                     count: STEP_COUNT + 1,
@@ -165,7 +190,7 @@ function _buildMetricsChart(ctx, chartData, title) {
                 position: {
                     x,
                 },
-                min: -maxAxisValue,
+                min: minAxisValue,
                 max: maxAxisValue,
                 count: STEP_COUNT + 1,
                 display: false,
@@ -177,7 +202,8 @@ function _buildMetricsChart(ctx, chartData, title) {
         const dataTP = new Array(x).fill(undefined);
         dataTP.push(data.tp);
         const dataFP = new Array(x).fill(undefined);
-        dataFP.push(-data.fp);
+        // @ts-ignore
+        dataFP.push(-data.fp * fpScaleFactors.get(data.axisId));
         // const dataFN = new Array(x).fill(undefined);
         // dataFN.push(data.fn);
         const dataTruth = new Array(x).fill(undefined);
@@ -197,14 +223,12 @@ function _buildMetricsChart(ctx, chartData, title) {
                 formatter: function (value, context) {
                     if (value == undefined) return undefined;
                     else if (data.recall < 0) return '';
-                    else return data.recall.toFixed(3);
+                    else return data.recall.toFixed(2);
                 },
                 offset: -2,
             },
         });
-        if (data.fp >= 0) {
-            showFP = true;
-            if (data.precision >= 0) showPrecision = true;
+        if (showFP) {
             datasets.push({
                 label: FP_LABEL,
                 data: dataFP,
@@ -217,7 +241,7 @@ function _buildMetricsChart(ctx, chartData, title) {
                     formatter: function (value, context) {
                         if (value == undefined) return undefined;
                         else if (data.precision < 0) return '';
-                        else return data.precision.toFixed(3);
+                        else return data.precision.toFixed(2);
                     },
                     offset: -2,
                 },
@@ -324,7 +348,14 @@ function _buildMetricsChart(ctx, chartData, title) {
                                 label += ": ";
                             }
                             if (context.parsed.y !== null) {
-                                label += Math.abs(context.parsed.y); // Avoid negative values in FP
+                                let output = context.parsed.y;
+                                // Recover the original value from FP
+                                if (context.dataset.label === FP_LABEL) {
+                                    const fpScaleFactor = fpScaleFactors.get(context.dataset.yAxisID.replace("yAxis", ""));
+                                    console.log(context.parsed.y, fpScaleFactor);
+                                    output = -context.parsed.y / fpScaleFactor;
+                                }
+                                label += output.toFixed(0); // Avoid negative values in FP
                             }
                             return label;
                         },
