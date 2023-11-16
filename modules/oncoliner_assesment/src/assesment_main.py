@@ -158,7 +158,8 @@ def main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_ref, indel_thresh
     print(f'Total truth variants analyzed: {len(df_truth)} + {len(df_skipped_truth)} skipped')
     print(f'Total test variants analyzed: {len(df_test)} + {len(df_skipped_test)} skipped')
     print('Benchmark metrics:')
-    print(metrics_df.drop(['protein_affected_genes', 'protein_affected_driver_genes'], axis=1).to_string(index=False))
+    # Drop all columns that end with _genes
+    print(metrics_df.drop([col for col in metrics_df.columns if col.endswith('_genes')], axis=1).to_string(index=False))
     print(f'Benchmark metrics can be found in {output_prefix}metrics.csv')
 
 
