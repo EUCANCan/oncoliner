@@ -1,8 +1,7 @@
 <div class="wrapper">
-
 	<main class="viz-content">
 		<h1 class="viz-width-limited">Improvement</h1>
-
+        <p class="viz-width-limited">Listing of the improvement possibilities based on the results obtained from the pipelines: <b>{{ ctrl.get_pipelines_names()|join(', ') }}</b>. Browse through the improvement possibilities of the different pipelines using the tabs below.</p>
         <nav class="nav nav-tabs">
             <div class="nav viz-nav-tabs-container viz-width-limited" id="improvement_pipelines-nav-tab" role="tablist">
                 {% for pp in ctrl.get_pipelines_names() %}

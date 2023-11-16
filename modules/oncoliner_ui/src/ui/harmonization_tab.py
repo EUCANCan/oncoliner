@@ -25,11 +25,8 @@ class HarmonizationTab():
     def get_flatten_tree(self):
         return flatten_dict(self._harmonization_tree_dict, 'id')
 
-    # def get_harmonization_keys(self):
-    #     return self._harmonization_keys
-
-    # def get_harmonization_keys_ids(self):
-    #     return self._harmonization_keys_ids
+    def get_pipelines_names(self):
+        return self._harmonization_dao.get_pipelines_names()
 
     def render_dropdown_tree(self, prefix_id, target_group):
         template = self._env.get_template(os.path.join("shared", "dropdown_tree.html"))

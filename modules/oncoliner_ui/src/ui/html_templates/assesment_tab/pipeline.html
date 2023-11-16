@@ -11,7 +11,6 @@
         <label for="{{pipeline_name}}-sample-select" class="form-label">
         Select a sample to see the results of the assesment of <b>{{pipeline_name}}</b> for that sample:
         </label>
-        <!-- TODO: Henri: Make this select searchable -->
         <select class="form-select" id="{{pipeline_name}}-sample-select" aria-label="Select sample" role="tablist" autocomplete="off">
             {% for sample in ctrl.get_samples(pipeline_name) %}
                 <option class="nav-link {{'active' if loop.first}}" id="{{pipeline_name}}_{{sample}}_sample_assesment_" data-bs-toggle="tab" role="tab" aria-controls="{{pipeline_name}}_{{sample}}_sample_assesment_" data-bs-target="#{{pipeline_name}}_{{sample}}_sample_assesment" href="#{{pipeline_name}}_{{sample}}_sample_assesment">{{sample}} ({{ctrl.get_sample_types(pipeline_name, sample)|join(', ')}})</option>

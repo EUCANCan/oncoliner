@@ -70,8 +70,9 @@ class MetricsTable():
         warning_dict = dict()
         # Find variant types with truth variants == 0 (TP + FN == 0)
         no_truth = set(df[df['tp'] + df['fn'] == 0]['variant_type'].tolist())
-        warning_dict['no_truth'] = sorted(list(no_truth))
-        # Find variant types with predicted variants == 0 (TP + FP == 0)ç
+        if len(no_truth) > 0:
+            warning_dict['no_truth'] = sorted(list(no_truth))
+        # Find variant types with predicted variants == 0 (TP + FP == 0)
         no_predicted = set()
         if 'fp' in df.columns:
             no_predicted = set(df[df['tp'] + df['fp'] == 0]['variant_type'].tolist())

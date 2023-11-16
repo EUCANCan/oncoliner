@@ -1,7 +1,6 @@
 from typing import List
 
 import os
-import glob
 from ..shared.table_from_list_dao import TableFromListDAO
 from ..shared.metrics_table import MetricsTable
 from ...utils import path_to_pipeline_name
@@ -19,6 +18,8 @@ class ImprovementDAO():
             pipeline_name = path_to_pipeline_name(pipeline_folder)
             self._pipelines_names.append(pipeline_name)
             self._pipeline_dao[pipeline_name] = ImprovementPipelineDAO(improvement_list_folder, results_folder)
+        # Sort the pipelines names
+        self._pipelines_names.sort()
 
     def get_pipelines_names(self):
         return self._pipelines_names

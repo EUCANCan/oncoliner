@@ -391,6 +391,10 @@ canvas {
     width: 90%;
 }
 
+.accordion-button::after {
+    cursor: pointer;
+}
+
 .accordion-button.no-expand::after {
     display: none;
 }

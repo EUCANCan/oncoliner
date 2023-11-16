@@ -1,45 +1,43 @@
-<div>
-    <div class="sub-tab-content tab-content" id="harmonizations_panel_content">
-        <div class="viz-width-limited">
-            <label>Select variant type and size</label>
-
-            <div id="ddat_harmonization" style="margin:20px;">
-                <div class="dropdown viz-dropdown-tree">
-                  <button class="form-select" type="button" id="ddat_dropdownMenuButton_harmonization" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                    {{ctrl.get_tree().keys() | first}}
-                  </button>
-                  <div class="dropdown-menu scrollbar" aria-labelledby="ddat_dropdownMenuButton_harmonization" id="ddat_dropdownMenuButton_harmonization_menu">
-                    <div class="tab-pane" role="tablist" aria-orientation="vertical" id="harmonization_size_type">
-                        {{ ctrl.render_tree_branch(ctrl.get_tree(), 'harmonization', 'harmonizations_panel_content', click_callback={'function':'hideMenuAndUpdateSelected', 'params':['ddat_dropdownMenuButton_harmonization_menu', 'ddat_dropdownMenuButton_harmonization']}) }}
-                        </div>
-                  </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="nav nav-tabs" id="nav-tab" role="tablist">
-            <div style="width: 100px"></div>
+<div class="sub-tab-content tab-content" id="harmonizations_panel_content">
+    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+        <div class="nav viz-nav-tabs-container viz-width-limited">
             <button class="nav-link" role="tab" data-bs-toggle="tab" type="button" onclick="setHarmonizationLabelsVisible('snv_indel_sv')">{{conf.names.snv_indel_sv}}</button>
             <button class="nav-link active" role="tab" data-bs-toggle="tab" type="button" onclick="setHarmonizationLabelsVisible('sv_subtypes')">{{conf.names.sv_subtypes}}</button>
             <button class="nav-link" role="tab" data-bs-toggle="tab" type="button" onclick="setHarmonizationLabelsVisible('sv_subtypes_sizes')">{{conf.names.sv_subtypes_sizes}}</button>
         </div>
-        <div class="viz-bordered-tab-container">
-            <div class="radar-chart-container">
-                {{include_cooked('shared/export_chart.html', chart_js_var_name='harmonizationPlot', filenames='harmonizationPlotData[\'titles\'].map((a) => `harmonization_plot_${a}`)', filename='harmonizationPlot')}}
-                <div id="chart_container_harmonization"></div>
-            </div>
-            <div id="harmonizationPlotInfo" class="viz-plot-info"></div>
-        </div>
-        {% for value in ctrl.get_flatten_tree() %}
-        <div
-            class="tab-pane fade {{'active show' if ctrl.default_id == value.id}}"
-            id="{{value.id}}_tab"
-            aria-labelledby="{{value.id}}_tab"
-        >
-            {{ ctrl.render_table(value.id, value.data) }}
-        </div>
-        {% endfor %}
     </div>
+    <div class="viz-bordered-tab-container">
+        <div class="radar-chart-container">
+            {{include_cooked('shared/export_chart.html', chart_js_var_name='harmonizationPlot', filenames='harmonizationPlotData[\'titles\'].map((a) => `harmonization_plot_${a}`)', filename='harmonizationPlot')}}
+            <div id="chart_container_harmonization"></div>
+        </div>
+        <div id="harmonizationPlotInfo" class="viz-plot-info"></div>
+    </div>
+    <div class="viz-width-limited">
+        <label>Select variant type and size</label>
+
+        <div id="ddat_harmonization" style="margin:20px;">
+            <div class="dropdown viz-dropdown-tree">
+                <button class="form-select" type="button" id="ddat_dropdownMenuButton_harmonization" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                {{ctrl.get_tree().keys() | first}}
+                </button>
+                <div class="dropdown-menu scrollbar" aria-labelledby="ddat_dropdownMenuButton_harmonization" id="ddat_dropdownMenuButton_harmonization_menu">
+                <div class="tab-pane" role="tablist" aria-orientation="vertical" id="harmonization_size_type">
+                    {{ ctrl.render_tree_branch(ctrl.get_tree(), 'harmonization', 'harmonizations_panel_content', click_callback={'function':'hideMenuAndUpdateSelected', 'params':['ddat_dropdownMenuButton_harmonization_menu', 'ddat_dropdownMenuButton_harmonization']}) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% for value in ctrl.get_flatten_tree() %}
+    <div
+        class="tab-pane fade {{'active show' if ctrl.default_id == value.id}}"
+        id="{{value.id}}_tab"
+        aria-labelledby="{{value.id}}_tab"
+    >
+        {{ ctrl.render_table(value.id, value.data) }}
+    </div>
+    {% endfor %}
 </div>
 
 {% block javascript %}

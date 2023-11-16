@@ -1,7 +1,7 @@
 <div class="wrapper">
     <main class="viz-content">
         <h1 class="viz-width-limited">Assesment</h1>
-        <p class="viz-width-limited">Comprehensive analysis of the results obtained from the pipelines: <b>{{ ctrl.get_pipelines_names()|join(', ') }}</b>. The metrics used for assesment are displayed by variant type and size and encompass true positives, false positives, false negatives, recall (also referred to as sensitivity), precision, F1-score, protein affected genes and protein affected driver genes.</p>
+        <p class="viz-width-limited">Comprehensive analysis of the results obtained from the pipelines: <b>{{ ctrl.get_pipelines_names()|join(', ') }}</b>. The metrics used for assesment are displayed by variant type and size and encompass true positives, false positives, false negatives, recall (also referred to as sensitivity), precision, F1-score and affected genes.</p>
         <p class="viz-width-limited">Browse through the results of the different pipelines using the tabs below.</p>
         <nav class="nav nav-tabs">
             <div class="nav viz-nav-tabs-container viz-width-limited" id="pipelines-nav-tab" role="tablist">

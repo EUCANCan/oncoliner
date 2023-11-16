@@ -14,6 +14,8 @@ class AssesmentDAO():
             pipeline_name = path_to_pipeline_name(pipeline_folder)
             self._pipelines_names.append(pipeline_name)
             self._pipeline_dao[pipeline_name] = AssesmentPipelineDAO(pipeline_folder)
+        # Sort pipelines names
+        self._pipelines_names.sort()
 
     def get_pipelines_names(self):
         return self._pipelines_names
