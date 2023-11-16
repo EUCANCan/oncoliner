@@ -15,7 +15,11 @@
 								aria-controls="{{data[key]._all_.id}}_"
 								data-bs-target="#{{data[key]._all_.id}}_tab"
 								href="#{{data[key]._all_.id}}_tab"
-								role="tab">{{key}}</a>
+								role="tab"
+								{% if click_callback %}
+									onclick="{{ print_js_function(click_callback.function, ['this', key] + click_callback.params ) }}"
+								{% endif %}
+								>{{key}}</a>
 								{% if depth == 0 and loop.index0 == 0 %}
 								<script>window.addEventListener('load', function() { {{print_js_function('toggleTabFromGroup', [data[key]._all_.id + '_tab', target_group])}}});</script>
 								{% endif %}
@@ -25,14 +29,14 @@
 					</div>
 				</h2>
 				<div id="{{prefix_id}}_{{loop.index}}" class="accordion-collapse collapse" data-bs-parent="#acc_{{prefix_id}}">
-					{{ ctrl.render_tree_branch(data[key], prefix_id + '_' + key, target_group, depth + 1) }}
+					{{ ctrl.render_tree_branch(data[key], prefix_id + '_' + key, target_group, depth + 1, click_callback) }}
 				</div>
 			</div>
 		{% endif %}
 	{% endfor %}
 </div>
 
-<div class="accordion-body nav-pills">
+<div class="{{ 'accordion-body' if depth > 0 else 'accordion-body-root' }} nav-pills">
 	{% for key in data %}
 		{% if 'id' in data[key] and key != '_all_' %}
 				<a  class="nav-link"
@@ -41,7 +45,11 @@
 					aria-controls="{{data[key].id}}_"
 					data-bs-target="#{{data[key].id}}_tab"
 					href="#{{data[key].id}}_tab"
-					role="tab">{{key}}</a>
+					role="tab"
+					{% if click_callback %}
+						onclick="{{ print_js_function(click_callback.function, ['this', key] + click_callback.params ) }}"
+					{% endif %}
+				>{{key}}</a>
 		{% endif %}
 	{% endfor %}
 </div>

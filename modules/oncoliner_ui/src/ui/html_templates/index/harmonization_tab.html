@@ -1,17 +1,7 @@
-<div class="wrapper main-tab-content">
+<div class="wrapper">
 
-    <div class="sidebar-sticky pt-3 app-sidebar">
-        <div class="navbar-brand viz-clickable">
-            Variant size & type
-        </div>
-        <div class="tab-pane flex-column viz-nav-block" role="tablist" aria-orientation="vertical" id="harmonization_size_type">
-            {{ ctrl.render_tree_branch(ctrl.get_tree(), 'harmonization', 'harmonizations_panel_content') }}
-        </div>
-
-    </div>
-
-    <main class="viz-content sidebar-spacer">
-		<h1>Harmonization</h1>
+    <main class="viz-content">
+		<h1 class="viz-width-limited">Harmonization</h1>
 
 		{{ ctrl.render_panel() }}
 	</main>

@@ -1,6 +1,6 @@
 import os
 
-from .utils import flatten_dict
+from .utils import flatten_dict, flatten_dict_keys
 from .plots.harmonization_plot import HarmonizationPlot
 
 
@@ -31,13 +31,21 @@ class HarmonizationTab():
     # def get_harmonization_keys_ids(self):
     #     return self._harmonization_keys_ids
 
+    def render_dropdown_tree(self, prefix_id, target_group):
+        template = self._env.get_template(os.path.join("shared", "dropdown_tree.html"))
+        data = flatten_dict_keys(self.get_tree(), 'id')
+        self.default_id = data[0]['id']
+        return template.render(ctrl=self, data=data, prefix_id=prefix_id, target_group=target_group)
+
     def get_tree(self):
         return self._harmonization_tree_dict
 
-    def render_tree_branch(self, data, prefix_id, target_group, depth=0):
+    def render_tree_branch(self, data, prefix_id, target_group, depth=0, click_callback=None):
         template = self._env.get_template(os.path.join("shared", "tree", "wrapper_template.html"))
-        return template.render(ctrl=self, data=data, prefix_id=prefix_id, target_group=target_group, depth=depth)
+        return template.render(ctrl=self, data=data, prefix_id=prefix_id, target_group=target_group, depth=depth, click_callback=click_callback)
     
     def get_harmonization_plot_data(self):
         harmonization_plot = HarmonizationPlot(self._harmonization_dao.get_operations_metrics())
         return harmonization_plot.get_plot_data()
+
+

@@ -3,6 +3,25 @@
         class="sub-tab-content tab-content"
         id="improvements_panel_content_{{pipeline_name}}"
     >
+
+        <div class="viz-width-limited">
+            <label>Select variant type and size</label>
+
+            <div id="ddat_improvement" style="margin:20px;">
+                <div class="dropdown viz-dropdown-tree">
+                  <button class="form-select" type="button" id="ddat_dropdownMenuButton_improvement_{{pipeline_name}}" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    {{ctrl.get_tree(pipeline_name).keys() | first}}
+                  </button>
+                  <div class="dropdown-menu scrollbar" aria-labelledby="ddat_dropdownMenuButton_improvement_{{pipeline_name}}" id="ddat_dropdownMenuButton_improvement_menu_{{pipeline_name}}">
+                    <div class="tab-pane" role="tablist" aria-orientation="vertical" id="improvement_size_type">
+                        {{ ctrl.render_tree_branch(ctrl.get_tree(pipeline_name), 'improvement', 'improvements_panel_content_' + pipeline_name, click_callback={'function':'hideMenuAndUpdateSelected', 'params':['ddat_dropdownMenuButton_improvement_menu_' + pipeline_name, 'ddat_dropdownMenuButton_improvement_' + pipeline_name]}) }}
+                        </div>
+                  </div>
+                </div>
+            </div>
+
+        </div>
+
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
             <div style="width: 100px"></div>
             <button
@@ -34,22 +53,24 @@
             </button>
         </div>
         <div class="viz-bordered-tab-container">
-            <div class="radar-chart-container">
-                {{include_cooked('shared/export_chart.html',
-                chart_js_var_name=pipeline_name+'ImprovementPlot',
-                filenames=pipeline_name+'ImprovementPlotData[\'titles\'].map((a)
-                => `'+pipeline_name+'_improvement_plot_${a}`)',
-                filename=pipeline_name+'ImprovementPlot')}}
-                <div id="{{pipeline_name}}_chart_container_improvement"></div>
+            <div class="viz-width-limited">
+                <div class="radar-chart-container">
+                    {{include_cooked('shared/export_chart.html',
+                    chart_js_var_name=pipeline_name+'ImprovementPlot',
+                    filenames=pipeline_name+'ImprovementPlotData[\'titles\'].map((a)
+                    => `'+pipeline_name+'_improvement_plot_${a}`)',
+                    filename=pipeline_name+'ImprovementPlot')}}
+                    <div id="{{pipeline_name}}_chart_container_improvement"></div>
+                </div>
+                <div
+                    id="improvementPlotInfo{{pipeline_name}}"
+                    class="viz-plot-info"
+                ></div>
             </div>
-            <div
-                id="improvementPlotInfo{{pipeline_name}}"
-                class="viz-plot-info"
-            ></div>
         </div>
         {% for value in ctrl.get_flatten_tree(pipeline_name) %}
         <div
-            class="tab-pane fade"
+            class="tab-pane fade {{'active show' if ctrl.default_id[pipeline_name] == value.id}}"
             id="{{value.id}}_tab"
             aria-labelledby="{{value.id}}_tab"
         >
