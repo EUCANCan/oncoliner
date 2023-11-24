@@ -1,7 +1,12 @@
 import argparse
-from vcf_ops.i_o import read_vcfs, write_masked_vcfs
-from vcf_ops.constants import DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS
-from vcf_ops.union import union
+import os
+import sys
+
+# Add vcf-ops to the path
+sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', 'shared', 'vcf_ops', 'src'))
+from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
+from vcf_ops.constants import DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS  # noqa
+from vcf_ops.union import union  # noqa
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Union two sets of VCF/BCF/VCF.GZ files')

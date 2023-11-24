@@ -5,6 +5,7 @@
 WIP
 
 ## Table of contents<!-- omit in toc -->
+- [Getting started](#getting-started)
 - [Installation](#installation)
   - [Singularity](#singularity)
   - [Docker](#docker)
@@ -12,9 +13,19 @@ WIP
   - [Interface](#interface)
   - [Normalization](#normalization)
 - [Tools](#tools)
-  - [Pipeline designer](#pipeline-designer)
-  - [`vcf-ops`](#vcf-ops)
+  - [Pipeline Designer](#pipeline-designer)
+  - [VCF Intersect](#vcf-intersect)
+  - [VCF Union](#vcf-union)
 - [Modularity](#modularity)
+
+## Getting started
+
+WIP
+
+```
+git clone <TODO>
+```
+
 
 ## Installation
 
@@ -94,11 +105,15 @@ It is recommended to normalize indels and SNVs before executing ONCOLINER. For t
 
 Along with ONCOLINER, in this repository you can find some tools that may be useful.
 
-### Pipeline designer
+### Pipeline Designer
 
 WIP
 
-### `vcf-ops`
+### VCF Intersect
+
+WIP
+
+### VCF Union
 
 WIP
 

@@ -7,25 +7,10 @@ The user just needs to provide the VCF files of the variant callers they want to
 Pipeline Designer is part of the [ONCOLINER suite](../../README.md) and is provided as a standalone command line tool. It is available as in the [Docker image](../../Dockerfile) and [Singularity image](../../singularity.def) of ONCOLINER.
 
 ## Table of contents<!-- omit in toc -->
-- [Dependencies](#dependencies)
 - [Usage](#usage)
   - [Interface](#interface)
   - [Output](#output)
 - [Use case example](#use-case-example)
-
-
-## Dependencies
-ONCOLINER's pipeline designer makes use of the following Python modules:
-* [`pandas`](https://pandas.pydata.org/)
-* [`pysam`](https://github.com/pysam-developers/pysam)
-* [`pysam`](https://github.com/pysam-developers/pysam)
-
-You may install them using pip:
-```
-pip3 install pandas pysam variant-extractor
-```
-
-However, we recommend using the provided [Dockerfile](../../Dockerfile)/[Singularity recipe](../../singularity.def) for building the whole ONCOLINER suite to avoid dependency issues.
 
 ## Usage
 
