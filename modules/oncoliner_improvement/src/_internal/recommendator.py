@@ -64,7 +64,7 @@ def compute_improvements(callers_folders, user_folder, results_output_folder, re
     return improvement_list
 
 def filter_operations(df: pd.DataFrame, loss_margin: float, max_recommendations: int):
-    filtered_df = filter_metrics_recommendations(df, loss_margin, max_recommendations, 'added_callers', ['f1_score', 'recall', 'precision'])
+    filtered_df = filter_metrics_recommendations(df, loss_margin, max_recommendations, 'added_callers')
     result = set(filtered_df['operation'].unique())
     return result
 

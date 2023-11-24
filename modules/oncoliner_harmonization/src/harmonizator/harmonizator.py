@@ -8,6 +8,7 @@ from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pandas as pd
+import numpy as np
 
 # Add vcf-ops to the path
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', '..', 'shared', 'vcf_ops', 'src'))
@@ -15,6 +16,7 @@ sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..'
 from vcf_ops.metrics import filter_metrics_recommendations  # noqa
 
 from .utils import cleanup_text  # noqa
+from .heterogeneity_metrics import compute_h_score, compute_gdr  # noqa
 
 
 def _read_pipeline_improvements(pipeline_folder: str) -> Dict[str, pd.DataFrame]:
@@ -22,12 +24,8 @@ def _read_pipeline_improvements(pipeline_folder: str) -> Dict[str, pd.DataFrame]
     csv_files = glob.glob(os.path.join(pipeline_folder, 'improvement_list', '*.csv'))
     if len(csv_files) == 0:
         raise Exception(f'No improvement files found in {pipeline_folder}')
-    # Get the first row of the first file to get the column names
-    first_row = pd.read_csv(csv_files[0], nrows=1)
-    # Get the columns and remove all those that end with _genes
-    selected_columns = [column for column in first_row.columns if not column.endswith('_genes')]
     # Read all the improvements
-    pipeline_improvements = [pd.read_csv(csv_file, usecols=selected_columns) for csv_file in csv_files]
+    pipeline_improvements = [pd.read_csv(csv_file) for csv_file in csv_files]
     # Concatenate all the improvements into a single dataframe
     pipeline_improvements = pd.concat(pipeline_improvements, ignore_index=True)
     # Create a dict with the variant_type and variant_size
@@ -43,7 +41,6 @@ def _get_pipelines_combinations(pipelines_folders: List[str], threads: int) -> D
     # Each pipeline folder contains a list of .csv files with its possible improvements
     # Read all of them and concatenate them into a single dataframe
     # Create a dictionary with the pipeline name as key and the improvements dataframe as value
-    pipelines_combinations = OrderedDict()
     pipeline_names = sorted([os.path.basename(pipeline_folder) for pipeline_folder in pipelines_folders])
     # Make sure the pipeline names are unique
     if len(pipeline_names) != len(set(pipeline_names)):
@@ -52,6 +49,8 @@ def _get_pipelines_combinations(pipelines_folders: List[str], threads: int) -> D
     futures = []
     for pipeline_folder in pipelines_folders:
         futures.append(pool.submit(_read_pipeline_improvements, pipeline_folder))
+    # Initialize the dictionary with the pipeline names sorted
+    pipelines_combinations = OrderedDict(zip(pipeline_names, [None] * len(pipeline_names)))
     for future in as_completed(futures):
         pipeline_improvements, pipeline_folder = future.result()
         pipeline_name = os.path.basename(pipeline_folder)
@@ -59,13 +58,34 @@ def _get_pipelines_combinations(pipelines_folders: List[str], threads: int) -> D
     return pipelines_combinations
 
 
-def _filter_combinations(pipelines_names: List[str], df: pd.DataFrame, num_callers_column: str, ranking_columns: List[str], loss_margin: float, max_recommendations: int) -> Set[str]:
-    
+def _filter_combinations(pipelines_names: List[str], df: pd.DataFrame, num_callers_column: str, ranking_columns: List[str], priority_columns: List[str], loss_margin: float, max_recommendations: int) -> Set[str]:
     # Create a new column with the concatenation of the operations
     df = df.assign(operation=lambda x: x[pipelines_names].apply(lambda y: ';'.join(y), axis=1))
-    filtered_df = filter_metrics_recommendations(df, loss_margin, max_recommendations, num_callers_column, ranking_columns)
+    filtered_df = filter_metrics_recommendations(df, loss_margin, max_recommendations, num_callers_column, ranking_columns, priority_columns)
     result = set(filtered_df['operation'].unique())
     return result
+
+
+def _compute_metrics(operations_combination, improvements_combinations_metrics, variant_type_size, metrics_name):
+    computable_metrics = []
+    for op in operations_combination:
+        pipeline_name, operation = op.split(';')
+        metrics = improvements_combinations_metrics[pipeline_name][variant_type_size]
+        # Get the metrics for the current operation
+        metrics = metrics[metrics['operation'] == operation].iloc[0]
+        # Calculate the metrics for the current operation
+        computable_metrics.append(metrics)
+    # Calculate the metrics for the combination
+    if metrics_name == 'h_score':
+        return compute_h_score([(metrics['recall'], metrics['precision']) for metrics in computable_metrics])
+    elif metrics_name == 'gdr':
+        return compute_gdr([metrics['protein_affected_genes'] for metrics in computable_metrics])
+    elif metrics_name.endswith('_avg'):
+        return np.mean([metrics[metrics_name.replace('_avg', '')] for metrics in computable_metrics])
+    elif metrics_name.endswith('_sum'):
+        return np.sum([metrics[metrics_name.replace('_sum', '')] for metrics in computable_metrics])
+    else:
+        raise Exception(f'Unknown metric {metrics_name}')
 
 
 def _group_combinations(improvements_combinations_metrics: Dict[str, Dict[str, pd.DataFrame]], loss_margin: float, max_recommendations: int) -> Dict[str, pd.DataFrame]:
@@ -96,29 +116,20 @@ def _group_combinations(improvements_combinations_metrics: Dict[str, Dict[str, p
                 combinations_row[pipeline_name] = operation
             combinations_row['variant_type'] = variant_type_size.split(';')[0]
             combinations_row['variant_size'] = variant_type_size.split(';')[1]
-            combinations_row['recall_avg'] = 0
-            combinations_row['precision_avg'] = 0
-            combinations_row['f1_score_avg'] = 0
-            combinations_row['protein_affected_genes_count_avg'] = 0
-            combinations_row['protein_affected_driver_genes_count_avg'] = 0
-            combinations_row['added_callers_sum'] = 0
-            # Calculate the metrics for each pipeline
-            for op in operations_combination:
-                pipeline_name, operation = op.split(';')
-                metrics = improvements_combinations_metrics[pipeline_name][variant_type_size]
-                # Get the metrics for the current operation
-                metrics = metrics[metrics['operation'] == operation].iloc[0]
-                # Calculate the metrics for the current operation
-                for combinations_row_key in combinations_row.keys():
-                    if combinations_row_key.endswith('_avg'):
-                        combinations_row[combinations_row_key] += \
-                            metrics[combinations_row_key.replace('_avg', '')] / len(operations_combination)
-                    elif combinations_row_key.endswith('_sum'):
-                        combinations_row[combinations_row_key] += metrics[combinations_row_key.replace('_sum', '')]
+            computable_metrics = ['h_score', 'recall_avg', 'precision_avg', 'f1_score_avg', 'gdr',
+                                  'protein_affected_genes_count_avg', 'protein_affected_driver_genes_count_avg', 'protein_affected_actionable_genes_count_avg',
+                                  'added_callers_sum']
+            for metrics_name in computable_metrics:
+                combinations_row[metrics_name] = _compute_metrics(operations_combination, improvements_combinations_metrics, variant_type_size, metrics_name)
             combinations_rows.append(combinations_row)
         # Create a dataframe with the metrics
         combinations_df = pd.DataFrame(combinations_rows)
-        selected_combinations.update(_filter_combinations(pipeline_names, combinations_df, 'added_callers_sum', ['f1_score_avg', 'recall_avg', 'precision_avg'], loss_margin, max_recommendations))
+        # Invert values for h_score and gdr
+        combinations_df['h_score_inv'] = - combinations_df['h_score']
+        combinations_df['gdr_inv'] = - combinations_df['gdr']
+        selected_combinations.update(_filter_combinations(pipeline_names, combinations_df, 'added_callers_sum', ['h_score_inv', 'gdr_inv'], ['f1_score_avg', 'recall_avg', 'precision_avg'], loss_margin, max_recommendations))
+        # Drop the inverted columns
+        combinations_df.drop(columns=['h_score_inv', 'gdr_inv'], inplace=True)
         result[variant_type_size] = combinations_df
     # Filter the combinations
     for variant_type_size, combinations_df in result.items():

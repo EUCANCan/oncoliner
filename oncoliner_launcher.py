@@ -91,11 +91,8 @@ def check_samples_folders(pipeline_folder_path: str, sample_names: Set[str]) -> 
     """
     pipeline_samples = set(os.listdir(pipeline_folder_path))
     missing_samples = sample_names - pipeline_samples
-    missing_pipeline_samples = pipeline_samples - sample_names
     if missing_samples:
         raise Exception(f'The following samples are missing in {pipeline_folder_path}: {missing_samples}')
-    if missing_pipeline_samples:
-        logging.warning(f'The following samples are missing from the config file: {missing_pipeline_samples}')
 
 
 if __name__ == '__main__':

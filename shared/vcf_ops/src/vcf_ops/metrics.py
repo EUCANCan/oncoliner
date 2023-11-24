@@ -82,12 +82,12 @@ def aggregate_metrics(metrics_list):
     agg_metrics = agg_metrics[METRICS_COLUMNS]
     return agg_metrics
 
-def filter_metrics_recommendations(df: pd.DataFrame, loss_margin: float, max_recommendations: int, num_callers_column='num_callers', ranking_columns=['f1_score', 'recall', 'precision']):
+def filter_metrics_recommendations(df: pd.DataFrame, loss_margin: float, max_recommendations: int, num_callers_column='num_callers', ranking_columns=['f1_score', 'recall', 'precision'], priority_columns=['f1_score', 'recall', 'precision']):
     if len(df) == 0:
         return df
     selected_dfs = []
     for i, ranking_column in enumerate(ranking_columns):
-        sort_columns = [ranking_column] + ranking_columns[:i] + ranking_columns[i+1:]
+        sort_columns = [ranking_column] + priority_columns
         # Filter all rows with the max element for each column - loss_margin
         df_temp = df
         for column in sort_columns:

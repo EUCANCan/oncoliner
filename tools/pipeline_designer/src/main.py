@@ -251,7 +251,7 @@ def execute_operations(operations: List[str], combinations_folder: str, evaluati
 
 
 def filter_operations(df: pd.DataFrame, loss_margin: float, max_recommendations: int):
-    return filter_metrics_recommendations(df, loss_margin, max_recommendations, 'num_callers', ['f1_score', 'recall', 'precision'])['operation'].unique()
+    return filter_metrics_recommendations(df, loss_margin, max_recommendations, 'num_callers')['operation'].unique()
 
 
 def write_improvement_lists(evaluation_callers_folders: List[str], loss_margin: float, max_recommendations: int, output_folder: str, processes: int):
