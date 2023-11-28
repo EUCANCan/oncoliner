@@ -37,7 +37,9 @@ class ImprovementTab():
 
     def render_table(self, id_, pipeline_name, data):
         template = self._env.get_template(os.path.join("improvement_tab", "improvement_table.html"))
-        return template.render(ctrl=self, id=f'table_{id_}', pipeline_name=pipeline_name, data=data)
+        # Get the index of the row with name 'baseline
+        baseline_index = data[data['operation'] == 'baseline'].index[0]
+        return template.render(ctrl=self, id=f'table_{id_}', pipeline_name=pipeline_name, data=data, fixed_index=baseline_index)
 
     def render_dropdown_tree(self, pipeline_name, prefix_id, target_group):
         template = self._env.get_template(os.path.join("shared", "dropdown_tree.html"))

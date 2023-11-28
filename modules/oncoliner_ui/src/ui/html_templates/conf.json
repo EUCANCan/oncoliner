@@ -86,6 +86,7 @@
       "recall_avg":{
          "name":"Recall avg.",
          "tooltip":"Average recall",
+         "legend": "Recall is calculated exclusively using the true positives and false negatives from the recall samples.",
          "sortable": true
       },
       "precision":{
@@ -97,6 +98,7 @@
       "precision_avg":{
          "name":"Precision avg.",
          "tooltip":"Average precision",
+         "legend": "Precision is calculated exclusively using the true positives and false positives from the precision samples.",
          "sortable": true
       },
       "f1_score":{
@@ -110,9 +112,25 @@
          "tooltip":"Average F1-score",
          "sortable": true
       },
+      "h_score":{
+         "name":"H<sub>score</sub>",
+         "tooltip":"Heterogeneity score",
+         "sortable": true
+      },
+      "gdr":{
+         "name":"GDR",
+         "tooltip":"Gene Discordance Ratio",
+         "sortable": true
+      },
       "protein_affected_genes_count":{
          "name":"Prot. genes",
          "tooltip":"Genes whose proteins are affected by discovered variants (only TP)",
+         "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
+         "sortable": true
+      },
+      "protein_affected_genes_count_avg":{
+         "name":"Prot. genes avg.",
+         "tooltip":"Average genes whose proteins are affected by discovered variants (only TP)",
          "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
          "sortable": true
       },
@@ -122,15 +140,33 @@
          "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
          "sortable": true
       },
+      "protein_affected_driver_genes_count_avg":{
+         "name":"Cancer driver prot. genes avg.",
+         "tooltip":"Average cancer driver genes whose proteins are affected by discovered variants (only TP)",
+         "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
+         "sortable": true
+      },
       "protein_affected_actionable_genes_count":{
          "name":"Prot. actionable genes",
          "tooltip":"Actionable genes whose proteins are affected by discovered variants (only TP)",
          "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
          "sortable": true
       },
+      "protein_affected_actionable_genes_count_avg":{
+         "name":"Prot. actionable genes avg.",
+         "tooltip":"Average actionable genes whose proteins are affected by discovered variants (only TP)",
+         "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
+         "sortable": true
+      },
       "added_callers":{
          "name":"Added callers",
          "tooltip":"Number of callers added to the pipeline",
+         "filterable": true,
+         "sortable": true
+      },
+      "added_callers_sum":{
+         "name":"Total added callers",
+         "tooltip":"Total number of callers added to all pipelines",
          "filterable": true,
          "sortable": true
       }

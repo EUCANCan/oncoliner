@@ -20,7 +20,10 @@ class HarmonizationTab():
 
     def render_table(self, id_, data):
         template = self._env.get_template(os.path.join("harmonization_tab", "harmonization_table.html"))
-        return template.render(ctrl=self, id=f'table_{id_}', data=data)
+        # Get the index of the row with all names 'baseline'
+        pipelines_names = self._harmonization_dao.get_pipelines_names()
+        baseline_index = data[data[pipelines_names].apply(lambda x: all(x == 'baseline'), axis=1)].index[0]
+        return template.render(ctrl=self, id=f'table_{id_}', data=data, fixed_index=baseline_index)
 
     def get_flatten_tree(self):
         return flatten_dict(self._harmonization_tree_dict, 'id')

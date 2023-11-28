@@ -20,6 +20,20 @@ function _getSortableColumns(headerTr) {
     return sortableColumns;
 }
 
+/**
+ * @param {string} tableId
+ * @param {number} fixedRowIndex
+ */
+function _createFixedRow(tableId, fixedRowIndex) {
+    const table = document.querySelector(`#${tableId}`);
+    const selectedRow = table.querySelector(`tbody tr:nth-child(${fixedRowIndex+1})`);
+    const clone = selectedRow.cloneNode(true);
+    // Add class to the cloned row
+    clone.classList.add("viz-fixed-row");
+    // Add at the end of the table header
+    table.querySelector("thead").appendChild(clone);
+}
+
 function _initComplete() {
     const api = this.api();
     const tableId = api.table().node().id;
@@ -45,7 +59,6 @@ function _initComplete() {
             cell.querySelector("input").addEventListener("keyup", function (e) {
                 // Get the value searched
                 const search = this.value;
-                console.log(search);
                 // Search the column for that value
                 api.column(colIdx).search(search, true, false).draw();
             });
@@ -55,14 +68,19 @@ function _initComplete() {
 /**
  * @param {string} tableId
  * @param {number} [defaultSortColumnIndex]
+ * @param {number} [fixedRowIndex]
  */
-function makeTableDynamic(tableId, defaultSortColumnIndex) {
+function makeTableDynamic(tableId, defaultSortColumnIndex, fixedRowIndex) {
     // Set the table width to 100%
     document.querySelector(`#${tableId}`).style.width = "100%";
     // Get the table header
     const headerTr = document.querySelector(`#${tableId} thead tr`);
     // Create a row for each column filter
     _createFilterHeader(headerTr);
+    // If a fixed row index is specified, make it fixed
+    if (fixedRowIndex !== undefined) {
+        _createFixedRow(tableId, fixedRowIndex);
+    }
     // Get the list of sortable columns
     const sortableColumns = _getSortableColumns(headerTr);
     // Get the list of non-sortable columns
