@@ -390,7 +390,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Pipeline designer')
+    parser = argparse.ArgumentParser(description='PipelineDesigner')
     parser.add_argument('-c', '--config', help='Path to the config file', required=True, type=str)
     parser.add_argument('-vc', '--variant-callers', help='Path to the variant callers folder', required=True, type=str)
     parser.add_argument('-o', '--output', help='Path to the output folder', required=True, type=str)

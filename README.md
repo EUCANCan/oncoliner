@@ -5,27 +5,113 @@
 WIP
 
 ## Table of contents<!-- omit in toc -->
-- [Getting started](#getting-started)
+- [Quick start guide](#quick-start-guide)
 - [Installation](#installation)
   - [Singularity](#singularity)
   - [Docker](#docker)
 - [Usage](#usage)
   - [Interface](#interface)
   - [Normalization](#normalization)
-- [Tools](#tools)
-  - [Pipeline Designer](#pipeline-designer)
+- [Additional software](#additional-software)
+  - [PipelineDesigner](#pipelinedesigner)
   - [VCF Intersect](#vcf-intersect)
   - [VCF Union](#vcf-union)
-- [Modularity](#modularity)
+- [Modules](#modules)
 
-## Getting started
+## Quick start guide
 
-WIP
+Follow these steps to run ONCOLINER with the default configuration and default datasets (tumorized and mosaic genomes). First, create a directory to store the ONCOLINER workspace:
 
 ```
-git clone <TODO>
+mkdir oncoliner_workspace
+cd oncoliner_workspace
 ```
 
+Then, download the tumorized genomes and their truth VCF files:
+
+```
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12264778/tumorized_NA12878_GRCh37_GRCh37_60X_precision_T.cram
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12264778/tumorized_NA12878_GRCh37_GRCh37_60X_precision_T.cram.crai
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12264432/tumorized_NA12878_GRCh37_GRCh37_40X_N.cram
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12264432/tumorized_NA12878_GRCh37_GRCh37_40X_N.cram.crai
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc http://ftp.sra.ebi.ac.uk/vol1/ERZ218/ERZ21869344/tumorized_NA12878_GRCh37_GRCh37_60X_precision_T.cram.annotated.vcf
+
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12261542/tumorized_HG002_GRCh37_GRCh37_60X_precision_T.cram
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12261542/tumorized_HG002_GRCh37_GRCh37_60X_precision_T.cram.crai
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12257182/tumorized_HG002_GRCh37_GRCh37_40X_N.cram.crai
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12257182/tumorized_HG002_GRCh37_GRCh37_40X_N.cram
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/ERZ218/ERZ21869345/tumorized_HG002_GRCh37_GRCh37_60X_precision_T.cram.annotated.vcf
+```
+
+Then, download the mosaic genomes and their truth VCF files. Follow the instructions for requesting access and downloading the PCAWG mosaic genomes and their truth files from [WIP]() and the HMF mosaic genomes and their truth files from [WIP]().
+```
+mkdir -p benchmarking_datasets/mosaic_genomes/mosaic_genome_PCAWG_0
+mkdir -p benchmarking_datasets/mosaic_genomes/mosaic_genome_PCAWG_1
+mkdir -p benchmarking_datasets/mosaic_genomes/mosaic_genome_PCAWG_2
+# Download data
+
+mkdir -p benchmarking_datasets/mosaic_genomes/mosaic_genome_HMF
+# Download data
+```
+
+Download and index the reference FASTA file. All CRAM files are aligned to GRCh37 (https://ftp.broadinstitute.org/pub/seq/references/Homo_sapiens_assembly19.fasta without scaffolds and supercontigs, only 1-22-X-Y-MT) using BWA-0.7.17 MEM.
+
+Download the example configuration file and edit it to match the paths of the tumorized and mosaic genomes, truth VCF files and reference FASTA file:
+
+```
+wget https://raw.githubusercontent.com/EUCANCan/oncoliner/main/default_config.tsv
+# Edit the example configuration file
+```
+
+Create the pipelines folders and subfolder (as many as pipelines you want to evaluate), the following example is for one pipeline:
+```
+mkdir pipeline_1
+mkdir pipeline_1/mosaic_genome_PCAWG_0
+mkdir pipeline_1/mosaic_genome_PCAWG_1
+mkdir pipeline_1/mosaic_genome_PCAWG_2
+mkdir pipeline_1/mosaic_genome_HMF
+mkdir pipeline_1/tumorized_precision_NA12878
+mkdir pipeline_1/tumorized_recall_NA12878
+```
+
+Execute the pipelines (as many as pipelines you want to evaluate) and store the filtered VCF files in the corresponding pipelines folders previously created. The pipeline folder structure should end up looking like this:
+
+```
+pipeline_1
+├── mosaic_genome_PCAWG_0
+│   ├── output_file_1.vcf
+│   ├── output_file_2.vcf
+│   ├── ...
+│   └── output_file_n.vcf
+├── mosaic_genome_PCAWG_1
+│   └── ...
+├── mosaic_genome_PCAWG_2
+│   └── ...
+├── mosaic_genome_HMF
+│   └── ...
+├── tumorized_precision_NA12878
+│   └── ...
+└── tumorized_recall_NA12878
+   └── ...
+```
+
+Download the ONCOLINER singularity image:
+```
+singularity pull oncoliner.sif oras://ghcr.io/eucancan/oncoliner:latest
+```
+
+Extract the variant callers pre-computed combinations evaluations:
+```
+wget -nc https://raw.githubusercontent.com/EUCANCan/oncoliner/main/data/variant_callers_combinations_evaluations.tar.gz.chunk.00
+wget -nc https://raw.githubusercontent.com/EUCANCan/oncoliner/main/data/variant_callers_combinations_evaluations.tar.gz.chunk.01
+wget -nc https://raw.githubusercontent.com/EUCANCan/oncoliner/main/data/variant_callers_combinations_evaluations.tar.gz.chunk.02
+cat variant_callers_combinations_evaluations.tar.gz.chunk* | tar xzvf -
+```
+
+Execute ONCOLINER:
+```
+singularity exec oncoliner.sif /oncoliner/oncoliner_launcher.py -c config.tsv -pf pipeline_1 -cf variant_callers_combinations/evaluations -o output_folder --max-processes 48
+```
 
 ## Installation
 
@@ -60,16 +146,19 @@ docker build -t oncoliner .
 Assuming you have a singularity image called `oncoliner.sif`, you can run ONCOLINER as follows:
 
 ```bash
-singularity exec oncoliner.sif oncoliner/main.py -c config.tsv -pf pipelines_1_folder pipelines_2_folder -o output_folder --max-processes 48
+singularity exec oncoliner.sif /oncoliner/oncoliner_launcher.py -c config.tsv -pf pipeline_1_folder pipelines_2_folder -o output_folder --max-processes 48
 ```
 
 ### Interface
 ```
-usage: main.py [-h] -c CONFIG -pf PIPELINES_FOLDERS [PIPELINES_FOLDERS ...] -o OUTPUT [-cf CALLERS_FOLDER] [--max-processes MAX_PROCESSES]
+usage: oncoliner_launcher.py [-h] -c CONFIG -pf PIPELINES_FOLDERS
+                             [PIPELINES_FOLDERS ...] -o OUTPUT
+                             [-cf CALLERS_FOLDER]
+                             [--max-processes MAX_PROCESSES]
 
 ONCOLINER
 
-options:
+optional arguments:
   -h, --help            show this help message and exit
   -c CONFIG, --config CONFIG
                         Path to config file
@@ -99,25 +188,25 @@ You can check an example of configuration file in [`example/example_config.tsv`]
 
 ### Normalization
 
-It is recommended to normalize indels and SNVs before executing ONCOLINER. For this purpose, we recommend using pre.py from [Illumina's Haplotype Comparison Tools (hap.py)](https://github.com/Illumina/hap.py). We provide an standalone and containerized **[EUCANCan's pre.py wrapper](https://github.com/EUCANCan/prepy-wrapper)** for this purpose, specially the bulk version of the wrapper. You can check an example of usage in [`example/example_prepy.sh`](/example/example_prepy.sh).
+It is recommended to normalize indels and SNVs before executing ONCOLINER. For this purpose, we recommend using pre.py from [Illumina's Haplotype Comparison Tools (hap.py)](https://github.com/Illumina/hap.py). We provide an standalone and containerized **[EUCANCan's pre.py wrapper](https://github.com/EUCANCan/prepy-wrapper)** for this purpose, specially the bulk version of the wrapper.
 
-## Tools
+## Additional software
 
-Along with ONCOLINER, in this repository you can find some tools that may be useful.
+Along with ONCOLINER, in this repository we also provide additional stand-alone software solutions for multiple needs associated with the improvement, standardization and harmonization of genome analysis across centers.
 
-### Pipeline Designer
+### PipelineDesigner
 
-WIP
+A standalone tool that helps users to find the best strategy to combine and merge specific variant callers to maximize recall and precision over all variant types. More information about this tool can be found in the [PipelineDesigner README](/tools/pipeline_designer/README.md).
 
 ### VCF Intersect
 
-WIP
+A standalone tool that allows users to intersect two different groups of VCF files. More information about this tool can be found in the [VCF Intersect README](/tools/vcf_intersect/README.md).
 
 ### VCF Union
 
-WIP
+A standalone tool that allows users to merge two different groups of VCF files. More information about this tool can be found in the [VCF Union README](/tools/vcf_union/README.md).
 
-## Modularity
+## Modules
 
 ONCOLINER is divided into three functional modules (assesment, improvement and harmonization) and a UI module. For more information about each module, check the corresponding README file in the [`modules`](/modules) folder:
 

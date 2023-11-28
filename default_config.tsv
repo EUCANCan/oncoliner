@@ -1,0 +1,7 @@
+sample_name	sample_types	reference_fasta_path	truth_vcf_paths
+mosaic_genome_PCAWG_2	recall	/path/to/GRCh37/genome.fa	benchmarking_datasets/mosaic_genomes/mosaic_genome_PCAWG_2/mosaic_genome_PCAWG_2.annotated.vcf 
+mosaic_genome_PCAWG_1	recall	/path/to/GRCh37/genome.fa	benchmarking_datasets/mosaic_genomes/mosaic_genome_PCAWG_1/mosaic_genome_PCAWG_1.annotated.vcf
+mosaic_genome_PCAWG_0	recall	/path/to/GRCh37/genome.fa	benchmarking_datasets/mosaic_genomes/mosaic_genome_PCAWG_0/mosaic_genome_PCAWG_0.annotated.vcf
+mosaic_genome_HMF	recall	/path/to/GRCh37/genome.fa	benchmarking_datasets/mosaic_genomes/mosaic_genome_HMF/mosaic_genome_HMF.annotated.vcf
+tumorized_precision_NA12878	precision	/path/to/GRCh37/genome.fa	benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878/tumorized_NA12878_GRCh37_GRCh37_60X_precision_T.cram.annotated.vcf
+tumorized_precision_HG002	precision	/path/to/GRCh37/genome.fa	benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002/tumorized_HG002_GRCh37_GRCh37_60X_precision_T.cram.annotated.vcf

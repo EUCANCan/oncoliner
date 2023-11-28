@@ -1,10 +1,10 @@
-# Pipeline Designer<!-- omit in toc -->
+# PipelineDesigner<!-- omit in toc -->
 
-Pipeline Designer is a standalone tool that allows the user to combine the results of different variant callers to improve the results of a variant calling pipeline. Pipeline Designer outputs the list of the best combinations of variant callers for each variant type and size, including SNVs, indels and SVs. Pipeline Designer also displays the F1-score, precision, recall and the number and names of genes discovered (if provided) of each combination (see [ONCOLINER's assesment module](../../modules/oncoliner_assesment/) for more information about the evaluation process).
+PipelineDesigner is a standalone tool that allows the user to combine the results of different variant callers to improve the results of a variant calling pipeline. PipelineDesigner outputs the list of the best combinations of variant callers for each variant type and size, including SNVs, indels and SVs. PipelineDesigner also displays the F1-score, precision, recall and the number and names of genes discovered (if provided) of each combination (see [ONCOLINER's assesment module](../../modules/oncoliner_assesment/) for more information about the evaluation process).
 
-The user just needs to provide the VCF files of the variant callers they want to combine as well as the truth files of the samples. The user must also specify which samples should be used to compute recall related metrics and which samples should be used to compute precision related metrics. Pipeline Designer will automatically combine the variant callers and evaluate the results. Check the [Use case example](#use-case-example) section for more information.
+The user just needs to provide the VCF files of the variant callers they want to combine as well as the truth files of the samples. The user must also specify which samples should be used to compute recall related metrics and which samples should be used to compute precision related metrics. PipelineDesigner will automatically combine the variant callers and evaluate the results. Check the [Use case example](#use-case-example) section for more information.
 
-Pipeline Designer is part of the [ONCOLINER suite](../../README.md) and is provided as a standalone command line tool. It is available as in the [Docker image](../../Dockerfile) and [Singularity image](../../singularity.def) of ONCOLINER.
+PipelineDesigner is part of the [ONCOLINER suite](../../README.md) and is provided as a standalone command line tool. It is available as in the [Docker image](../../Dockerfile) and [Singularity image](../../singularity.def) of ONCOLINER.
 
 ## Table of contents<!-- omit in toc -->
 - [Usage](#usage)
@@ -13,8 +13,6 @@ Pipeline Designer is part of the [ONCOLINER suite](../../README.md) and is provi
 - [Use case example](#use-case-example)
 
 ## Usage
-
-**WARNING**: It is recommended to normalize indels and SNVs for each variant caller before executing the pipeline designer. For this purpose, we recommend using pre.py from [Illumina's Haplotype Comparison Tools (hap.py)](https://github.com/Illumina/hap.py). We provide an standalone and containerized **[EUCANCan's pre.py wrapper](https://github.com/EUCANCan/prepy-wrapper)** for this purpose.
 
 The main executable code is in the [`src/`](/src/) folder. There is one executable file: [`main.py`](/src/main.py). It is provided as a standalone command line tool. Example of usage:
 
@@ -29,12 +27,14 @@ python3 src/main.py -t ./input/truth -v ./input/test -o ./output
 
 Check the example of usage in the [example](./example/) folder for more information.
 
+_Note_: it is recommended to normalize indels and SNVs for each variant caller before executing the PipelineDesigner. For this purpose, we recommend using pre.py from [Illumina's Haplotype Comparison Tools (hap.py)](https://github.com/Illumina/hap.py). We provide an standalone and containerized **[EUCANCan's pre.py wrapper](https://github.com/EUCANCan/prepy-wrapper)** for this purpose.
+
 ### Interface
 ```
 usage: main.py [-h] -t TRUTH -v TEST -o OUTPUT -f FASTA_REF -rs RECALL_SAMPLES [RECALL_SAMPLES ...] -ps PRECISION_SAMPLES [PRECISION_SAMPLES ...] [-it INDEL_THRESHOLD] [-wr WINDOW_RADIUS]
                [--sv-size-bins SV_SIZE_BINS [SV_SIZE_BINS ...]] [--contigs CONTIGS [CONTIGS ...]] [-p PROCESSES] [--max-combinations MAX_COMBINATIONS]
 
-Pipeline designer
+PipelineDesigner
 
 options:
   -h, --help            show this help message and exit
@@ -65,7 +65,7 @@ options:
 
 ### Output
 
-Pipeline Designer generates a series of files in the output folder. Most of them are intermediate files that are used by Pipeline Designer to generate the final output files and recover in case of failure. The most important ones are the `.csv` files in `$OUTPUT_FOLDER/improvement_list`.
+PipelineDesigner generates a series of files in the output folder. Most of them are intermediate files that are used by PipelineDesigner to generate the final output files and recover in case of failure. The most important ones are the `.csv` files in `$OUTPUT_FOLDER/improvement_list`.
 
 Each output `.csv` file is named after the variant type and the variant size (e.g `SNV_1.csv` contains the callers combinations results for SNVs of size 1). Each file contains the following columns:
 
@@ -90,9 +90,9 @@ Assume that we have the following input variant callers: `variant_caller_1` and 
 
 First of all, we need to run the variant callers and obtain the VCF files for each sample. Assume we obtain the following VCF files: `variant_caller_1_sample_N.vcf` and `variant_caller_2_sample_N.vcf` for each sample. **Make sure the names of the samples subfolders are the same across all the variant callers**.
 
-**Optional**. We recommend normalizing the VCF files before running the pipeline designer (see [Usage](#usage) for more information). However, in this case it is not necessary because we are only working with SVs.
+**Optional**. We recommend normalizing the VCF files before running the PipelineDesigner (see [Usage](#usage) for more information). However, in this case it is not necessary because we are only working with SVs.
 
-Now, we can run the pipeline designer. We will use the following command:
+Now, we can run the PipelineDesigner. We will use the following command:
 
 ```bash
 python3 src/main.py -t ./input/truth -v ./input/test -o ./output
@@ -103,7 +103,7 @@ python3 src/main.py -t ./input/truth -v ./input/test -o ./output
     --max-combinations 5
 ```
 
-The `input` folder must have the following structure:
+The `input` folder has the following structure:
 ```
 input
 ├── truth
@@ -124,7 +124,7 @@ input
             └── variant_caller_2_sample_2.vcf
 ```
 
-After running the pipeline designer, we will obtain the following output folder structure:
+After running the PipelineDesigner, we will obtain the following output folder structure:
 ```
 output
 ├── ...
