@@ -102,10 +102,8 @@ singularity pull oncoliner.sif oras://ghcr.io/eucancan/oncoliner:latest
 
 Extract the variant callers pre-computed combinations evaluations:
 ```
-wget -nc https://raw.githubusercontent.com/EUCANCan/oncoliner/main/data/variant_callers_combinations_evaluations.tar.gz.chunk.00
-wget -nc https://raw.githubusercontent.com/EUCANCan/oncoliner/main/data/variant_callers_combinations_evaluations.tar.gz.chunk.01
-wget -nc https://raw.githubusercontent.com/EUCANCan/oncoliner/main/data/variant_callers_combinations_evaluations.tar.gz.chunk.02
-cat variant_callers_combinations_evaluations.tar.gz.chunk* | tar xzvf -
+wget -nc http://cg.bsc.es/cg/data/oncoliner_variant_callers_combinations.tar.gz
+tar xzvf oncoliner_variant_callers_combinations.tar.gz
 ```
 
 Execute ONCOLINER:
