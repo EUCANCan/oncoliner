@@ -7,11 +7,13 @@
         </div>
     </div>
     <div class="viz-bordered-tab-container">
-        <div class="radar-chart-container">
-            {{include_cooked('shared/export_chart.html', chart_js_var_name='harmonizationPlot', filenames='harmonizationPlotData[\'titles\'].map((a) => `harmonization_plot_${a}`)', filename='harmonizationPlot')}}
-            <div id="chart_container_harmonization"></div>
+        <div class="viz-width-limited-large">
+            <div class="radar-chart-container">
+                {{include_cooked('shared/export_chart.html', chart_js_var_name='harmonizationPlot', filenames='harmonizationPlotData[\'titles\'].map((a) => `harmonization_plot_${a}`)', filename='harmonizationPlot')}}
+                <div id="chart_container_harmonization"></div>
+            </div>
+            <div id="harmonizationPlotInfo" class="viz-plot-info"></div>
         </div>
-        <div id="harmonizationPlotInfo" class="viz-plot-info"></div>
     </div>
     <div class="viz-width-limited">
         <label>Select variant type and size</label>
@@ -31,7 +33,7 @@
     </div>
     {% for value in ctrl.get_flatten_tree() %}
     <div
-        class="tab-pane fade {{'active show' if ctrl.default_id == value.id}}"
+        class="tab-pane viz-width-limited-large fade {{'active show' if ctrl.default_id == value.id}}"
         id="{{value.id}}_tab"
         aria-labelledby="{{value.id}}_tab"
     >

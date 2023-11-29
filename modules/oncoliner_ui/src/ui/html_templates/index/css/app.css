@@ -1,10 +1,10 @@
 
 body {
-    font-family: 'Open Sans';
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Montserrat';
+    font-family: Verdana, sans-serif;
 }
 
 #main-oncoliner-logo {
@@ -40,8 +40,14 @@ h1, h2, h3, h4, h5, h6 {
     padding: 20px;
 }
 
-.viz-content .viz-width-limited {
-    max-width: 1000px;
+.viz-width-limited {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.viz-width-limited-large {
+    max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
 }

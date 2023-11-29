@@ -35,7 +35,7 @@
             </div>
         </div>
         <div class="viz-bordered-tab-container">
-            <div class="viz-width-limited">
+            <div class="viz-width-limited-large">
                 <div class="radar-chart-container">
                     {{include_cooked('shared/export_chart.html',
                     chart_js_var_name=pipeline_name+'ImprovementPlot',
@@ -68,7 +68,7 @@
         </div>
         {% for value in ctrl.get_flatten_tree(pipeline_name) %}
         <div
-            class="tab-pane fade {{'active show' if ctrl.default_id[pipeline_name] == value.id}}"
+            class="viz-width-limited-large tab-pane fade {{'active show' if ctrl.default_id[pipeline_name] == value.id}}"
             id="{{value.id}}_tab"
             aria-labelledby="{{value.id}}_tab"
         >

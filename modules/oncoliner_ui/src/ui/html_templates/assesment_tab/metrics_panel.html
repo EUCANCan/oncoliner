@@ -1,47 +1,47 @@
-<div>
-    <nav class="nav nav-tabs">
-    <ul class="nav viz-nav-tabs-container viz-width-limited">
-        <li class="nav-item">
-            <button
-                class="nav-link"
-                id="metricspaneltab_snv_indel_sv_{{id}}"
-                data-bs-toggle="tab"
-                data-bs-target="#metricspaneltab_snv_indel_sv_{{id}}_"
-                type="button"
-                aria-selected="false"
-            >
-                {{conf.names.snv_indel_sv}}
-            </button>
-        </li>
-        <li class="nav-item">
-            <button
-                class="nav-link active"
-                id="metricspaneltab_by-type_{{id}}"
-                data-bs-toggle="tab"
-                data-bs-target="#metricspaneltab_by-type_{{id}}_"
-                type="button"
-                aria-selected="true"
-            >
-                {{conf.names.sv_subtypes}}
-            </button>
-        </li>
-        <li class="nav-item">
-            <button
-                class="nav-link"
-                id="metricspaneltab_by-type-size_{{id}}"
-                data-bs-toggle="tab"
-                data-bs-target="#metricspaneltab_by-type-size_{{id}}_"
-                type="button"
-                aria-selected="false"
-            >
-                {{conf.names.sv_subtypes_sizes}}
-            </button>
-        </li>
-    </ul>
-    </nav>
-    <div class="sub-tab-content" id="metricspaneltab_content_{{id}}">
+<nav class="nav nav-tabs">
+<ul class="nav viz-nav-tabs-container viz-width-limited">
+    <li class="nav-item">
+        <button
+            class="nav-link"
+            id="metricspaneltab_snv_indel_sv_{{id}}"
+            data-bs-toggle="tab"
+            data-bs-target="#metricspaneltab_snv_indel_sv_{{id}}_"
+            type="button"
+            aria-selected="false"
+        >
+            {{conf.names.snv_indel_sv}}
+        </button>
+    </li>
+    <li class="nav-item">
+        <button
+            class="nav-link active"
+            id="metricspaneltab_by-type_{{id}}"
+            data-bs-toggle="tab"
+            data-bs-target="#metricspaneltab_by-type_{{id}}_"
+            type="button"
+            aria-selected="true"
+        >
+            {{conf.names.sv_subtypes}}
+        </button>
+    </li>
+    <li class="nav-item">
+        <button
+            class="nav-link"
+            id="metricspaneltab_by-type-size_{{id}}"
+            data-bs-toggle="tab"
+            data-bs-target="#metricspaneltab_by-type-size_{{id}}_"
+            type="button"
+            aria-selected="false"
+        >
+            {{conf.names.sv_subtypes_sizes}}
+        </button>
+    </li>
+</ul>
+</nav>
+<div class="sub-tab-content viz-bordered-tab-container" id="metricspaneltab_content_{{id}}">
+    <div class="viz-width-limited-large">
         <div
-            class="tab-pane viz-bordered-tab-container fade"
+            class="tab-pane fade"
             id="metricspaneltab_snv_indel_sv_{{id}}_"
             aria-labelledby="metricspaneltab_snv_indel_sv_{{id}}"
         >
@@ -51,7 +51,7 @@
             {{ ctrl.render_metrics_table(metrics_table, id, 'snv_indel_sv', sample) }}
         </div>
         <div
-            class="tab-pane viz-bordered-tab-container fade show active"
+            class="tab-pane fade show active"
             id="metricspaneltab_by-type_{{id}}_"
             aria-labelledby="metricspaneltab_by-type_{{id}}"
         >
@@ -61,7 +61,7 @@
             {{ ctrl.render_metrics_table(metrics_table, id, 'sv_subtypes', sample) }}
         </div>
         <div
-            class="tab-pane viz-bordered-tab-container fade"
+            class="tab-pane fade"
             id="metricspaneltab_by-type-size_{{id}}_"
             aria-labelledby="metricspaneltab_by-type-size_{{id}}"
         >
