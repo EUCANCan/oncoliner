@@ -52,9 +52,16 @@ function createImprovementPlot(htmlContainerId, titles, labels, baseValues) {
         }
     }
 
+    function setImprovementLegendName(name) {
+        for (let i = 0; i < titles.length; i++) {
+            charts[i].setImprovementLegendName(name);
+        }
+    }
+
     return {
         setLabelsVisible,
         setImprovementData,
+        setImprovementLegendName,
         getBase64Images: () => charts.map((chart) => chart.getBase64Image()),
         getCanvas: () => concatCanvases(charts.map((chart) => chart.getCanvas()))
     };
@@ -76,7 +83,7 @@ function _buildImprovementChart(ctx, index, title, labels, baseValues) {
     /** @type {ChartDataset[]} */
     const datasets = [
         {
-            label: "Baseline",
+            label: "baseline",
             data: baseValues,
             borderColor: COLORS[index % COLORS.length],
             backgroundColor: `${COLORS[index % COLORS.length]}63`,
@@ -88,7 +95,7 @@ function _buildImprovementChart(ctx, index, title, labels, baseValues) {
             },
         },
         {
-            label: "Improvement",
+            label: "baseline",
             data: baseValues,
             borderColor: COLORS[index % COLORS.length],
             pointBackgroundColor: COLORS[index % COLORS.length],
@@ -136,6 +143,11 @@ function _buildImprovementChart(ctx, index, title, labels, baseValues) {
 
     const chart = buildRadarChart(labels, datasets, title, ctx);
 
+    function setImprovementLegendName(name) {
+        chart.data.datasets[1].label = name;
+        chart.update();
+    }
+
     /**
      * @param {number[]} values
      */
@@ -177,6 +189,7 @@ function _buildImprovementChart(ctx, index, title, labels, baseValues) {
     return {
         setImprovementData,
         setLabelsVisible,
+        setImprovementLegendName,
         getBase64Image: () => getBase64Image(chart),
         getCanvas: () => {return chart}
     };

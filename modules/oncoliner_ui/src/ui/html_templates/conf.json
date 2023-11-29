@@ -3,23 +3,10 @@
       "links": {
          "eucancan": "https://eucancan.com/",
          "oncoliner": "https://github.com/EUCANCan/oncoliner"
-      },
-      "libraries":  {
-         "js": [
-            {"name": "Bootstrap", "url": "https://getbootstrap.com/"},
-            {"name": "DataTables", "url": "https://datatables.net/"},
-            {"name": "Chart.js", "url": "https://www.chartjs.org/"},
-            {"name": "file-saver", "url": "https://www.npmjs.com/package/file-saver"},
-            {"name": "popper.js", "url": "https://popper.js.org/"}
-         ],
-         "python": [
-            {"name": "jinja2", "url": "https://pypi.org/project/Jinja2/"},
-            {"name": "pandas", "url": "https://pandas.pydata.org/"}
-         ]
       }
    },
    "names": {
-      "snv_indel_sv": "SNV, indel and SV",
+      "snv_indel_sv": "By SNV, indel and SV",
       "sv_subtypes": "By variant type",
       "sv_subtypes_sizes": "By variant type and size"
    },
@@ -147,13 +134,13 @@
          "sortable": true
       },
       "protein_affected_actionable_genes_count":{
-         "name":"Prot. actionable genes",
+         "name":"Actionable prot. genes",
          "tooltip":"Actionable genes whose proteins are affected by discovered variants (only TP)",
          "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
          "sortable": true
       },
       "protein_affected_actionable_genes_count_avg":{
-         "name":"Prot. actionable genes avg.",
+         "name":"Actionable prot. genes avg.",
          "tooltip":"Average actionable genes whose proteins are affected by discovered variants (only TP)",
          "legend": "Warning: ONCOLINER does not compute genes linked to false positives.",
          "sortable": true

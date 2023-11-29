@@ -78,7 +78,7 @@
         for (let i = 0; i < harmonizationPlotData['pipelines_names'].length; i++) {
             matrixText.push([harmonizationPlotData['pipelines_names'][i], pipelinesSelected[i]]);
         }
-        document.querySelector('#harmonizationPlotInfo').innerHTML = formatTemplateFromMatrix('<div>{0}: {1}</div>', matrixText);
+        document.querySelector('#harmonizationPlotInfo').innerHTML = matrixText;
     }
 
     setHarmonizationLabelsVisible('sv_subtypes');

@@ -1,3 +1,4 @@
+<h4 class="viz-plot-title">Performance metrics ({{conf.names[plot_type]}})</h4>
 <div class="metrics-chart-container" id="metrics-chart-container-{{id}}">
     {{include_cooked('shared/export_chart.html', chart_js_var_name=id+'MetricsChart', filenames=[id+'_metrics_plot'], filename=id+'_metrics_plot')}}
     <canvas></canvas>
@@ -5,6 +6,6 @@
 
 {% block javascript %}
 <script>
-    {{id}}MetricsChart = createMetricsPlot('metrics-chart-container-{{id}}', {{chart_data}}, 'Performance metrics ' + '{{conf.names[plot_type]}}'.charAt(0).toLowerCase() + '{{conf.names[plot_type]}}'.slice(1));
+    {{id}}MetricsChart = createMetricsPlot('metrics-chart-container-{{id}}', {{chart_data}});
 </script>
 {% endblock %}

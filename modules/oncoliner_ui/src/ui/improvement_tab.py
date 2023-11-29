@@ -2,10 +2,11 @@ import os
 
 from .utils import flatten_dict, flatten_dict_keys
 from .plots.improvement_plot import ImprovementPlot
+from .model.improvement.improvement_dao import ImprovementDAO
 
 
 class ImprovementTab():
-    def __init__(self, env, dao):
+    def __init__(self, env, dao: ImprovementDAO):
         self._env = env
         self._improvement_dao = dao
         self.default_id = {}
@@ -19,6 +20,12 @@ class ImprovementTab():
 
     def get_pipelines_names(self):
         return self._improvement_dao.get_pipelines_names()
+    
+    def get_callers_names(self, pipeline_name):
+        return self._improvement_dao.get_callers_names(pipeline_name)
+    
+    def get_best_improvement_name(self, pipeline_name, variant_type):
+        return self._improvement_dao.get_best_improvement_name(pipeline_name, variant_type)
 
     def get_tree(self, pipeline_name):
         return self._improvement_dao.get_pipeline_improvement_tree(pipeline_name)
@@ -38,7 +45,7 @@ class ImprovementTab():
     def render_table(self, id_, pipeline_name, data):
         template = self._env.get_template(os.path.join("improvement_tab", "improvement_table.html"))
         # Build the default order of the columns
-        columns_order = [[data.columns.get_loc('f1_score'), 'desc'], [data.columns.get_loc('added_callers'), 'asc']]
+        columns_order = list(map(lambda x: [data.columns.get_loc(x[0]), x[1]], self._improvement_dao.get_default_order()))
         # Get the index of the row with name 'baseline
         baseline_index = data[data['operation'] == 'baseline'].index[0]
         return template.render(ctrl=self, id=f'table_{id_}', pipeline_name=pipeline_name, data=data, fixed_index=baseline_index, default_order=columns_order)

@@ -1,8 +1,21 @@
 <div class="tab-content">
     <div class="tab-pane fade show active" id="improvements_panel_content_{{pipeline_name}}">
-        <h2 class="viz-width-limited">Improvement: <b>{{pipeline_name}}</b></h2>
-        <p class="viz-width-limited">Improvement possibilities of <b>{{pipeline_name}}</b> based on its assesment results. These improvements are the result of combining the output of <b>{{pipeline_name}}</b> with the outputs of variant callers.</p>
-        <!-- TODO: Show a list of all callers and combinations used -->
+        <div class="viz-width-limited">
+            <h2>Improvement: <b>{{pipeline_name}}</b></h2>
+            <p>Improvement possibilities of <b>{{pipeline_name}}</b> based on its assesment results. These improvements are the result of combining the output of <b>{{pipeline_name}}</b> with the outputs of different variant callers and their combinations.</p>
+            <p>Variant callers and combinations used to compute the improvement possibilities:</p>
+            <ul>
+                {% for value in ctrl.get_callers_names(pipeline_name) %}
+                <li><i>{{value}}</i></li>
+                {% endfor %}
+            </ul>
+            <p>Use the table below to explore all improvement possibilities using the variant callers and combinations mentioned above. <i>baseline</i> refers to the <b>{{pipeline_name}}</b> without any modification. Overall, the following improvements have the highest F1 score:</p>
+            <ul>
+                <li>SNV: <i>{{ctrl.get_best_improvement_name(pipeline_name, 'SNV')}}</i></li>
+                <li>INDEL: <i>{{ctrl.get_best_improvement_name(pipeline_name, 'INDEL')}}</i></li>
+                <li>SV: <i>{{ctrl.get_best_improvement_name(pipeline_name, 'SV')}}</i></li>
+            </ul>
+        </div>
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
             <div class="nav viz-nav-tabs-container viz-width-limited">
                 <button
@@ -36,6 +49,7 @@
         </div>
         <div class="viz-bordered-tab-container">
             <div class="viz-width-limited-large">
+                <h4 class="viz-plot-title">Performance metrics (<i>baseline</i> vs <i><span id="improvementPlotInfo{{pipeline_name}}"></span></i>)</h4>
                 <div class="radar-chart-container">
                     {{include_cooked('shared/export_chart.html',
                     chart_js_var_name=pipeline_name+'ImprovementPlot',
@@ -44,25 +58,18 @@
                     filename=pipeline_name+'ImprovementPlot')}}
                     <div id="{{pipeline_name}}_chart_container_improvement"></div>
                 </div>
-                <div
-                    id="improvementPlotInfo{{pipeline_name}}"
-                    class="viz-plot-info"
-                ></div>
             </div>
         </div>
-        <div class="viz-width-limited">
-            <label>Select variant type and size</label>
-
-            <div id="ddat_improvement" style="margin:20px;">
-                <div class="dropdown viz-dropdown-tree">
-                  <button class="form-select" type="button" id="ddat_dropdownMenuButton_improvement_{{pipeline_name}}" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                    {{ctrl.get_tree(pipeline_name).keys() | first}}
-                  </button>
-                  <div class="dropdown-menu scrollbar" aria-labelledby="ddat_dropdownMenuButton_improvement_{{pipeline_name}}" id="ddat_dropdownMenuButton_improvement_menu_{{pipeline_name}}">
-                    <div class="tab-pane" role="tablist" aria-orientation="vertical" id="improvement_size_type">
-                        {{ ctrl.render_tree_branch(ctrl.get_tree(pipeline_name), 'improvement', 'improvements_panel_content_' + pipeline_name, click_callback={'function':'hideMenuAndUpdateSelected', 'params':['ddat_dropdownMenuButton_improvement_menu_' + pipeline_name, 'ddat_dropdownMenuButton_improvement_' + pipeline_name]}) }}
-                        </div>
-                  </div>
+        <div class="viz-width-limited" style="margin-top: 1rem;">
+            <p>Explore the improvement possibilities of <b>{{pipeline_name}}</b> by selecting a variant caller or combination of variant callers from the table below. <i>baseline</i> represents the <b>{{pipeline_name}}</b> without any combination with other callers. Use the dropdown below to check the improvements possibilities for specific variant types and sizes. The selected improvement will be displayed in the plot above.</p>
+            <div class="dropdown viz-dropdown-tree" style="max-width: 300px; margin-left: auto; margin-right: auto;">
+                <button class="form-select" type="button" id="ddat_dropdownMenuButton_improvement_{{pipeline_name}}" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                {{ctrl.get_tree(pipeline_name).keys() | first}}
+                </button>
+                <div class="dropdown-menu scrollbar" aria-labelledby="ddat_dropdownMenuButton_improvement_{{pipeline_name}}" id="ddat_dropdownMenuButton_improvement_menu_{{pipeline_name}}">
+                <div class="tab-pane" role="tablist" aria-orientation="vertical" id="improvement_size_type">
+                    {{ ctrl.render_tree_branch(ctrl.get_tree(pipeline_name), 'improvement', 'improvements_panel_content_' + pipeline_name, click_callback={'function':'hideMenuAndUpdateSelected', 'params':['ddat_dropdownMenuButton_improvement_menu_' + pipeline_name, 'ddat_dropdownMenuButton_improvement_' + pipeline_name]}) }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -107,11 +114,12 @@
         const operationImprovementData = {{pipeline_name}}ImprovementPlotData['operation_values'][operationName];
         {{pipeline_name}}ImprovementPlot.setImprovementData(operationImprovementData);
 
-        document.querySelector('#improvementPlotInfo{{pipeline_name}}').innerHTML = formatTemplateFromMatrix('<div>{0}: {1}</div>', [['Selected', operationName]]);
+        {{pipeline_name}}ImprovementPlot.setImprovementLegendName(operationName);
+        document.querySelector('#improvementPlotInfo{{pipeline_name}}').innerHTML = operationName;
     }
 
     set{{pipeline_name}}ImprovementLabelsVisible('sv_subtypes');
     // Manually trigger the click event on baseline
-    setImprovementData{{pipeline_name}}('baseline');
+    setImprovementData{{pipeline_name}}('{{ctrl.get_best_improvement_name(pipeline_name, "SV")}}');
 </script>
 {% endblock %}

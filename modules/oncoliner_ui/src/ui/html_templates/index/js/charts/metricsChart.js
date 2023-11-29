@@ -13,9 +13,8 @@
 /**
  * @param {string} htmlContainerId
  * @param {ChartData[]} chartData
- * @param {string} title
  */
-function createMetricsPlot(htmlContainerId, chartData, title) {
+function createMetricsPlot(htmlContainerId, chartData) {
     const htmlContainer = /** @type {HTMLElement} */ (document.querySelector(`#${htmlContainerId}`));
     // Count unique axis ids in chartData
     const axisIds = chartData.map((d) => d.axisId);
@@ -28,7 +27,7 @@ function createMetricsPlot(htmlContainerId, chartData, title) {
     htmlContainer.style.width = `${width}%`;
     htmlContainer.style.height = `100%`;
     const ctx = /** @type {HTMLCanvasElement} */ (htmlContainer.querySelector("canvas"));
-    const chart = _buildMetricsChart(ctx, chartData, title);
+    const chart = _buildMetricsChart(ctx, chartData);
     return {
         getBase64Images : () => [chart.getBase64Image()],
         getCanvas: () => {return ctx}
@@ -39,7 +38,7 @@ function createMetricsPlot(htmlContainerId, chartData, title) {
  * @param {HTMLCanvasElement} ctx
  * @param {ChartData[]} chartData
  */
-function _buildMetricsChart(ctx, chartData, title) {
+function _buildMetricsChart(ctx, chartData) {
     const STEP_COUNT = 10;
     const TP_LABEL = "True positives";
     const FP_LABEL = "False positives";
@@ -327,14 +326,6 @@ function _buildMetricsChart(ctx, chartData, title) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                title: {
-                    display: true,
-                    text: title,
-                    font: {
-                        size: 18,
-                        weight: "bold",
-                    }
-                },
                 datalabels: {
                     display: false,
                     color: "black",

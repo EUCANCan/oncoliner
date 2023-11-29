@@ -1,7 +1,21 @@
 <div class="tab-content">
     <div class="tab-pane fade show active" id="{{pipeline_name}}_sample_assesment" aria-labelledby="{{pipeline_name}}_sample_assesment_">
-        <h2 class="viz-width-limited">Assesment overview: <b>{{pipeline_name}}</b></h2>
-        <p class="viz-width-limited">Results of the assesment of <b>{{pipeline_name}}</b>. These performance results are the result of aggregating the performance of <b>{{pipeline_name}}</b> over a total of {{ctrl.get_samples(pipeline_name)|length}} samples. Samples used for computing recall related metrics ({{ctrl.get_recall_samples(pipeline_name)|length}}): <i>{{ctrl.get_recall_samples(pipeline_name)|join(', ')}}</i>. Samples used for computing precision related metrics ({{ctrl.get_precision_samples(pipeline_name)|length}}): <i>{{ctrl.get_precision_samples(pipeline_name)|join(', ')}}</i>.</p>
+        <div class="viz-width-limited">
+            <h2>Assesment overview: <b>{{pipeline_name}}</b></h2>
+            <p>Results of the assesment of <b>{{pipeline_name}}</b>. These performance results are the result of aggregating the performance of <b>{{pipeline_name}}</b> over a total of {{ctrl.get_samples(pipeline_name)|length}} samples.</p>
+            <p>Samples used for computing recall related metrics ({{ctrl.get_recall_samples(pipeline_name)|length}}):</p>
+            <ul>
+                {% for sample in ctrl.get_recall_samples(pipeline_name) %}
+                    <li><i>{{sample}}</i></li>
+                {% endfor %}
+            </ul>
+            <p>Samples used for computing precision related metrics ({{ctrl.get_precision_samples(pipeline_name)|length}}):</p>
+            <ul>
+                {% for sample in ctrl.get_precision_samples(pipeline_name) %}
+                    <li><i>{{sample}}</i></li>
+                {% endfor %}
+            </ul>
+        </div>
         {{ ctrl.render_warning_panel(pipeline_name, None) }}
         {{ ctrl.render_metrics_panel(pipeline_name) }}
     </div>

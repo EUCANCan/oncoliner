@@ -1,7 +1,10 @@
-import pandas as pd
+from typing import List, Tuple
 import glob
 import os
 import re
+
+import pandas as pd
+
 from ...utils import clean_string, to_sorted_dict
 from .metrics_table import read_csv
 
@@ -19,6 +22,14 @@ class TableFromListDAO():
 
     def get_df(self):
         return pd.concat(self._dfs)
+    
+    def get_first_from_ordered(self, variant_type: str, metric_order: List[Tuple[str, str]]):
+        df = self.get_df()
+        df = df[df['variant_type'] == variant_type]
+        for metric, order in metric_order[::-1]:
+            df = df.sort_values(by=[metric], ascending=order == 'asc')
+        return df.iloc[0]
+        
 
     def get_tree(self, prefix_id):
         if self.tree:

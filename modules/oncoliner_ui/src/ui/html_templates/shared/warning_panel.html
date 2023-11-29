@@ -1,22 +1,29 @@
-<div class="viz-width-limited viz-warning-container">
-    <!-- TODO: Make it minimizable and add an icon -->
-    <p style="font-size: medium;"><b>WARNING</b></p>
-    {% for warning_id, warning_dict in warnings.items() %}
-    <div class="viz-warning-element">
-        <p><b style="text-transform: uppercase;">{{conf.warnings[warning_id].name}}</b>. {{conf.warnings[warning_id].description}}
-        {% if not single_sample %}
-        <b>Affected samples</b>:</p>
-        <ul>
-            {% for sample, affected_variants in warning_dict.items() %}
-            {% if affected_variants|length > 0 %}
-            <li><b>{{sample}}</b>: {{affected_variants|join(', ')}}</li>
-            {% endif %}
-            {% endfor %}
-        </ul>
-        {% else %}
-        <b>Affected variants:</b> {{warning_dict[warning_dict.keys()|first]|join(', ')}}.</p>
-        {% endif %}
+<div class="viz-width-limited">
+    <p>
+        <button style="font-size: small;" class="btn btn-warning" type="button" data-bs-toggle="collapse" data-bs-target="#{{id}}collapse" aria-expanded="false" aria-controls="{{id}}collapse">
+          Warnings
+        </button>
+    </p>
+    <div class="collapse" id="{{id}}collapse">
+      <div class="card card-body viz-warning-container">
+          {% for warning_id, warning_dict in warnings.items() %}
+          <div>
+              <p><b style="text-transform: uppercase;">{{conf.warnings[warning_id].name}}</b>. {{conf.warnings[warning_id].description}}
+              {% if not single_sample %}
+              <b>Affected samples</b>:</p>
+              <ul>
+                  {% for sample, affected_variants in warning_dict.items() %}
+                  {% if affected_variants|length > 0 %}
+                  <li><b>{{sample}}</b>: {{affected_variants|join(', ')}}</li>
+                  {% endif %}
+                  {% endfor %}
+              </ul>
+              {% else %}
+              <b>Affected variants:</b> {{warning_dict[warning_dict.keys()|first]|join(', ')}}.</p>
+              {% endif %}
+          </div>
+          {% endfor %}
+          <p>If any of these warnings are relevant to your analysis, please check the configuration file and input VCF files and execute ONCOLINER again.</p>
+      </div>
     </div>
-    {% endfor %}
-    <p>If any of these warnings are relevant to your analysis, please check the configuration file and input VCF files and execute ONCOLINER again.</p>
 </div>

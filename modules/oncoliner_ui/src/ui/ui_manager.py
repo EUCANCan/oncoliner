@@ -1,10 +1,14 @@
 from typing import List, Union
 import os
+import sys
 from jinja2 import Environment, FileSystemLoader
 from markupsafe import Markup
 from htmlmin.minify import html_minify
 import rjsmin
 import rcssmin
+
+# Add vcf-ops to the path
+sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', '..', 'shared', 'vcf_ops', 'src'))
 
 from .assesment_tab import AssesmentTab
 from .improvement_tab import ImprovementTab
@@ -13,6 +17,7 @@ from .harmonization_tab import HarmonizationTab
 from .model.assesment.assesment_dao import AssesmentDAO
 from .model.improvement.improvement_dao import ImprovementDAO
 from .model.harmonization.harmonization_dao import HarmonizationDAO
+
 
 from .utils import get_conf
 
