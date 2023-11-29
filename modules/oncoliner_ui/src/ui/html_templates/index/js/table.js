@@ -67,10 +67,11 @@ function _initComplete() {
 
 /**
  * @param {string} tableId
+ * @param {[number, string][]} [defaultOrder]
  * @param {number} [defaultSortColumnIndex]
  * @param {number} [fixedRowIndex]
  */
-function makeTableDynamic(tableId, defaultSortColumnIndex, fixedRowIndex) {
+function makeTableDynamic(tableId, defaultOrder=[], defaultSortColumnIndex, fixedRowIndex) {
     // Set the table width to 100%
     document.querySelector(`#${tableId}`).style.width = "100%";
     // Get the table header
@@ -114,7 +115,9 @@ function makeTableDynamic(tableId, defaultSortColumnIndex, fixedRowIndex) {
         config.order = [];
     }
     // Build the DataTable
-    new DataTable(`#${tableId}`, config);
+    const dtTable = new DataTable(`#${tableId}`, config);
+    dtTable.order(defaultOrder).draw();
+    return dtTable;
 }
 
 /**

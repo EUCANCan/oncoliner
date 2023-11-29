@@ -20,10 +20,12 @@ class HarmonizationTab():
 
     def render_table(self, id_, data):
         template = self._env.get_template(os.path.join("harmonization_tab", "harmonization_table.html"))
+        # Build the default order of the columns
+        columns_order = [[data.columns.get_loc('h_score'), 'asc'], [data.columns.get_loc('gdr'), 'asc'], [data.columns.get_loc('f1_score_avg'), 'desc'], [data.columns.get_loc('added_callers_sum'), 'asc']]
         # Get the index of the row with all names 'baseline'
         pipelines_names = self._harmonization_dao.get_pipelines_names()
         baseline_index = data[data[pipelines_names].apply(lambda x: all(x == 'baseline'), axis=1)].index[0]
-        return template.render(ctrl=self, id=f'table_{id_}', data=data, fixed_index=baseline_index)
+        return template.render(ctrl=self, id=f'table_{id_}', data=data, fixed_index=baseline_index, default_order=columns_order)
 
     def get_flatten_tree(self):
         return flatten_dict(self._harmonization_tree_dict, 'id')

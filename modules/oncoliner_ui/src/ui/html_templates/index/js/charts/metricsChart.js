@@ -352,7 +352,6 @@ function _buildMetricsChart(ctx, chartData, title) {
                                 // Recover the original value from FP
                                 if (context.dataset.label === FP_LABEL) {
                                     const fpScaleFactor = fpScaleFactors.get(context.dataset.yAxisID.replace("yAxis", ""));
-                                    console.log(context.parsed.y, fpScaleFactor);
                                     output = -context.parsed.y / fpScaleFactor;
                                 }
                                 label += output.toFixed(0); // Avoid negative values in FP
