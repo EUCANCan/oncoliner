@@ -45,9 +45,7 @@
             id="metricspaneltab_snv_indel_sv_{{id}}_"
             aria-labelledby="metricspaneltab_snv_indel_sv_{{id}}"
         >
-            <div class="viz-inline-plots">
-                {{ ctrl.render_metrics_plot(metrics_table, id, 'snv_indel_sv') }}
-            </div>
+            {{ ctrl.render_metrics_plot(metrics_table, id, 'snv_indel_sv') }}
             {{ ctrl.render_metrics_table(metrics_table, id, 'snv_indel_sv', sample) }}
         </div>
         <div
@@ -55,9 +53,7 @@
             id="metricspaneltab_by-type_{{id}}_"
             aria-labelledby="metricspaneltab_by-type_{{id}}"
         >
-            <div class="viz-inline-plots">
-                {{ ctrl.render_metrics_plot(metrics_table, id, 'sv_subtypes') }}
-            </div>
+            {{ ctrl.render_metrics_plot(metrics_table, id, 'sv_subtypes') }}
             {{ ctrl.render_metrics_table(metrics_table, id, 'sv_subtypes', sample) }}
         </div>
         <div
@@ -65,9 +61,7 @@
             id="metricspaneltab_by-type-size_{{id}}_"
             aria-labelledby="metricspaneltab_by-type-size_{{id}}"
         >
-            <div class="viz-inline-plots">
-                {{ ctrl.render_metrics_plot(metrics_table, id, 'sv_subtypes_sizes') }}
-            </div>
+            {{ ctrl.render_metrics_plot(metrics_table, id, 'sv_subtypes_sizes') }}
             {{ ctrl.render_metrics_table(metrics_table, id, 'sv_subtypes_sizes', sample) }}
         </div>
     </div>

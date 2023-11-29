@@ -29,6 +29,12 @@ h1, h2, h3, h4, h5, h6 {
     margin-top: 30px;
 }
 
+.viz-dropdown-tree {
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .viz-dropdown-tree .dropdown-menu {
     width: 100%;
     max-height: 400px;
@@ -298,10 +304,6 @@ a[class^="icon-"].active {
     background: transparent !important;
 }
 
-.viz-inline-plots {
-    height: 60vh;
-}
-
 .viz-fixed-row {
     font-weight: bold;
 }
@@ -344,16 +346,10 @@ a[class^="icon-"].active {
     align-items: center;
 }
 
-.radar-chart-container {
-    width: 100%; 
+.radar-chart-container, .metrics-chart-container {
+    width: 100%;
     height: 500px;
     position: relative;
-}
-
-.metrics-chart-container {
-    position: relative;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 canvas {

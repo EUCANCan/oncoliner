@@ -1,6 +1,7 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 import os
+from collections import OrderedDict
 from ..shared.table_from_list_dao import TableFromListDAO
 from ..shared.metrics_table import MetricsTable
 from ...utils import path_to_pipeline_name
@@ -27,6 +28,16 @@ class HarmonizationDAO():
                 self._pipelines_operations_metrics_dict[pipeline_name][op_name] = agg_metrics_table
         # Sort the pipelines names
         self._pipelines_names.sort()
+
+    def get_default_order(self) -> List[Tuple[str, str]]:
+        return [('h_score', 'asc'), ('gdr', 'asc'), ('f1_score_avg', 'desc'), ('added_callers_sum', 'asc')]
+
+    def get_best_harmonization_names(self, variant_type: str) -> Dict[str, str]:
+        first_row = self._table.get_first_from_ordered(variant_type, self.get_default_order())
+        result = OrderedDict()
+        for pipeline_name in self._pipelines_names:
+            result[pipeline_name] = first_row[pipeline_name]
+        return result
 
     def get_pipelines_names(self):
         return self._pipelines_names

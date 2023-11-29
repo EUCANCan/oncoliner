@@ -3,9 +3,10 @@ import os
 from .utils import flatten_dict, flatten_dict_keys
 from .plots.harmonization_plot import HarmonizationPlot
 
+from .model.harmonization.harmonization_dao import HarmonizationDAO
 
 class HarmonizationTab():
-    def __init__(self, env, dao):
+    def __init__(self, env, dao: HarmonizationDAO):
         self._env = env
         self._harmonization_dao = dao
         self._harmonization_tree_dict = self._harmonization_dao.get_tree()
@@ -21,11 +22,14 @@ class HarmonizationTab():
     def render_table(self, id_, data):
         template = self._env.get_template(os.path.join("harmonization_tab", "harmonization_table.html"))
         # Build the default order of the columns
-        columns_order = [[data.columns.get_loc('h_score'), 'asc'], [data.columns.get_loc('gdr'), 'asc'], [data.columns.get_loc('f1_score_avg'), 'desc'], [data.columns.get_loc('added_callers_sum'), 'asc']]
+        columns_order = list(map(lambda x: [data.columns.get_loc(x[0]), x[1]], self._harmonization_dao.get_default_order()))
         # Get the index of the row with all names 'baseline'
         pipelines_names = self._harmonization_dao.get_pipelines_names()
         baseline_index = data[data[pipelines_names].apply(lambda x: all(x == 'baseline'), axis=1)].index[0]
         return template.render(ctrl=self, id=f'table_{id_}', data=data, fixed_index=baseline_index, default_order=columns_order)
+    
+    def get_best_harmonization_names(self, variant_type: str):
+        return self._harmonization_dao.get_best_harmonization_names(variant_type)
 
     def get_flatten_tree(self):
         return flatten_dict(self._harmonization_tree_dict, 'id')

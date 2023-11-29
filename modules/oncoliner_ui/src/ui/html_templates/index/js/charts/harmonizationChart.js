@@ -53,9 +53,19 @@ function createHarmonizationPlot(htmlContainerId, datasetNames, titles, labels, 
         }
     }
 
+    /**
+     * @param {string[]} names
+     */
+    function setHarmonizationLegendNames(names) {
+        for (const chart of charts) {
+            chart.setHarmonizationLegendNames(names);
+        }
+    }
+
     return {
         setLabelsVisible,
         setHarmonizationData,
+        setHarmonizationLegendNames,
         getBase64Images : () => charts.map(chart => chart.getBase64Image()),
         getCanvas: () => concatCanvases(charts.map((chart) => chart.getCanvas()))
     };
@@ -71,8 +81,6 @@ function createHarmonizationPlot(htmlContainerId, datasetNames, titles, labels, 
  */
 function _buildHarmonizationChart(ctx, index, datasetNames, titles, labels, baseValues) {
     const COLORS = ["#228833", "#bc629f", "#4477AA", "#E3B505", "#95190C"];
-    const HARMONIZATION_SUFFIX = " (harmonization)";
-    const BASELINE_SUFFIX = " (baseline)";
     // Create a dataset for the chartBaseData
     /** @type {ChartDataset[]} */
     const datasets = [];
@@ -81,7 +89,8 @@ function _buildHarmonizationChart(ctx, index, datasetNames, titles, labels, base
         const datasetName = datasetNames[i];
         const harmonizationValues = baseValues[i][index];
         datasets.push({
-            label: `${datasetName}${BASELINE_SUFFIX}`,
+            customType: 'baseline',
+            label: `${datasetName}`,
             data: harmonizationValues,
             backgroundColor: `${COLORS[i % COLORS.length]}50`,
             borderWidth: 0,
@@ -92,7 +101,8 @@ function _buildHarmonizationChart(ctx, index, datasetNames, titles, labels, base
             },
         });
         datasets.push({
-            label: `${datasetName}${HARMONIZATION_SUFFIX}`,
+            customType: 'harmonization',
+            label: `${datasetName} (baseline)`,
             data: harmonizationValues,
             borderColor: COLORS[i % COLORS.length],
             pointBackgroundColor: COLORS[i % COLORS.length],
@@ -113,27 +123,31 @@ function _buildHarmonizationChart(ctx, index, datasetNames, titles, labels, base
 
     /**
      * @param {string} datasetName
+     * @param {string} datasetType
      * @param {number[]} values
      */
-    function applyValuesToDataset(datasetName, values) {
+    function applyValuesToDataset(datasetName, datasetType, values) {
         const dataset = chart.data.datasets.find(
-            (dataset) => dataset.label === datasetName
+            (dataset) => dataset.label.split(' (')[0] === datasetName && dataset.customType === datasetType
         );
-        if (!dataset) return;
+        if (!dataset) {
+            throw new Error(
+                `Could not find dataset with label ${datasetName} and type ${datasetType}`
+            );
+        }
         dataset.data = values;
     }
 
     /**
      * @param {number[][]} newValues
      * @param {number[]} indexes
-     * @param {string} suffix
+     * @param {string} datasetType
      */
-    function updateDatasetValues(newValues, indexes, suffix) {
+    function updateDatasetValues(newValues, indexes, datasetType) {
         for (let i = 0; i < newValues.length; i++) {
-            const datasetName = `${datasetNames[i]}${suffix}`;
             const newValue = newValues[i];
             const values = indexes.map((index) => newValue[index]);
-            applyValuesToDataset(datasetName, values);
+            applyValuesToDataset(datasetNames[i], datasetType, values);
         }
     }
 
@@ -151,7 +165,7 @@ function _buildHarmonizationChart(ctx, index, datasetNames, titles, labels, base
             indexes.push(index);
         }
         // Get the values of the labels that are in the chart
-        updateDatasetValues(harmonizationValues, indexes, HARMONIZATION_SUFFIX);
+        updateDatasetValues(harmonizationValues, indexes, 'harmonization');
         chart.update();
     }
 
@@ -170,14 +184,32 @@ function _buildHarmonizationChart(ctx, index, datasetNames, titles, labels, base
         indexes.sort((a, b) => a - b);
         // Get the values of the labels that are in the chart
         chart.data.labels = indexes.map((index) => originalLabels[index]);
-        updateDatasetValues(harmonizationValues, indexes, HARMONIZATION_SUFFIX);
-        updateDatasetValues(originalValues, indexes, BASELINE_SUFFIX);
+        updateDatasetValues(harmonizationValues, indexes, 'harmonization');
+        updateDatasetValues(originalValues, indexes, 'baseline');
+        chart.update();
+    }
+
+    /**
+     * @param {string[]} operationNames
+     */
+    function setHarmonizationLegendNames(operationNames) {
+        // Get all the datasets that are harmonization
+        const harmonizationDatasets = chart.data.datasets.filter(
+            (dataset) => dataset.customType === 'harmonization'
+        );
+        // Change the text of the label between brackets
+        for (let i = 0; i < harmonizationDatasets.length; i++) {
+            const harmonizationDataset = harmonizationDatasets[i];
+            const pipelineName = harmonizationDataset.label.split(' (')[0];
+            harmonizationDataset.label = `${pipelineName} (${operationNames[i]})`;
+        }
         chart.update();
     }
 
     return {
         setHarmonizationData,
         setLabelsVisible,
+        setHarmonizationLegendNames,
         getBase64Image: () => getBase64Image(chart),
         getCanvas: () => {return chart}
     };

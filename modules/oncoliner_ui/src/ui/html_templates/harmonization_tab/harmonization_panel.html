@@ -1,3 +1,28 @@
+<div class="viz-width-limited">
+    <p>Listing of the harmonization options based on the improvement possibilities of the pipelines: <b>{{ ctrl.get_pipelines_names()|join(', ') }}</b>.</p>
+    <p>Use the table below to explore all harmonization options. <i>baseline</i> refers to the pipeline without any modification. Overall, the following combinations have the lowest heterogeneity score (H<sub>score</sub>):</p>
+    <ul>
+        <li>SNV:</li>
+        <ul>
+            {% for pipeline_name, harmonization_op in ctrl.get_best_harmonization_names('SNV').items() %}
+            <li><b>{{ pipeline_name }}</b>: <i>{{ harmonization_op }}</i></li>
+            {% endfor %}
+        </ul>
+        <li>INDEL:</li>
+        <ul>
+            {% for pipeline_name, harmonization_op in ctrl.get_best_harmonization_names('INDEL').items() %}
+            <li><b>{{ pipeline_name }}</b>: <i>{{ harmonization_op }}</i></li>
+            {% endfor %}
+        </ul>
+        <li>SV:</li>
+        <ul>
+            {% for pipeline_name, harmonization_op in ctrl.get_best_harmonization_names('SV').items() %}
+            <li><b>{{ pipeline_name }}</b>: <i>{{ harmonization_op }}</i></li>
+            {% endfor %}
+        </ul>
+    </ul>
+</div>
+
 <div class="sub-tab-content tab-content" id="harmonizations_panel_content">
     <div class="nav nav-tabs" id="nav-tab" role="tablist">
         <div class="nav viz-nav-tabs-container viz-width-limited">
@@ -8,25 +33,22 @@
     </div>
     <div class="viz-bordered-tab-container">
         <div class="viz-width-limited-large">
+            <h4 class="viz-plot-title">Performance metrics (baseline vs harmonization)</h4>
             <div class="radar-chart-container">
                 {{include_cooked('shared/export_chart.html', chart_js_var_name='harmonizationPlot', filenames='harmonizationPlotData[\'titles\'].map((a) => `harmonization_plot_${a}`)', filename='harmonizationPlot')}}
                 <div id="chart_container_harmonization"></div>
             </div>
-            <div id="harmonizationPlotInfo" class="viz-plot-info"></div>
         </div>
     </div>
-    <div class="viz-width-limited">
-        <label>Select variant type and size</label>
-
-        <div id="ddat_harmonization" style="margin:20px;">
-            <div class="dropdown viz-dropdown-tree">
-                <button class="form-select" type="button" id="ddat_dropdownMenuButton_harmonization" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                {{ctrl.get_tree().keys() | first}}
-                </button>
-                <div class="dropdown-menu scrollbar" aria-labelledby="ddat_dropdownMenuButton_harmonization" id="ddat_dropdownMenuButton_harmonization_menu">
-                <div class="tab-pane" role="tablist" aria-orientation="vertical" id="harmonization_size_type">
-                    {{ ctrl.render_tree_branch(ctrl.get_tree(), 'harmonization', 'harmonizations_panel_content', click_callback={'function':'hideMenuAndUpdateSelected', 'params':['ddat_dropdownMenuButton_harmonization_menu', 'ddat_dropdownMenuButton_harmonization']}) }}
-                    </div>
+    <div class="viz-width-limited" style="margin-top: 1rem;">
+        <p>Explore the harmonization options by selecting any row from the table below. <i>baseline</i> represents a pipeline without any combination with other callers. Use the dropdown below to check the harmonization options for specific variant types and sizes. The selected harmonization will be displayed in the plot above.</p>
+        <div class="dropdown viz-dropdown-tree">
+            <button class="form-select" type="button" id="ddat_dropdownMenuButton_harmonization" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+            {{ctrl.get_tree().keys() | first}}
+            </button>
+            <div class="dropdown-menu scrollbar" aria-labelledby="ddat_dropdownMenuButton_harmonization" id="ddat_dropdownMenuButton_harmonization_menu">
+            <div class="tab-pane" role="tablist" aria-orientation="vertical" id="harmonization_size_type">
+                {{ ctrl.render_tree_branch(ctrl.get_tree(), 'harmonization', 'harmonizations_panel_content', click_callback={'function':'hideMenuAndUpdateSelected', 'params':['ddat_dropdownMenuButton_harmonization_menu', 'ddat_dropdownMenuButton_harmonization']}) }}
                 </div>
             </div>
         </div>
@@ -72,17 +94,11 @@
         });
         const operationHarmonizationData = pipelinesNames.map((pipelineName, j) => harmonizationPlotData['operation_values'][pipelineName][pipelinesSelected[j]]);
         harmonizationPlot.setHarmonizationData(operationHarmonizationData);
-
-        // Set the info text
-        const matrixText = []
-        for (let i = 0; i < harmonizationPlotData['pipelines_names'].length; i++) {
-            matrixText.push([harmonizationPlotData['pipelines_names'][i], pipelinesSelected[i]]);
-        }
-        document.querySelector('#harmonizationPlotInfo').innerHTML = matrixText;
+        harmonizationPlot.setHarmonizationLegendNames(pipelinesSelected);
     }
 
     setHarmonizationLabelsVisible('sv_subtypes');
     // Manually trigger the click event on baseline
-    setHarmonizationDataFromTable(harmonizationPlotData['pipelines_names'].map((pipelineName) => 'baseline'));
+    setHarmonizationDataFromTable(['{{ctrl.get_best_harmonization_names("SV").values()|join("\', \'")}}']);
 </script>
 {% endblock %}
