@@ -23,15 +23,13 @@ def read_csv(csv_path: str, columns_to_drop: List[str] = []):
     columns_to_drop_set.update([col for col in test_df.columns if col.endswith('_genes')])
     used_columns = [col for col in test_df.columns if col not in columns_to_drop_set]
     # Read the whole csv
-    return pd.read_csv(csv_path, usecols=used_columns)
+    return pd.read_csv(csv_path, usecols=used_columns).round(2)
 
 
 class MetricsTable():
     def __init__(self, csv_path: str, table_types: Optional[List[str]] = None):
         columns_to_drop = _get_columns_to_drop(table_types) if table_types else []
         self._df = read_csv(csv_path, columns_to_drop)
-        # Round all floats to 2 decimals
-        self._df = self._df.round(2)
         self._indel_threshold = int(self._df[self._df['variant_type'] == 'INDEL']
                                     ['variant_size'].iloc[0].split('-')[-1].strip())
 

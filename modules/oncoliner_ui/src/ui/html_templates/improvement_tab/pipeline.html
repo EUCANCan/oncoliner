@@ -3,12 +3,23 @@
         <div class="viz-width-limited">
             <h2>Improvement: <b>{{pipeline_name}}</b></h2>
             <p>Improvement possibilities of <b>{{pipeline_name}}</b> based on its assesment results. These improvements are the result of combining the output of <b>{{pipeline_name}}</b> with the outputs of different variant callers and their combinations.</p>
-            <p>Variant callers and combinations used to compute the improvement possibilities:</p>
-            <ul>
-                {% for value in ctrl.get_callers_names(pipeline_name) %}
-                <li><i>{{value}}</i></li>
-                {% endfor %}
-            </ul>
+            <p>
+                <center>
+                    <button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#{{pipeline_name}}collapseCallers" aria-expanded="false" aria-controls="{{pipeline_name}}collapseCallers">
+                    Display variant callers and combinations used to generate the improvements
+                    </button>
+                </center>
+            </p>
+            <div class="collapse" id="{{pipeline_name}}collapseCallers">
+                <div class="card card-body">
+                    <ul style="margin: 0;">
+                        {% for value in ctrl.get_callers_names(pipeline_name) %}
+                        <li><i>{{value}}</i></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            <div style="height: 1rem;"></div>
             <p>Use the table below to explore all improvement possibilities using the variant callers and combinations mentioned above. <i>baseline</i> refers to the <b>{{pipeline_name}}</b> without any modification. Overall, the following improvements have the highest F1 score:</p>
             <ul>
                 <li>SNV: <i>{{ctrl.get_best_improvement_name(pipeline_name, 'SNV')}}</i></li>

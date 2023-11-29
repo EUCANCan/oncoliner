@@ -77,7 +77,7 @@ class TableFromListDAO():
                 last_dict = last_dict[tree_level]
             last_dict['id'] = clean_string(f'{prefix_id}_{variant_type}_{variant_size}')
             # Round all floats to 2 decimals
-            last_dict['data'] = df.round(2)
+            last_dict['data'] = df
 
         # Sort by variant size
         def extract_lower_limit_size(variant_size):
