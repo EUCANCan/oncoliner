@@ -2,7 +2,7 @@
 
 ![ONCOLINER logo](/docs/images/ONCOLINER_LOGO_COLOR.png)
 
-WIP
+ONCOLINER is an integrated platform with benchmarking data and tools for the detailed assessment, improvement and quality-based harmonization of analysis pipelines across centers. It can not only improve the overall efficiency of somatic variant identification globally, but it will also enable interoperability and consistency within emerging multi-center and multi-hospital data environments, allowing the sharing and integration of cancer datasets and results.
 
 ## Table of contents<!-- omit in toc -->
 - [Quick start guide](#quick-start-guide)
@@ -108,8 +108,10 @@ tar xzvf oncoliner_variant_callers_combinations.tar.gz
 
 Execute ONCOLINER:
 ```
-singularity exec oncoliner.sif /oncoliner/oncoliner_launcher.py -c config.tsv -pf pipeline_1 -cf variant_callers_combinations/evaluations -o output_folder --max-processes 48
+singularity exec oncoliner.sif python3 -O /oncoliner/oncoliner_launcher.py -c config.tsv -pf pipeline_1 -cf variant_callers_combinations/evaluations -o output_folder --max-processes 48
 ```
+
+Check your results in the `output_folder/oncoliner_report.html` file.
 
 ## Installation
 
@@ -144,7 +146,7 @@ docker build -t oncoliner .
 Assuming you have a singularity image called `oncoliner.sif`, you can run ONCOLINER as follows:
 
 ```bash
-singularity exec oncoliner.sif /oncoliner/oncoliner_launcher.py -c config.tsv -pf pipeline_1_folder pipelines_2_folder -o output_folder --max-processes 48
+singularity exec oncoliner.sif python3 -O /oncoliner/oncoliner_launcher.py -c config.tsv -pf pipeline_1_folder pipelines_2_folder -o output_folder --max-processes 48
 ```
 
 ### Interface
