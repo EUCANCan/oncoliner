@@ -108,7 +108,7 @@
 
     function setImprovementData{{pipeline_name}}(operationName) {
         // Set the active class to all the rows in all the tables that match the selected operationName
-        document.querySelectorAll('#improvements_panel_content_{{pipeline_name}} table tr').forEach((row) => {
+        document.querySelectorAll('#improvements_panel_content_{{pipeline_name}} table tbody tr').forEach((row) => {
         const cell = row.querySelector('td:nth-child(2)')
             if (cell && cell.getAttribute('original-data-value') === operationName) {
                 row.classList.add('active');

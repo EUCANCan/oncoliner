@@ -54,13 +54,13 @@ function _initComplete() {
             }
             // Add filter text field
             const title = cell.innerText;
-            cell.innerHTML = `<input type="text" placeholder="${title}" id="filter_${tableId}_${title}" />`;
+            cell.innerHTML = `<input type="text" placeholder="Filter ${title.toLowerCase()}" id="filter_${tableId}_${title}" />`;
             // Listen to the filter input
             cell.querySelector("input").addEventListener("keyup", function (e) {
                 // Get the value searched
                 const search = this.value;
                 // Search the column for that value
-                api.column(colIdx).search(search, true, false).draw();
+                api.column(colIdx).search(search).draw();
             });
         });
 }
@@ -126,25 +126,22 @@ function makeTableDynamic(tableId, defaultOrder=[], defaultSortColumnIndex, fixe
  */
 function addButtonsToTable(tableId, callback) {
     const table = document.querySelector(`#${tableId}`);
-    // Add a new column to the table at the start
-    const rows = table.querySelectorAll("tr");
-    rows.forEach((row, index) => {
-        if (index == 0) {
-            const cell = row.insertCell(0);
-            cell.style.width = "0";
-            return;
-        } else if (index < 2) {
-            row.insertCell(0);
-            return;
-        }
+    // Add a empty cell to the table header
+    table.querySelectorAll("thead tr").forEach((row) => {
+        const cell = row.insertCell(0);
+        cell.style.width = 0;
+    });
+    // Add a new column to the table at the start in the body
+    table.querySelectorAll("tbody tr").forEach((row) => {
         // Get all the strings in the row
         const cells = [];
         row.querySelectorAll("td").forEach((cell) => {
             cells.push(cell);
         });
         const cell = row.insertCell(0);
+        cell.classList.add("icon-cell");
         const a = document.createElement("a");
-        a.classList.add("icon-search");
+        a.classList.add("icon-circle-empty");
         a.onclick = () => callback(cells);
         cell.appendChild(a);
     });

@@ -79,7 +79,7 @@
         const pipelinesNames = harmonizationPlotData['pipelines_names'];
         const pipelinesSelected = selected_row.slice(0, pipelinesNames.length);
         // Set the active class to all the rows in all the tables that match the selected pipelines
-        document.querySelectorAll('#harmonizations_panel_content table tr').forEach((row) => {
+        document.querySelectorAll('#harmonizations_panel_content table tbody tr').forEach((row) => {
             const rowPipelines = Array.from(row.querySelectorAll('td')).slice(1, pipelinesNames.length+1).map((cell) => cell.getAttribute('original-data-value'));
             if (pipelinesSelected.every((pipeline, i) => pipeline === rowPipelines[i])) {
                 row.classList.add('active');
