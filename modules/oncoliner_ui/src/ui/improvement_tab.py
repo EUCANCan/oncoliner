@@ -20,10 +20,10 @@ class ImprovementTab():
 
     def get_pipelines_names(self):
         return self._improvement_dao.get_pipelines_names()
-    
+
     def get_callers_names(self, pipeline_name):
         return self._improvement_dao.get_callers_names(pipeline_name)
-    
+
     def get_best_improvement_name(self, pipeline_name, variant_type):
         return self._improvement_dao.get_best_improvement_name(pipeline_name, variant_type)
 

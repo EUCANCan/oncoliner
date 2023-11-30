@@ -6,7 +6,7 @@ from ...utils import path_to_pipeline_name
 
 
 class AssesmentDAO():
-    def __init__(self, pipeline_folders: List[str], callers_folders: str) -> None:
+    def __init__(self, pipeline_folders: List[str]) -> None:
         # Create a dict of pipeline_name -> pipeline_dao
         self._pipeline_dao = dict()
         self._pipelines_names = []

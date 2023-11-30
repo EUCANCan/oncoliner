@@ -71,14 +71,12 @@ def run_harmonizator(pipeline_improvements_folder_paths: List[str], output_folde
     subprocess.check_call(args)
 
 
-def run_ui(pipelines_evaluation_folder_paths: List[str], pipeline_improvements_folder_paths: Union[List[str], None], callers_folder: Union[str, None], harmonization_folder: Union[str, None], output_file: str) -> None:
+def run_ui(pipelines_evaluation_folder_paths: List[str], pipeline_improvements_folder_paths: Union[List[str], None], harmonization_folder: Union[str, None], output_file: str) -> None:
     ui_command = os.environ['UI_COMMAND']
     ui_command_split = ui_command.split()
     args = ui_command_split + ['-pe', *sorted(pipelines_evaluation_folder_paths)]
     if pipeline_improvements_folder_paths:
         args += ['-pi', *pipeline_improvements_folder_paths]
-    if callers_folder:
-        args += ['-c', callers_folder]
     if harmonization_folder:
         args += ['-ha', harmonization_folder]
     args += ['-o', output_file]
@@ -171,6 +169,6 @@ if __name__ == '__main__':
 
     # Run the UI
     run_ui(pipelines_evaluation_folder_paths, pipeline_improvements_folder_paths,
-           args.callers_folder, output_harmonization_folder, ui_output_file)
+           output_harmonization_folder, ui_output_file)
 
     logging.info(f'ONCOLINER report available at {ui_output_file}')

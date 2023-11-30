@@ -10,19 +10,17 @@ import rcssmin
 # Add vcf-ops to the path
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', '..', 'shared', 'vcf_ops', 'src'))
 
-from .assesment_tab import AssesmentTab
-from .improvement_tab import ImprovementTab
-from .harmonization_tab import HarmonizationTab
+from .utils import get_conf  # noqa
+from .assesment_tab import AssesmentTab  # noqa
+from .improvement_tab import ImprovementTab  # noqa
+from .harmonization_tab import HarmonizationTab  # noqa
 
-from .model.assesment.assesment_dao import AssesmentDAO
-from .model.improvement.improvement_dao import ImprovementDAO
-from .model.harmonization.harmonization_dao import HarmonizationDAO
-
-
-from .utils import get_conf
+from .model.assesment.assesment_dao import AssesmentDAO  # noqa
+from .model.improvement.improvement_dao import ImprovementDAO  # noqa
+from .model.harmonization.harmonization_dao import HarmonizationDAO  # noqa
 
 
-def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pipelines_improvements_folders: Union[List[str], None], harmonization_folder: Union[str, None], callers_evaluation_folder: Union[str, None]):
+def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pipelines_improvements_folders: Union[List[str], None], harmonization_folder: Union[str, None]):
     # Generate HTML files
     loader = FileSystemLoader(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html_templates'))
     env = Environment(loader=loader)
@@ -59,7 +57,7 @@ def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pi
                 f'Pipelines in evaluation and improvement folders are not the same: {pipelines_names} != {pipelines_improvements_names}')
 
     # Create assesment tab
-    assesment_dao = AssesmentDAO(pipelines_evaluations_folders, callers_evaluation_folder)
+    assesment_dao = AssesmentDAO(pipelines_evaluations_folders)
     assesment_tab = AssesmentTab(env, assesment_dao)
 
     # Create improvement tab

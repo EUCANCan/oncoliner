@@ -7,6 +7,7 @@ from ...utils import path_to_pipeline_name
 
 from vcf_ops.constants import INTERSECTION_SYMBOL, UNION_SYMBOL
 
+
 class ImprovementDAO():
     def __init__(self, pipeline_folders: List[str]) -> None:
         # Create a dict of pipeline_name -> pipeline_dao
@@ -24,10 +25,10 @@ class ImprovementDAO():
 
     def get_pipelines_names(self):
         return self._pipelines_names
-    
+
     def get_default_order(self) -> List[Tuple[str, str]]:
         return [('f1_score', 'desc'), ('added_callers', 'asc')]
-        
+
     def get_callers_names(self, pipeline_name: str):
         return self._pipeline_dao[pipeline_name].get_callers_names()
 
@@ -39,6 +40,7 @@ class ImprovementDAO():
 
     def get_best_improvement_name(self, pipeline_name: str, variant_type: str):
         return self._pipeline_dao[pipeline_name].get_best_improvement_name(variant_type, self.get_default_order())
+
 
 class ImprovementPipelineDAO():
     def __init__(self, improvement_list_folder: str, results_folder: str):
@@ -57,7 +59,7 @@ class ImprovementPipelineDAO():
         self._callers_names.remove('baseline')
         # Sort the callers names
         self._callers_names = sorted(self._callers_names)
-    
+
     def get_callers_names(self):
         return self._callers_names
 
