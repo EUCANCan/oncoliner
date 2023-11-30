@@ -6,7 +6,9 @@
     </div>
 </div>
 {% block javascript %}
-<script>
-    {{id}}MetricsChart = createMetricsPlot('metrics-chart-container-{{id}}', {{chart_data}});
+<script type="text/javascript">
+    document.addEventListener('viz-content-loaded', () => {
+        {{id}}MetricsChart = createMetricsPlot('metrics-chart-container-{{id}}', {{chart_data}});
+    });
 </script>
 {% endblock %}

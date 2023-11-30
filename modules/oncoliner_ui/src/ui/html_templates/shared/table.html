@@ -33,6 +33,8 @@
 
 {% block javascript %}
 <script type="text/javascript">
-    makeTableDynamic("{{id}}", {{default_order if default_order is defined else 'undefined'}}, {{data.columns.get_loc(default_sort_column) if default_sort_column is defined else 'undefined'}}, {{fixed_index if fixed_index is defined else 'undefined'}});
+    document.addEventListener('viz-content-loaded', () => {
+        makeTableDynamic("{{id}}", {{default_order if default_order is defined else 'undefined'}}, {{data.columns.get_loc(default_sort_column) if default_sort_column is defined else 'undefined'}}, {{fixed_index if fixed_index is defined else 'undefined'}});
+    });
 </script>
 {% endblock %}

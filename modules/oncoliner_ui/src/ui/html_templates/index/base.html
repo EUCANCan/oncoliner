@@ -33,6 +33,7 @@
         <script type="text/javascript">{{ include_raw('index/js/charts/harmonizationChart.js') }}</script>
         <script type="text/javascript">
             function afterInit() {
+                document.dispatchEvent(new Event('viz-content-loaded'));
                 hideElementById('loading_screen');
 
                 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')

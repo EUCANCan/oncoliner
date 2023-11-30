@@ -21,7 +21,7 @@
 								{% endif %}
 								>{{key}}</a>
 								{% if depth == 0 and loop.index0 == 0 %}
-								<script>window.addEventListener('load', function() { {{print_js_function('toggleTabFromGroup', [data[key]._all_.id + '_tab', target_group])}}});</script>
+								<script type="text/javascript">window.addEventListener('load', function() { {{print_js_function('toggleTabFromGroup', [data[key]._all_.id + '_tab', target_group])}}});</script>
 								{% endif %}
 						{% else %}
 							{{key}}

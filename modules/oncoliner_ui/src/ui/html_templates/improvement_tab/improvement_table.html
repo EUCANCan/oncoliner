@@ -1,11 +1,13 @@
 {% include 'shared/table.html' %} {% block javascript %}
 <script type="text/javascript">
-    // Set original-data-value to the operation cell
-    document.querySelectorAll('#{{id}} tbody tr, #{{id}} .viz-fixed-row').forEach((row) => {
-        const cell = row.children[0];
-        setOperationCell(cell);
-    });
+    document.addEventListener('viz-content-loaded', () => {
+        // Set original-data-value to the operation cell
+        document.querySelectorAll('#{{id}} tbody tr, #{{id}} .viz-fixed-row').forEach((row) => {
+            const cell = row.children[0];
+            setOperationCell(cell);
+        });
 
-    addButtonsToTable("{{id}}", (cells) => setImprovementData{{pipeline_name}}(cells[0].getAttribute('original-data-value')));
+        addButtonsToTable("{{id}}", (cells) => setImprovementData{{pipeline_name}}(cells[0].getAttribute('original-data-value')));
+    });
 </script>
 {% endblock %}

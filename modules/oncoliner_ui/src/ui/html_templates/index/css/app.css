@@ -1,3 +1,9 @@
+:root {
+    --primary-color: #2126c2;
+    --accent-color: #ffa617;
+    --light-color: #6470ff;
+}
+
 body {
     font-family: Arial, Helvetica, sans-serif;
 }
@@ -16,17 +22,6 @@ h1, h2, h3, h4, h5, h6 {
 .wrapper {
     display: flex;
     align-items: stretch;
-}
-
-.app-sidebar {
-    max-width: 300px;
-    width: 300px;
-    z-index: 10;
-    height: 100%;
-    padding: 0 10px;
-    position: fixed;
-    background: #f8f8f8;
-    margin-top: 30px;
 }
 
 .viz-dropdown-tree {
@@ -92,7 +87,7 @@ a {
 }
 
 .nav-pills .nav-link:hover:not(.nav-link.active) {
-    background:#0d6efd30;
+    background: var(--light-color);
 }
 
 
@@ -141,9 +136,9 @@ a {
 
 .viz-loader {
     margin: auto;
-    border: 20px solid #003399;
+    border: 20px solid var(--primary-color);
     border-radius: 50%;
-    border-top: 20px solid #ff0000;
+    border-top: 20px solid var(--accent-color);
     width: 200px;
     height: 200px;
     animation: spinner 4s linear infinite;
@@ -166,8 +161,7 @@ a {
     color: grey;
     text-decoration: none;
     transform: rotate(0deg);
-    -webkit-transition : all 100ms ease-in;
-    -moz-transition : all 100ms ease-in;
+    transition: all 100ms ease-in;
 }
 
 .viz-export-btn:hover {
@@ -185,20 +179,12 @@ a[class^="icon-"] {
     text-decoration: none;
 }
 
-a[class^="icon-"]:hover {
-    color: #0d6efd;
-}
-
-a[class^="icon-"].active {
-    color: #0d6efd;
+a[class^="icon-"]:hover, a[class^="icon-"].active, .viz-table tr.active a[class^="icon-"] {
+    color: var(--light-color);
 }
 
 .viz-table tr.active {
     background-color: #0d6efd33;
-}
-
-.viz-table tr.active a[class^="icon-"] {
-    color: #0d6efd;
 }
 
 /* Tables */

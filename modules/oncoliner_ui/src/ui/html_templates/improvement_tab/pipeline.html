@@ -98,14 +98,9 @@
 </div>
 
 {% block javascript %}
-<script>
+<script type="text/javascript">
     const {{pipeline_name}}ImprovementPlotData = {{ctrl.get_improvement_plot_data(pipeline_name)}}
-    const {{pipeline_name}}ImprovementPlot = createImprovementPlot(
-        "{{pipeline_name}}_chart_container_improvement",
-        {{pipeline_name}}ImprovementPlotData['titles'],
-        {{pipeline_name}}ImprovementPlotData['labels'],
-        {{pipeline_name}}ImprovementPlotData['operation_values']['baseline']
-    );
+    let {{pipeline_name}}ImprovementPlot;
 
     function set{{pipeline_name}}ImprovementLabelsVisible(labelGroup) {
         {{pipeline_name}}ImprovementPlot.setLabelsVisible({{pipeline_name}}ImprovementPlotData['labels_groups'][labelGroup]);
@@ -114,7 +109,7 @@
     function setImprovementData{{pipeline_name}}(operationName) {
         // Set the active class to all the rows in all the tables that match the selected operationName
         document.querySelectorAll('#improvements_panel_content_{{pipeline_name}} table tr').forEach((row) => {
-           const cell = row.querySelector('td:nth-child(2)')
+        const cell = row.querySelector('td:nth-child(2)')
             if (cell && cell.getAttribute('original-data-value') === operationName) {
                 row.classList.add('active');
             } else {
@@ -129,8 +124,17 @@
         document.querySelector('#improvementPlotInfo{{pipeline_name}}').innerHTML = parseOperationName(operationName);
     }
 
-    set{{pipeline_name}}ImprovementLabelsVisible('sv_subtypes');
-    // Manually trigger the click event on baseline
-    setImprovementData{{pipeline_name}}('{{ctrl.get_best_improvement_name(pipeline_name, "SV")}}');
+    document.addEventListener('viz-content-loaded', () => {
+        {{pipeline_name}}ImprovementPlot = createImprovementPlot(
+            "{{pipeline_name}}_chart_container_improvement",
+            {{pipeline_name}}ImprovementPlotData['titles'],
+            {{pipeline_name}}ImprovementPlotData['labels'],
+            {{pipeline_name}}ImprovementPlotData['operation_values']['baseline']
+        );
+
+        set{{pipeline_name}}ImprovementLabelsVisible('sv_subtypes');
+        // Manually trigger the click event on baseline
+        setImprovementData{{pipeline_name}}('{{ctrl.get_best_improvement_name(pipeline_name, "SV")}}');
+    });
 </script>
 {% endblock %}

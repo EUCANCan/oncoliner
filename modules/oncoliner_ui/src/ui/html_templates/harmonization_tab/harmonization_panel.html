@@ -65,16 +65,10 @@
 </div>
 
 {% block javascript %}
-<script>
+<script type="text/javascript">
     const harmonizationPlotData = {{ctrl.get_harmonization_plot_data()}}
     const baselineValues = harmonizationPlotData['pipelines_names'].map(pipeline_name => harmonizationPlotData['operation_values'][pipeline_name]['baseline']);
-    const harmonizationPlot = createHarmonizationPlot(
-        "chart_container_harmonization",
-        harmonizationPlotData['pipelines_names'],
-        harmonizationPlotData['titles'],
-        harmonizationPlotData['labels'],
-        baselineValues,
-    );
+    let harmonizationPlot;
 
     function setHarmonizationLabelsVisible(labelGroup) {
         harmonizationPlot.setLabelsVisible(harmonizationPlotData['labels_groups'][labelGroup]);
@@ -97,8 +91,18 @@
         harmonizationPlot.setHarmonizationLegendNames(pipelinesSelected.map((opName) => parseOperationName(opName, false, 40)));
     }
 
-    setHarmonizationLabelsVisible('sv_subtypes');
-    // Manually trigger the click event on baseline
-    setHarmonizationDataFromTable(['{{ctrl.get_best_harmonization_names("SV").values()|join("\', \'")}}']);
+    document.addEventListener('viz-content-loaded', () => {
+        harmonizationPlot = createHarmonizationPlot(
+            "chart_container_harmonization",
+            harmonizationPlotData['pipelines_names'],
+            harmonizationPlotData['titles'],
+            harmonizationPlotData['labels'],
+            baselineValues,
+        );
+
+        setHarmonizationLabelsVisible('sv_subtypes');
+        // Manually trigger the click event on baseline
+        setHarmonizationDataFromTable(['{{ctrl.get_best_harmonization_names("SV").values()|join("\', \'")}}']);
+    });
 </script>
 {% endblock %}
