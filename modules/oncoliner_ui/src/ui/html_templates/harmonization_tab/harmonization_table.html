@@ -1,5 +1,17 @@
 {% include 'shared/table.html' %} {% block javascript %}
 <script type="text/javascript">
-    addButtonsToTable("{{id}}", (cells) => setHarmonizationDataFromTable(cells));
+    // Set original-data-value to the pipelines names cells
+    document.querySelectorAll('#{{id}} tbody tr, #{{id}} .viz-fixed-row').forEach((row) => {
+        // Up to {{pipelines_names|length}} pipelines
+        for (let i = 0; i < {{pipelines_names|length}}; i++) {
+            const cell = row.children[i];
+            setOperationCell(cell);
+        }
+    });
+
+    addButtonsToTable("{{id}}", (cells) => {
+        const cellStrings = cells.splice(0, {{pipelines_names|length}}).map((cell) => cell.getAttribute('original-data-value'));
+        setHarmonizationDataFromTable(cellStrings);
+    });
 </script>
 {% endblock %}

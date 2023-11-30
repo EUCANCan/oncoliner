@@ -23,6 +23,7 @@
         <script type="text/javascript">{{ include_raw('index/js_external/popper.js@2.11.6/popper.min.js') }}</script>
 
 
+        <script type="text/javascript">{{ include_cooked('index/js/utils.js') }}</script>
         <script type="text/javascript">{{ include_raw('index/js/table.js') }}</script>
         <script type="text/javascript">{{ include_raw('index/js/navigation.js') }}</script>
         <script type="text/javascript">{{ include_raw('index/js/charts/chartUtils.js') }}</script>
@@ -41,8 +42,6 @@
                     }
                 });
             }
-
-            const config = JSON.parse(`{{include_raw("conf.json")}}`);
         </script>
         {% endblock %}
     </head>

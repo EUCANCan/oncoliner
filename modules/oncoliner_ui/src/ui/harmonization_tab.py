@@ -27,7 +27,7 @@ class HarmonizationTab():
         # Get the index of the row with all names 'baseline'
         pipelines_names = self._harmonization_dao.get_pipelines_names()
         baseline_index = data[data[pipelines_names].apply(lambda x: all(x == 'baseline'), axis=1)].index[0]
-        return template.render(ctrl=self, id=f'table_{id_}', data=data, fixed_index=baseline_index, default_order=columns_order)
+        return template.render(ctrl=self, id=f'table_{id_}', data=data, pipelines_names=pipelines_names, fixed_index=baseline_index, default_order=columns_order)
 
     def get_best_harmonization_names(self, variant_type: str):
         return self._harmonization_dao.get_best_harmonization_names(variant_type)

@@ -3,6 +3,56 @@
       "links": {
          "eucancan": "https://eucancan.com/",
          "oncoliner": "https://github.com/EUCANCan/oncoliner"
+      },
+      "variant_callers": {
+         "brass_6_3_4": {
+            "name": "BRASS",
+            "version": "6.3.4"
+         },
+         "cgpcavemanwrapper_1_16_0": {
+            "name": "cgpCaVEManWrapper",
+            "version": "1.16.0"
+         },
+         "cgppindel_3_9_0": {
+            "name": "cgpPindel",
+            "version": "3.9.0"
+         },
+         "delly_1_1_6": {
+            "name": "Delly",
+            "version": "1.1.6"
+         },
+         "gatk_4_2_6_1": {
+            "name": "mutect2",
+            "version": "GATK 4.2.6.1"
+         },
+         "gridss_2_13_2": {
+            "name": "GRIDSS",
+            "version": "2.13.2"
+         },
+         "manta_1_6_0": {
+            "name": "Manta",
+            "version": "1.6.0"
+         },
+         "muse_2_0": {
+            "name": "MuSE",
+            "version": "2.0"
+         },
+         "sage_3_0": {
+            "name": "SAGE",
+            "version": "3.0"
+         },
+         "shimmer": {
+            "name": "Shimmer",
+            "version": ""
+         },
+         "strelka_2_9_10": {
+            "name": "Strelka2",
+            "version": "2.9.10"
+         },
+         "svaba_1_1_0": {
+            "name": "SVABA",
+            "version": "1.1.0"
+         }
       }
    },
    "names": {

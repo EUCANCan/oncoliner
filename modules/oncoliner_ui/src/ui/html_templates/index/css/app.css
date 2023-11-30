@@ -340,6 +340,23 @@ a[class^="icon-"].active {
     grid-auto-rows: auto;
 }
 
+.viz-operation-name {
+    font-family: monospace;
+}
+
+.viz-cell-operation-name {
+    font-family: monospace;
+    width: 100px;
+    display: block;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.viz-cell-operation-name:hover {
+    cursor: help;
+}
+
 .logo-container {
     display: flex;
     justify-content: center;

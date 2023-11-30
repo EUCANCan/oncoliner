@@ -14,17 +14,17 @@
                 <div class="card card-body">
                     <ul style="margin: 0;">
                         {% for value in ctrl.get_callers_names(pipeline_name) %}
-                        <li><i>{{value}}</i></li>
+                        <li><span class="viz-operation-name viz-to-parse">{{value}}</span></li>
                         {% endfor %}
                     </ul>
                 </div>
             </div>
             <div style="height: 1rem;"></div>
-            <p>Use the table below to explore all improvement possibilities using the variant callers and combinations mentioned above. <i>baseline</i> refers to the <b>{{pipeline_name}}</b> without any modification. Overall, the following improvements have the highest F1 score:</p>
+            <p>Use the table below to explore all improvement possibilities using the variant callers and combinations mentioned above. <span class="viz-operation-name viz-to-parse">baseline</span> refers to the <b>{{pipeline_name}}</b> without any modification. Overall, the following improvements have the highest F1 score:</p>
             <ul>
-                <li>SNV: <i>{{ctrl.get_best_improvement_name(pipeline_name, 'SNV')}}</i></li>
-                <li>INDEL: <i>{{ctrl.get_best_improvement_name(pipeline_name, 'INDEL')}}</i></li>
-                <li>SV: <i>{{ctrl.get_best_improvement_name(pipeline_name, 'SV')}}</i></li>
+                <li>SNV: <span class="viz-operation-name viz-to-parse">{{ctrl.get_best_improvement_name(pipeline_name, 'SNV')}}</span></li>
+                <li>INDEL: <span class="viz-operation-name viz-to-parse">{{ctrl.get_best_improvement_name(pipeline_name, 'INDEL')}}</span></li>
+                <li>SV: <span class="viz-operation-name viz-to-parse">{{ctrl.get_best_improvement_name(pipeline_name, 'SV')}}</span></li>
             </ul>
         </div>
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
@@ -60,7 +60,7 @@
         </div>
         <div class="viz-bordered-tab-container">
             <div class="viz-width-limited-large">
-                <h4 class="viz-plot-title">Performance metrics (<i>baseline</i> vs <i><span id="improvementPlotInfo{{pipeline_name}}"></span></i>)</h4>
+                <h4 class="viz-plot-title">Performance metrics (<span class="viz-operation-name viz-to-parse">baseline</span> vs <span class="viz-operation-name" id="improvementPlotInfo{{pipeline_name}}"></span>)</h4>
                 <div class="radar-chart-container">
                     {{include_cooked('shared/export_chart.html',
                     chart_js_var_name=pipeline_name+'ImprovementPlot',
@@ -72,7 +72,7 @@
             </div>
         </div>
         <div class="viz-width-limited" style="margin-top: 1rem;">
-            <p>Explore the improvement possibilities of <b>{{pipeline_name}}</b> by selecting a variant caller or combination of variant callers from the table below. <i>baseline</i> represents the <b>{{pipeline_name}}</b> without any combination with other callers. Use the dropdown below to check the improvements possibilities for specific variant types and sizes. The selected improvement will be displayed in the plot above.</p>
+            <p>Explore the improvement possibilities of <b>{{pipeline_name}}</b> by selecting a variant caller or combination of variant callers from the table below. <span class="viz-operation-name viz-to-parse">baseline</span> represents the <b>{{pipeline_name}}</b> without any combination with other callers. Use the dropdown below to check the improvements possibilities for specific variant types and sizes. The selected improvement will be displayed in the plot above.</p>
             <div class="dropdown viz-dropdown-tree">
                 <button class="form-select" type="button" id="ddat_dropdownMenuButton_improvement_{{pipeline_name}}" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                 {{ctrl.get_tree(pipeline_name).keys() | first}}
@@ -115,7 +115,7 @@
         // Set the active class to all the rows in all the tables that match the selected operationName
         document.querySelectorAll('#improvements_panel_content_{{pipeline_name}} table tr').forEach((row) => {
            const cell = row.querySelector('td:nth-child(2)')
-            if (cell && cell.innerText === operationName) {
+            if (cell && cell.getAttribute('original-data-value') === operationName) {
                 row.classList.add('active');
             } else {
                 row.classList.remove('active');
@@ -125,8 +125,8 @@
         const operationImprovementData = {{pipeline_name}}ImprovementPlotData['operation_values'][operationName];
         {{pipeline_name}}ImprovementPlot.setImprovementData(operationImprovementData);
 
-        {{pipeline_name}}ImprovementPlot.setImprovementLegendName(operationName);
-        document.querySelector('#improvementPlotInfo{{pipeline_name}}').innerHTML = operationName;
+        {{pipeline_name}}ImprovementPlot.setImprovementLegendName(parseOperationName(operationName, false));
+        document.querySelector('#improvementPlotInfo{{pipeline_name}}').innerHTML = parseOperationName(operationName);
     }
 
     set{{pipeline_name}}ImprovementLabelsVisible('sv_subtypes');

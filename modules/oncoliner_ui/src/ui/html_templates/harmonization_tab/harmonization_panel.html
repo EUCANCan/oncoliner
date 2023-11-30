@@ -1,23 +1,23 @@
 <div class="viz-width-limited">
     <p>Listing of the harmonization options based on the improvement possibilities of the pipelines: <b>{{ ctrl.get_pipelines_names()|join(', ') }}</b>.</p>
-    <p>Use the table below to explore all harmonization options. <i>baseline</i> refers to the pipeline without any modification. Overall, the following combinations have the lowest heterogeneity score (H<sub>score</sub>):</p>
+    <p>Use the table below to explore all harmonization options. <span class="viz-operation-name viz-to-parse">baseline</span> refers to the pipeline without any modification. Overall, the following combinations have the lowest heterogeneity score (H<sub>score</sub>):</p>
     <ul>
         <li>SNV:</li>
         <ul>
             {% for pipeline_name, harmonization_op in ctrl.get_best_harmonization_names('SNV').items() %}
-            <li><b>{{ pipeline_name }}</b>: <i>{{ harmonization_op }}</i></li>
+            <li><b>{{ pipeline_name }}</b>: <span class="viz-operation-name viz-to-parse">{{ harmonization_op }}</span></li>
             {% endfor %}
         </ul>
         <li>INDEL:</li>
         <ul>
             {% for pipeline_name, harmonization_op in ctrl.get_best_harmonization_names('INDEL').items() %}
-            <li><b>{{ pipeline_name }}</b>: <i>{{ harmonization_op }}</i></li>
+            <li><b>{{ pipeline_name }}</b>: <span class="viz-operation-name viz-to-parse">{{ harmonization_op }}</span></li>
             {% endfor %}
         </ul>
         <li>SV:</li>
         <ul>
             {% for pipeline_name, harmonization_op in ctrl.get_best_harmonization_names('SV').items() %}
-            <li><b>{{ pipeline_name }}</b>: <i>{{ harmonization_op }}</i></li>
+            <li><b>{{ pipeline_name }}</b>: <span class="viz-operation-name viz-to-parse">{{ harmonization_op }}</span></li>
             {% endfor %}
         </ul>
     </ul>
@@ -41,7 +41,7 @@
         </div>
     </div>
     <div class="viz-width-limited" style="margin-top: 1rem;">
-        <p>Explore the harmonization options by selecting any row from the table below. <i>baseline</i> represents a pipeline without any combination with other callers. Use the dropdown below to check the harmonization options for specific variant types and sizes. The selected harmonization will be displayed in the plot above.</p>
+        <p>Explore the harmonization options by selecting any row from the table below. <span class="viz-operation-name viz-to-parse">baseline</span> represents a pipeline without any combination with other callers. Use the dropdown below to check the harmonization options for specific variant types and sizes. The selected harmonization will be displayed in the plot above.</p>
         <div class="dropdown viz-dropdown-tree">
             <button class="form-select" type="button" id="ddat_dropdownMenuButton_harmonization" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
             {{ctrl.get_tree().keys() | first}}
@@ -85,7 +85,7 @@
         const pipelinesSelected = selected_row.slice(0, pipelinesNames.length);
         // Set the active class to all the rows in all the tables that match the selected pipelines
         document.querySelectorAll('#harmonizations_panel_content table tr').forEach((row) => {
-            const rowPipelines = Array.from(row.querySelectorAll('td')).slice(1, pipelinesNames.length+1).map((cell) => cell.innerText);
+            const rowPipelines = Array.from(row.querySelectorAll('td')).slice(1, pipelinesNames.length+1).map((cell) => cell.getAttribute('original-data-value'));
             if (pipelinesSelected.every((pipeline, i) => pipeline === rowPipelines[i])) {
                 row.classList.add('active');
             } else {
@@ -94,7 +94,7 @@
         });
         const operationHarmonizationData = pipelinesNames.map((pipelineName, j) => harmonizationPlotData['operation_values'][pipelineName][pipelinesSelected[j]]);
         harmonizationPlot.setHarmonizationData(operationHarmonizationData);
-        harmonizationPlot.setHarmonizationLegendNames(pipelinesSelected);
+        harmonizationPlot.setHarmonizationLegendNames(pipelinesSelected.map((opName) => parseOperationName(opName, false, 40)));
     }
 
     setHarmonizationLabelsVisible('sv_subtypes');

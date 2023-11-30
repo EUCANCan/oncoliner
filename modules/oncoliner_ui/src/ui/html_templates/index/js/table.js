@@ -138,14 +138,14 @@ function addButtonsToTable(tableId, callback) {
             return;
         }
         // Get all the strings in the row
-        const strings = [];
+        const cells = [];
         row.querySelectorAll("td").forEach((cell) => {
-            strings.push(cell.innerText);
+            cells.push(cell);
         });
         const cell = row.insertCell(0);
         const a = document.createElement("a");
         a.classList.add("icon-search");
-        a.onclick = () => callback(strings);
+        a.onclick = () => callback(cells);
         cell.appendChild(a);
     });
 }

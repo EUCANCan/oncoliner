@@ -10,6 +10,8 @@ import rcssmin
 # Add vcf-ops to the path
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', '..', 'shared', 'vcf_ops', 'src'))
 
+from vcf_ops.constants import INTERSECTION_SYMBOL, UNION_SYMBOL  # noqa
+
 from .utils import get_conf  # noqa
 from .assesment_tab import AssesmentTab  # noqa
 from .improvement_tab import ImprovementTab  # noqa
@@ -38,7 +40,11 @@ def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pi
 
     def include_cooked(template_path, **context):
         template = env.get_template(template_path)
-        return template.render(**context)
+        result = template.render(**context)
+        # Minify JS
+        if template_path.endswith('.js'):
+            return rjsmin.jsmin(result)
+        return result
 
     def include_encoded(name):
         # Escape " and # characters
@@ -112,6 +118,8 @@ def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pi
     env.globals['include_encoded'] = include_encoded
     env.globals['render_tab'] = render_tab
     env.globals['print_js_function'] = print_js_function
+    env.globals['intersection_symbol'] = INTERSECTION_SYMBOL
+    env.globals['union_symbol'] = UNION_SYMBOL
 
     # Global vars
     env.globals['conf'] = get_conf()
