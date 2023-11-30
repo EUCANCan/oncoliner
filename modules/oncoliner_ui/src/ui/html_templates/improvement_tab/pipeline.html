@@ -72,7 +72,7 @@
             </div>
         </div>
         <div class="viz-width-limited" style="margin-top: 1rem;">
-            <p>Explore the improvement possibilities of <b>{{pipeline_name}}</b> by selecting a variant caller or combination of variant callers from the table below. <span class="viz-operation-name viz-to-parse">baseline</span> represents the <b>{{pipeline_name}}</b> without any combination with other callers. Use the dropdown below to check the improvements possibilities for specific variant types and sizes. The selected improvement will be displayed in the plot above.</p>
+            <p>Explore the improvement possibilities of <b>{{pipeline_name}}</b> by selecting a variant caller or combination of variant callers from the table below. Use the dropdown below to check the improvements possibilities for specific variant types and sizes. The selected improvement will be displayed in the plot above.</p>
             <div class="dropdown viz-dropdown-tree">
                 <button class="form-select" type="button" id="ddat_dropdownMenuButton_improvement_{{pipeline_name}}" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
                 {{ctrl.get_tree(pipeline_name).keys() | first}}

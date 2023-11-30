@@ -1,6 +1,7 @@
 <div class="viz-width-limited">
     <p>Listing of the harmonization options based on the improvement possibilities of the pipelines: <b>{{ ctrl.get_pipelines_names()|join(', ') }}</b>.</p>
-    <p>Use the table below to explore all harmonization options. <span class="viz-operation-name viz-to-parse">baseline</span> refers to the pipeline without any modification. Overall, the following combinations have the lowest heterogeneity score (H<sub>score</sub>):</p>
+    <p>The different combinations are described using the <span class="viz-operation-name viz-to-parse">_and_</span>and<span class="viz-operation-name viz-to-parse">_or_</span>symbols. <span class="viz-operation-name viz-to-parse">baseline</span> refers to the pipeline without any modification.<span class="viz-operation-name viz-to-parse">_and_</span>refers to the intersection of two different outputs (you may use ONCOLINER's <a href="https://github.com/EUCANCan/oncoliner/blob/main/tools/vcf_intersect/" target="_blank">VCF intersection tool</a>). For example, <span class="viz-operation-name viz-to-parse">baseline_and_variant_caller_1</span> represents the output of the intersection of the results of the pipeline and variant caller 1.<span class="viz-operation-name viz-to-parse">_or_</span>refers to the union of two different outputs (you may use ONCOLINER's <a href="https://github.com/EUCANCan/oncoliner/blob/main/tools/vcf_union/" target="_blank">VCF union tool</a>). For example, <span class="viz-operation-name viz-to-parse">variant_caller_1_or_variant_caller_2</span> represents the output of the union of the results of variant caller 1 and variant caller 2.</p>
+    <p>Use the table below to explore all harmonization options. Overall, the following combinations have the lowest heterogeneity score (H<sub>score</sub>):</p>
     <ul>
         <li>SNV:</li>
         <ul>
@@ -41,7 +42,7 @@
         </div>
     </div>
     <div class="viz-width-limited" style="margin-top: 1rem;">
-        <p>Explore the harmonization options by selecting any row from the table below. <span class="viz-operation-name viz-to-parse">baseline</span> represents a pipeline without any combination with other callers. Use the dropdown below to check the harmonization options for specific variant types and sizes. The selected harmonization will be displayed in the plot above.</p>
+        <p>Explore the harmonization options by selecting any row from the table below. Use the dropdown below to check the harmonization options for specific variant types and sizes. The selected harmonization will be displayed in the plot above.</p>
         <div class="dropdown viz-dropdown-tree">
             <button class="form-select" type="button" id="ddat_dropdownMenuButton_harmonization" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
             {{ctrl.get_tree().keys() | first}}
