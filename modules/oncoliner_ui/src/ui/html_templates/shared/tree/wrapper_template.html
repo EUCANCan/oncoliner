@@ -17,7 +17,7 @@
 								href="#{{data[key]._all_.id}}_tab"
 								role="tab"
 								{% if click_callback %}
-									onclick="{{ print_js_function(click_callback.function, ['this', key] + click_callback.params ) }}"
+									onclick="{{ print_js_function(click_callback.function, ['this', data[key]['_all_']['hierarchy']] + click_callback.params ) }}"
 								{% endif %}
 								>{{key}}</a>
 								{% if depth == 0 and loop.index0 == 0 %}
@@ -47,7 +47,7 @@
 					href="#{{data[key].id}}_tab"
 					role="tab"
 					{% if click_callback %}
-						onclick="{{ print_js_function(click_callback.function, ['this', key] + click_callback.params ) }}"
+						onclick="{{ print_js_function(click_callback.function, ['this', data[key]['hierarchy']] + click_callback.params ) }}"
 					{% endif %}
 				>{{key}}</a>
 		{% endif %}
