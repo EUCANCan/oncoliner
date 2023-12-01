@@ -308,7 +308,6 @@ tr.active a[class^="icon-"]:before {
 .viz-plot-title {
     padding-top: 1rem;
     padding-bottom: 1rem;
-    font-weight: bold;
     text-align: center;
 }
 

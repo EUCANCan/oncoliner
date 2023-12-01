@@ -55,6 +55,9 @@ function buildRadarChart(labels, datasets, title, ctx) {
                 legend: {
                     display: true,
                     position: "top",
+                    labels: {
+                        boxWidth: 10,
+                    },
                 },
             },
         },

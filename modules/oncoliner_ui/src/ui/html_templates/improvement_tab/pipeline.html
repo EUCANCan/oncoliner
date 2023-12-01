@@ -22,9 +22,9 @@
             <div style="height: 1rem;"></div>
             <p>Use the table below to explore all improvement possibilities using the variant callers and combinations mentioned above. <span class="viz-operation-name viz-to-parse">baseline</span> refers to the <b>{{pipeline_name}}</b> without any modification. Overall, the following improvements have the highest F1 score:</p>
             <ul>
-                <li>SNV: <span class="viz-operation-name viz-to-parse">{{ctrl.get_best_improvement_name(pipeline_name, 'SNV')}}</span></li>
-                <li>INDEL: <span class="viz-operation-name viz-to-parse">{{ctrl.get_best_improvement_name(pipeline_name, 'INDEL')}}</span></li>
-                <li>SV: <span class="viz-operation-name viz-to-parse">{{ctrl.get_best_improvement_name(pipeline_name, 'SV')}}</span></li>
+                <li><b>SNV</b>: <span class="viz-operation-name viz-to-parse">{{ctrl.get_best_improvement_name(pipeline_name, 'SNV')}}</span></li>
+                <li><b>INDEL</b>: <span class="viz-operation-name viz-to-parse">{{ctrl.get_best_improvement_name(pipeline_name, 'INDEL')}}</span></li>
+                <li><b>SV</b>: <span class="viz-operation-name viz-to-parse">{{ctrl.get_best_improvement_name(pipeline_name, 'SV')}}</span></li>
             </ul>
         </div>
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
@@ -72,6 +72,7 @@
             </div>
         </div>
         <div class="viz-width-limited" style="margin-top: 1rem;">
+            <h4>Improvement selection</h4>
             <p>Explore the improvement possibilities of <b>{{pipeline_name}}</b> by selecting a variant caller or combination of variant callers from the table below. Use the dropdown below to check the improvements possibilities for specific variant types and sizes. The selected improvement will be displayed in the plot above.</p>
             <div class="dropdown viz-dropdown-tree">
                 <button class="form-select" type="button" id="ddat_dropdownMenuButton_improvement_{{pipeline_name}}" aria-expanded="false" style="text-align: left" data-bs-toggle="dropdown" data-bs-auto-close="outside">
