@@ -72,9 +72,13 @@ class TableFromListDAO():
                 tree_levels.append(variant_size)
             
             last_dict = result
+            hierarchy = []
             for tree_level in tree_levels:
+                if tree_level != '_all_':
+                    hierarchy.append(tree_level)
                 last_dict[tree_level] = last_dict.get(tree_level, dict())
                 last_dict = last_dict[tree_level]
+            last_dict['hierarchy'] = ' ; '.join(hierarchy)
             last_dict['id'] = clean_string(f'{prefix_id}_{variant_type}_{variant_size}')
             # Round all floats to 2 decimals
             last_dict['data'] = df
