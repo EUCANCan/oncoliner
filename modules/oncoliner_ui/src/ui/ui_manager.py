@@ -3,7 +3,7 @@ import os
 import sys
 from jinja2 import Environment, FileSystemLoader
 from markupsafe import Markup
-from htmlmin.minify import html_minify
+import minify_html
 import rjsmin
 import rcssmin
 
@@ -128,4 +128,4 @@ def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pi
 
     with open(os.path.join(output_file), "w") as f:
         output_str = template.render(main_tabs=main_tabs)
-        f.write(html_minify(output_str))
+        f.write(minify_html.minify(output_str, minify_js=True, remove_processing_instructions=True))

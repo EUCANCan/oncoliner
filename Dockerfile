@@ -13,7 +13,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     liblzma-dev
 
 # Python dependencies
-RUN pip install pysam pandas variant-extractor jinja2 markupsafe rjsmin rcssmin django-htmlmin
+RUN pip install pysam pandas variant-extractor jinja2 markupsafe rjsmin rcssmin minify-html
 
 # Copy modules and launcher script
 COPY modules /oncoliner/modules

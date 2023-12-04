@@ -23,7 +23,7 @@ libbz2-dev \
 liblzma-dev
 
 # Python dependencies
-pip install pysam pandas variant-extractor jinja2 markupsafe rjsmin rcssmin django-htmlmin
+pip install pysam pandas variant-extractor jinja2 markupsafe rjsmin rcssmin minify-html
 
 # Copy modules and launcher script
 %runscript
