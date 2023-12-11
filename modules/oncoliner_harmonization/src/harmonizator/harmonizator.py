@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..'
 from vcf_ops.metrics import filter_metrics_recommendations  # noqa
 
 from .utils import cleanup_text  # noqa
-from .heterogeneity_metrics import compute_h_score, compute_gdr  # noqa
+from .heterogeneity_metrics import compute_phs, compute_gdr  # noqa
 
 
 def _read_pipeline_improvements(pipeline_folder: str) -> Dict[str, pd.DataFrame]:
@@ -76,8 +76,8 @@ def _compute_metrics(operations_combination, improvements_combinations_metrics, 
         # Calculate the metrics for the current operation
         computable_metrics.append(metrics)
     # Calculate the metrics for the combination
-    if metrics_name == 'h_score':
-        return compute_h_score([(metrics['recall'], metrics['precision']) for metrics in computable_metrics])
+    if metrics_name == 'phs':
+        return compute_phs([(metrics['recall'], metrics['precision']) for metrics in computable_metrics])
     elif metrics_name == 'gdr':
         return compute_gdr([metrics['protein_affected_genes'] for metrics in computable_metrics])
     elif metrics_name.endswith('_avg'):
@@ -116,20 +116,19 @@ def _group_combinations(improvements_combinations_metrics: Dict[str, Dict[str, p
                 combinations_row[pipeline_name] = operation
             combinations_row['variant_type'] = variant_type_size.split(';')[0]
             combinations_row['variant_size'] = variant_type_size.split(';')[1]
-            computable_metrics = ['h_score', 'recall_avg', 'precision_avg', 'f1_score_avg', 'gdr',
-                                  'protein_affected_genes_count_avg', 'protein_affected_driver_genes_count_avg', 'protein_affected_actionable_genes_count_avg',
-                                  'added_callers_sum']
+            computable_metrics = ['phs', 'recall_avg', 'precision_avg', 'f1_score_avg', 'gdr',
+                                  'protein_affected_genes_count_avg', 'protein_affected_driver_genes_count_avg', 'added_callers_sum']
             for metrics_name in computable_metrics:
                 combinations_row[metrics_name] = _compute_metrics(operations_combination, improvements_combinations_metrics, variant_type_size, metrics_name)
             combinations_rows.append(combinations_row)
         # Create a dataframe with the metrics
         combinations_df = pd.DataFrame(combinations_rows)
-        # Invert values for h_score and gdr
-        combinations_df['h_score_inv'] = - combinations_df['h_score']
+        # Invert values for phs and gdr
+        combinations_df['phs_inv'] = - combinations_df['phs']
         combinations_df['gdr_inv'] = - combinations_df['gdr']
-        selected_combinations.update(_filter_combinations(pipeline_names, combinations_df, 'added_callers_sum', ['h_score_inv', 'gdr_inv'], ['f1_score_avg', 'recall_avg', 'precision_avg'], loss_margin, max_recommendations))
+        selected_combinations.update(_filter_combinations(pipeline_names, combinations_df, 'added_callers_sum', ['phs_inv', 'gdr_inv'], ['f1_score_avg', 'recall_avg', 'precision_avg'], loss_margin, max_recommendations))
         # Drop the inverted columns
-        combinations_df.drop(columns=['h_score_inv', 'gdr_inv'], inplace=True)
+        combinations_df.drop(columns=['phs_inv', 'gdr_inv'], inplace=True)
         result[variant_type_size] = combinations_df
     # Filter the combinations
     for variant_type_size, combinations_df in result.items():

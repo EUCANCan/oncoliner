@@ -34,7 +34,7 @@ class HarmonizationDAO():
             self._pipelines_operations_metrics_dict[pipeline_name] = temp_dict[pipeline_name]
 
     def get_default_order(self) -> List[Tuple[str, str]]:
-        return [('h_score', 'asc'), ('gdr', 'asc'), ('f1_score_avg', 'desc'), ('added_callers_sum', 'asc')]
+        return [('phs', 'asc'), ('gdr', 'asc'), ('f1_score_avg', 'desc'), ('added_callers_sum', 'asc')]
 
     def get_best_harmonization_names(self, variant_type: str) -> Dict[str, str]:
         first_row = self._table.get_first_from_ordered(variant_type, self.get_default_order())

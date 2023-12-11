@@ -149,9 +149,9 @@
          "tooltip":"Average F1-score",
          "sortable": true
       },
-      "h_score":{
-         "name":"H<sub>score</sub>",
-         "tooltip":"Heterogeneity score",
+      "phs":{
+         "name":"PHS",
+         "tooltip":"Performance Heterogeneity Score",
          "sortable": true
       },
       "gdr":{

@@ -9,16 +9,16 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', '..', 'shared', 'vcf_ops', 'src'))
 from vcf_ops.genes import GENE_SPLIT_SYMBOL  # noqa
 
-def compute_h_score(metrics: List[Tuple[float, float]]) -> float:
+def compute_phs(metrics: List[Tuple[float, float]]) -> float:
     # Compute the centroid
     centroid = np.mean(metrics, axis=0)
     # Compute the distance from the centroid to each point
     distances = []
     for point in metrics:
         distances.append(np.linalg.norm(point - centroid))
-    # Compute the h-score
-    h_score = np.mean(distances)
-    return h_score
+    # Compute the phs
+    phs = np.mean(distances) / (np.sqrt(2) / 2)
+    return phs
 
 
 def compute_gdr(genes_list: List[str]) -> float:

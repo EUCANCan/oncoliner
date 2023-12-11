@@ -10,14 +10,10 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     libz-dev \
     libglib2.0-dev \
     libbz2-dev \
-    liblzma-dev curl
-
-# Install cargo
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-RUN . "$HOME/.cargo/env"
+    liblzma-dev
 
 # Python dependencies
-RUN pip install pysam pandas variant-extractor jinja2 markupsafe rjsmin rcssmin minify-html
+RUN pip install pysam pandas variant-extractor jinja2 markupsafe rjsmin rcssmin django-htmlmin
 
 # Copy modules and launcher script
 COPY modules /oncoliner/modules

@@ -10,7 +10,6 @@ ONCOLINER_INFO_FIELD_NAME = 'ONCOLINER_PROT_GENES'
 # Lazy load
 _PROTEIN_CODING_GENES = None
 _CANCER_CENSUS_GENES = None
-_ACTIONABLE_GENES = None
 
 
 def _read_genes_file(genes_tsv_file_path: str):
@@ -34,13 +33,6 @@ def get_cancer_census_genes():
     if _CANCER_CENSUS_GENES is None:
         _CANCER_CENSUS_GENES = _read_genes_file(os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'genes_cancer.tsv'))
     return _CANCER_CENSUS_GENES
-
-def get_actionable_genes():
-    # Lazy load ACTIONABLE_GENES
-    global _ACTIONABLE_GENES
-    if _ACTIONABLE_GENES is None:
-        _ACTIONABLE_GENES = _read_genes_file(os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'genes_actionable.tsv'))
-    return _ACTIONABLE_GENES
 
 def _extract_protein_affected_genes_from_oncoliner(variant_record_obj) -> Set[str]:
     # Extract protein coding genes from ONCOLINER annotation

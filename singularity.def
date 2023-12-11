@@ -20,14 +20,10 @@ python3-pip \
 libz-dev \
 libglib2.0-dev \
 libbz2-dev \
-liblzma-dev curl
-
-# Install cargo
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-. "$HOME/.cargo/env"
+liblzma-dev
 
 # Python dependencies
-pip install pysam pandas variant-extractor jinja2 markupsafe rjsmin rcssmin minify-html
+pip install pysam pandas variant-extractor jinja2 markupsafe rjsmin rcssmin django-htmlmin
 
 # Copy modules and launcher script
 %runscript

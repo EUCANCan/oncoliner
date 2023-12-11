@@ -3,11 +3,10 @@ from functools import reduce
 
 from variant_extractor.variants import VariantType
 
-from .genes import combine_genes_symbols, get_cancer_census_genes, get_actionable_genes, is_gene_annotated, extract_protein_affected_genes, GENE_SPLIT_SYMBOL
+from .genes import combine_genes_symbols, get_cancer_census_genes, is_gene_annotated, extract_protein_affected_genes, GENE_SPLIT_SYMBOL
 
 METRICS_COLUMNS = ['variant_type', 'variant_size', 'window_radius', 'recall', 'precision', 'f1_score', 'tp', 'fp', 'fn',
-                   'protein_affected_genes_count', 'protein_affected_driver_genes_count', 'protein_affected_actionable_genes_count',
-                   'protein_affected_genes', 'protein_affected_driver_genes', 'protein_affected_actionable_genes']
+                   'protein_affected_genes_count', 'protein_affected_driver_genes_count', 'protein_affected_genes', 'protein_affected_driver_genes']
 
 
 def infer_parameters_from_metrics(metrics: pd.DataFrame, window_radius=None):
@@ -71,13 +70,9 @@ def aggregate_metrics(metrics_list):
     # Add protein_affected_driver_genes
     agg_metrics['protein_affected_driver_genes'] = agg_metrics['protein_affected_genes'].apply(lambda x: x.intersection(get_cancer_census_genes()))
     agg_metrics['protein_affected_driver_genes_count'] = agg_metrics['protein_affected_driver_genes'].apply(lambda x: len(x))
-    # Add actionable genes
-    agg_metrics['protein_affected_actionable_genes'] = agg_metrics['protein_affected_genes'].apply(lambda x: x.intersection(get_actionable_genes()))
-    agg_metrics['protein_affected_actionable_genes_count'] = agg_metrics['protein_affected_actionable_genes'].apply(lambda x: len(x))
     # Convert to string
     agg_metrics['protein_affected_genes'] = agg_metrics['protein_affected_genes'].apply(lambda x: GENE_SPLIT_SYMBOL.join(x))
     agg_metrics['protein_affected_driver_genes'] = agg_metrics['protein_affected_driver_genes'].apply(lambda x: GENE_SPLIT_SYMBOL.join(x))
-    agg_metrics['protein_affected_actionable_genes'] = agg_metrics['protein_affected_actionable_genes'].apply(lambda x: GENE_SPLIT_SYMBOL.join(x))
     # Reorder columns
     agg_metrics = agg_metrics[METRICS_COLUMNS]
     return agg_metrics
@@ -123,10 +118,8 @@ def combine_precision_recall_metrics(recall_df, precision_df):
     df['f1_score'].fillna(0, inplace=True)
     df['protein_affected_genes_count'] = recall_df['protein_affected_genes_count']
     df['protein_affected_driver_genes_count'] = recall_df['protein_affected_driver_genes_count']
-    df['protein_affected_actionable_genes_count'] = recall_df['protein_affected_actionable_genes_count']
     df['protein_affected_genes'] = recall_df['protein_affected_genes']
     df['protein_affected_driver_genes'] = recall_df['protein_affected_driver_genes']
-    df['protein_affected_actionable_genes'] = recall_df['protein_affected_actionable_genes']
     return df
 
 
@@ -248,17 +241,13 @@ def compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size
         is_test_annotated = tp_df['variant_record_obj'].apply(is_gene_annotated)
         protein_affected_genes = set()
         protein_affected_driver_genes = set()
-        protein_affected_actionable_genes = set()
         if is_test_annotated.any():
             protein_affected_genes = combine_genes_symbols(tp_df[is_test_annotated]['variant_record_obj'].apply(extract_protein_affected_genes))
             protein_affected_driver_genes = protein_affected_genes & get_cancer_census_genes()
-            protein_affected_actionable_genes = protein_affected_genes & get_actionable_genes()
         row.append(len(protein_affected_genes))
         row.append(len(protein_affected_driver_genes))
-        row.append(len(protein_affected_actionable_genes))
         row.append(GENE_SPLIT_SYMBOL.join(protein_affected_genes))
         row.append(GENE_SPLIT_SYMBOL.join(protein_affected_driver_genes))
-        row.append(GENE_SPLIT_SYMBOL.join(protein_affected_actionable_genes))
         rows.append(row)
 
     return pd.DataFrame(rows, columns=METRICS_COLUMNS)
