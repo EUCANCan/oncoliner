@@ -6,7 +6,7 @@ import pandas as pd
 from ..shared.metrics_table import MetricsTable
 
 
-class AssesmentPipelineDAO():
+class AssessmentPipelineDAO():
     def __init__(self, pipeline_results_folder: str) -> None:
         self._pipeline_results_folder = pipeline_results_folder
 

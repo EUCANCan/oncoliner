@@ -24,9 +24,9 @@ def get_recall_precision_samples(config: pd.DataFrame) -> Tuple[List[str], List[
 
 
 def run_evaluator(pipeline_folder_path: str, output_folder: str, config: pd.DataFrame, max_processes: int) -> None:
-    # If output_folder/aggregated_metrics.csv already exists and it is not empty, skip the assesment
+    # If output_folder/aggregated_metrics.csv already exists and it is not empty, skip the assessment
     if os.path.exists(os.path.join(output_folder, 'aggregated_metrics.csv')) and os.path.getsize(os.path.join(output_folder, 'aggregated_metrics.csv')) > 0:
-        logging.info(f'The assesment file {os.path.join(output_folder, "aggregated_metrics.csv")} already exists.\nSkipping the assesment for pipeline {pipeline_folder_path}')
+        logging.info(f'The assessment file {os.path.join(output_folder, "aggregated_metrics.csv")} already exists.\nSkipping the assessment for pipeline {pipeline_folder_path}')
         return
     pipelines_vcf_paths = config['sample_name'].apply(
         lambda sample_name: ','.join([os.path.join(pipeline_folder_path, sample_name, '*.vcf.gz'),
@@ -38,9 +38,9 @@ def run_evaluator(pipeline_folder_path: str, output_folder: str, config: pd.Data
     # Save the new config file
     config_path = os.path.join(output_folder, 'config.tsv')
     config_with_pipeline_vcf_paths.to_csv(config_path, sep='\t', index=False)
-    # Execute the assesment
-    assesment_command = os.environ['ASSESMENT_COMMAND']
-    evaluator_command_split = assesment_command.split()
+    # Execute the assessment
+    assessment_command = os.environ['ASSESSMENT_COMMAND']
+    evaluator_command_split = assessment_command.split()
     args = evaluator_command_split + ['-c', config_path, '-o', output_folder, '-p', str(max_processes)]
     subprocess.check_call(args)
 
@@ -117,9 +117,9 @@ if __name__ == '__main__':
     if args.callers_folder:
         args.callers_folder = os.path.abspath(args.callers_folder)
     # Check if the environment variables are set, set them if not
-    if 'ASSESMENT_COMMAND' not in os.environ:
-        assesment_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules', 'oncoliner_assesment', 'src', 'assesment_bulk.py')
-        os.environ['ASSESMENT_COMMAND'] = 'python3 ' + assesment_command_default_path
+    if 'ASSESSMENT_COMMAND' not in os.environ:
+        assessment_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules', 'oncoliner_assessment', 'src', 'assessment_bulk.py')
+        os.environ['ASSESSMENT_COMMAND'] = 'python3 ' + assessment_command_default_path
     if 'UI_COMMAND' not in os.environ:
         ui_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modules', 'oncoliner_ui', 'src', 'ui_main.py')
         os.environ['UI_COMMAND'] = 'python3 ' + ui_command_default_path
@@ -146,10 +146,10 @@ if __name__ == '__main__':
 
     # Run the evaluator
     for pipeline_folder in args.pipelines_folders:
-        output_pipeline_evaluation_folder = os.path.join(args.output, 'assesment', os.path.basename(pipeline_folder))
+        output_pipeline_evaluation_folder = os.path.join(args.output, 'assessment', os.path.basename(pipeline_folder))
         os.makedirs(output_pipeline_evaluation_folder, exist_ok=True)
         run_evaluator(pipeline_folder, output_pipeline_evaluation_folder, config, args.max_processes)
-    pipelines_evaluation_folder_paths = glob.glob(os.path.join(args.output, 'assesment', '*'))
+    pipelines_evaluation_folder_paths = glob.glob(os.path.join(args.output, 'assessment', '*'))
 
     # Run the improver
     pipeline_improvements_folder_paths = None

@@ -208,11 +208,11 @@ A standalone tool that allows users to merge two different groups of VCF files. 
 
 ## Modules
 
-ONCOLINER is divided into three functional modules (assesment, improvement and harmonization) and a UI module. For more information about each module, check the corresponding README file in the [`modules`](/modules) folder:
+ONCOLINER is divided into three functional modules (assessment, improvement and harmonization) and a UI module. For more information about each module, check the corresponding README file in the [`modules`](/modules) folder:
 
-* [Assesment README](/modules/oncoliner_assesment/README.md)
+* [Assessment README](/modules/oncoliner_assessment/README.md)
 * [Improvement README](/modules/oncoliner_improvement/README.md)
 * [Harmonization README](/modules/oncoliner_harmonization/README.md)
 * [UI README](/modules/oncoliner_ui/README.md)
 
-Each module can be run independently. However, the results of the assesment module are required to run the improvement module and the results of the improvement module are required to run the harmonization module. The UI module generates a report for the results of each module.
+Each module can be run independently. However, the results of the assessment module are required to run the improvement module and the results of the improvement module are required to run the harmonization module. The UI module generates a report for the results of each module.

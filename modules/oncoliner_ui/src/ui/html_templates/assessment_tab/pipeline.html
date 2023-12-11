@@ -1,8 +1,8 @@
 <div class="tab-content">
-    <div class="tab-pane fade show active" id="{{pipeline_name}}_sample_assesment" aria-labelledby="{{pipeline_name}}_sample_assesment_">
+    <div class="tab-pane fade show active" id="{{pipeline_name}}_sample_assessment" aria-labelledby="{{pipeline_name}}_sample_assessment_">
         <div class="viz-width-limited">
-            <h2>Assesment overview: <b>{{pipeline_name}}</b></h2>
-            <p>Results of the assesment of <b>{{pipeline_name}}</b>. These performance results are the result of aggregating the performance of <b>{{pipeline_name}}</b> over a total of {{ctrl.get_samples(pipeline_name)|length}} samples.</p>
+            <h2>Assessment overview: <b>{{pipeline_name}}</b></h2>
+            <p>Results of the assessment of <b>{{pipeline_name}}</b>. These performance results are the result of aggregating the performance of <b>{{pipeline_name}}</b> over a total of {{ctrl.get_samples(pipeline_name)|length}} samples.</p>
             <p>Samples used for computing recall related metrics ({{ctrl.get_recall_samples(pipeline_name)|length}}):</p>
             <ul>
                 {% for sample in ctrl.get_recall_samples(pipeline_name) %}
@@ -20,14 +20,14 @@
         {{ ctrl.render_metrics_panel(pipeline_name) }}
     </div>
 
-    <h2 class="viz-width-limited" style="padding-top: 20px">Assesment by sample: <b>{{pipeline_name}}</b></h2>
+    <h2 class="viz-width-limited" style="padding-top: 20px">Assessment by sample: <b>{{pipeline_name}}</b></h2>
     <div class="viz-width-limited">
         <label for="{{pipeline_name}}-sample-select" class="form-label">
-        Select a sample to see the results of the assesment of <b>{{pipeline_name}}</b> for that sample:
+        Select a sample to see the results of the assessment of <b>{{pipeline_name}}</b> for that sample:
         </label>
         <select class="form-select" id="{{pipeline_name}}-sample-select" aria-label="Select sample" role="tablist" autocomplete="off">
             {% for sample in ctrl.get_samples(pipeline_name) %}
-                <option class="nav-link {{'active' if loop.first}}" id="{{pipeline_name}}_{{sample}}_sample_assesment_" data-bs-toggle="tab" role="tab" aria-controls="{{pipeline_name}}_{{sample}}_sample_assesment_" data-bs-target="#{{pipeline_name}}_{{sample}}_sample_assesment" href="#{{pipeline_name}}_{{sample}}_sample_assesment">{{sample}} ({{ctrl.get_sample_types(pipeline_name, sample)|join(', ')}})</option>
+                <option class="nav-link {{'active' if loop.first}}" id="{{pipeline_name}}_{{sample}}_sample_assessment_" data-bs-toggle="tab" role="tab" aria-controls="{{pipeline_name}}_{{sample}}_sample_assessment_" data-bs-target="#{{pipeline_name}}_{{sample}}_sample_assessment" href="#{{pipeline_name}}_{{sample}}_sample_assessment">{{sample}} ({{ctrl.get_sample_types(pipeline_name, sample)|join(', ')}})</option>
             {% endfor %}
         </select>
     </div>
@@ -36,11 +36,11 @@
     {% for sample in ctrl.get_samples(pipeline_name) %}
         <div
             class="tab-pane fade {{'show active' if loop.first}}"
-            id="{{pipeline_name}}_{{sample}}_sample_assesment"
-            aria-labelledby="{{pipeline_name}}_{{sample}}_sample_assesment_"
+            id="{{pipeline_name}}_{{sample}}_sample_assessment"
+            aria-labelledby="{{pipeline_name}}_{{sample}}_sample_assessment_"
             role="tabpanel">
             <h3 class="viz-width-limited" style="padding-top: 20px">{{sample}} ({{ctrl.get_sample_types(pipeline_name, sample)|join(', ')}})</h3>
-            <p class="viz-width-limited">Results of the assesment of <b>{{pipeline_name}}</b> for the sample <b>{{sample}}</b>. {{sample}} is a sample of type <i>{{ctrl.get_sample_types(pipeline_name, sample)|join(', ')}}</i>.
+            <p class="viz-width-limited">Results of the assessment of <b>{{pipeline_name}}</b> for the sample <b>{{sample}}</b>. {{sample}} is a sample of type <i>{{ctrl.get_sample_types(pipeline_name, sample)|join(', ')}}</i>.
                 {% if 'precision' not in ctrl.get_sample_types(pipeline_name, sample) %}
                     Since this sample is not part of the precision samples, metrics related to precision were not computed in the aggregated metrics and are not displayed here.
                 {% endif %}

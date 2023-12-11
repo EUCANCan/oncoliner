@@ -2,7 +2,7 @@
 
 ![ONCOLINER logo](../../docs/images/ONCOLINER_LOGO_COLOR.png)
 
-The improvement module follows the [assessment step](../oncoliner_assesment/) and provides recommendations based on the performance evaluation of the input pipelines and the selected variant callers. Specifically, the recommendations are the best combinations of variant callers to integrate into the pipeline to maximize performance metrics. It is provided as a standalone command line tool.
+The improvement module follows the [assessment step](../oncoliner_assessment/) and provides recommendations based on the performance evaluation of the input pipelines and the selected variant callers. Specifically, the recommendations are the best combinations of variant callers to integrate into the pipeline to maximize performance metrics. It is provided as a standalone command line tool.
 
 The first step is to perform both the union and the intersection of the pipeline calls with the callers. Then, performance metrics are calculated for these merged results, and combinations are sorted based on them. It provides a list of all possible combinations provided in a CSV file. This allows the user to sort them by any of the metrics between recall, precision, F1-score, or even by the number of affected protein-coding, cancer-driver, or actionable genes. To improve visualization of the most relevant recommendations, they are filtered by selecting the one in the top 5% for each performance metric, prioritizing those with the least number of callers. This follows the rationale that a better recommendation minimizes the cost of adding too many tools to a pipeline and the effort of going through redundant combinations.
 

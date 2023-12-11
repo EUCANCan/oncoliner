@@ -55,7 +55,7 @@
             <div id="main-oncoliner-logo" class="logo-container"> {{include_raw('index/svg/ONCOLINER_logo.svg')}} </div>
             <nav class="nav nav-tabs main-nav-tabs">
                 <div class="nav viz-nav-tabs-container" id="nav-tab" role="tablist">
-                    <button class="nav-link active" id="nav-assesment-tab" data-bs-toggle="tab" data-bs-target="#nav-assesment" type="button" role="tab" aria-controls="nav-assesment" aria-selected="true">Assesment</button>
+                    <button class="nav-link active" id="nav-assessment-tab" data-bs-toggle="tab" data-bs-target="#nav-assessment" type="button" role="tab" aria-controls="nav-assessment" aria-selected="true">Assessment</button>
                     {% if 'improvement' in main_tabs %}
                     <button class="nav-link" id="nav-improvement-tab" data-bs-toggle="tab" data-bs-target="#nav-improvement" type="button" role="tab" aria-controls="nav-improvement" aria-selected="false">Improvement</button>
                     {% endif %}
@@ -65,8 +65,8 @@
                 </div>
             </nav>
             <div class="tab-content" id="nav-tabContent">
-                <div class="tab-pane fade show active" id="nav-assesment" role="tabpanel" aria-labelledby="nav-assesment-tab">
-                    {{ render_tab('assesment') }}
+                <div class="tab-pane fade show active" id="nav-assessment" role="tabpanel" aria-labelledby="nav-assessment-tab">
+                    {{ render_tab('assessment') }}
                 </div>
                 <div class="tab-pane fade" id="nav-improvement" role="tabpanel" aria-labelledby="nav-improvement-tab">
                     {{ render_tab('improvement') }}

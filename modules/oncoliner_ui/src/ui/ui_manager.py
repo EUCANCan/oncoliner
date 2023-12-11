@@ -13,11 +13,11 @@ sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..'
 from vcf_ops.constants import INTERSECTION_SYMBOL, UNION_SYMBOL  # noqa
 
 from .utils import get_conf  # noqa
-from .assesment_tab import AssesmentTab  # noqa
+from .assessment_tab import AssessmentTab  # noqa
 from .improvement_tab import ImprovementTab  # noqa
 from .harmonization_tab import HarmonizationTab  # noqa
 
-from .model.assesment.assesment_dao import AssesmentDAO  # noqa
+from .model.assessment.assessment_dao import AssessmentDAO  # noqa
 from .model.improvement.improvement_dao import ImprovementDAO  # noqa
 from .model.harmonization.harmonization_dao import HarmonizationDAO  # noqa
 
@@ -54,7 +54,7 @@ def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pi
     pipelines_names = [os.path.basename(pipeline_folder) for pipeline_folder in pipelines_evaluations_folders]
     # Check pipeline_names are unique
     if len(pipelines_names) != len(set(pipelines_names)):
-        raise ValueError(f'Pipeline names are not unique: {pipelines_names}. Please, rename their assesment folders')
+        raise ValueError(f'Pipeline names are not unique: {pipelines_names}. Please, rename their assessment folders')
     # If there are improvements, check they are the same pipelines
     if pipelines_improvements_folders:
         pipelines_improvements_names = [os.path.basename(pipeline_folder) for pipeline_folder in pipelines_improvements_folders]
@@ -62,9 +62,9 @@ def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pi
             raise ValueError(
                 f'Pipelines in evaluation and improvement folders are not the same: {pipelines_names} != {pipelines_improvements_names}')
 
-    # Create assesment tab
-    assesment_dao = AssesmentDAO(pipelines_evaluations_folders)
-    assesment_tab = AssesmentTab(env, assesment_dao)
+    # Create assessment tab
+    assessment_dao = AssessmentDAO(pipelines_evaluations_folders)
+    assessment_tab = AssessmentTab(env, assessment_dao)
 
     # Create improvement tab
     improvement_dao = None
@@ -94,8 +94,8 @@ def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pi
 
     def get_controller(tab):
         ctrl = None
-        if tab == 'assesment':
-            ctrl = assesment_tab
+        if tab == 'assessment':
+            ctrl = assessment_tab
         elif tab == 'harmonization':
             ctrl = harmonization_tab
         elif tab == 'improvement':
@@ -111,7 +111,7 @@ def generate_html(pipelines_evaluations_folders: List[str], output_file: str, pi
         else:
             return ''
 
-    main_tabs = list(filter(lambda tab: get_controller(tab) is not None, ['assesment', 'harmonization', 'improvement']))
+    main_tabs = list(filter(lambda tab: get_controller(tab) is not None, ['assessment', 'harmonization', 'improvement']))
 
     env.globals['include_raw'] = include_raw
     env.globals['include_cooked'] = include_cooked

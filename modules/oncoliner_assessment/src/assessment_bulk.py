@@ -4,7 +4,7 @@ import argparse
 import glob
 from concurrent.futures import ProcessPoolExecutor
 
-from assesment_main import main  # noqa
+from assessment_main import main  # noqa
 from vcf_ops.constants import DEFAULT_CONTIGS, DEFAULT_VARIANT_TYPES, DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS, DEFAULT_SV_BINS  # noqa
 from vcf_ops.metrics import aggregate_metrics, combine_precision_recall_metrics  # noqa
 
@@ -67,7 +67,7 @@ def aggregate_metrics_from_samples(output_file: str, samples_folder: str, recall
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='ONCOLINER Assesment Bulk')
+    parser = argparse.ArgumentParser(description='ONCOLINER Assessment Bulk')
     parser.add_argument('-c', '--config-file', required=True, type=str, help='Path to the config TSV file')
     parser.add_argument('-o', '--output-folder', required=True, type=str, help='Path to the output folder')
     parser.add_argument('-it', '--indel-threshold',

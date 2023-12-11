@@ -78,12 +78,12 @@ def evaluate_caller(caller_folder, config, output_folder, processes, indel_thres
     # Save the new config file
     config_path = os.path.join(output_folder, 'config.tsv')
     config_with_pipeline_vcf_paths.to_csv(config_path, sep='\t', index=False)
-    # Execute the assesment
-    if 'ASSESMENT_COMMAND' not in os.environ:
-        assesment_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'modules', 'oncoliner_assesment', 'src', 'assesment_bulk.py')
-        os.environ['ASSESMENT_COMMAND'] = 'python3 ' + os.path.relpath(assesment_command_default_path)
-    assesment_command = os.environ['ASSESMENT_COMMAND']
-    evaluator_command_split = assesment_command.split()
+    # Execute the assessment
+    if 'ASSESSMENT_COMMAND' not in os.environ:
+        assessment_command_default_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'modules', 'oncoliner_assessment', 'src', 'assessment_bulk.py')
+        os.environ['ASSESSMENT_COMMAND'] = 'python3 ' + os.path.relpath(assessment_command_default_path)
+    assessment_command = os.environ['ASSESSMENT_COMMAND']
+    evaluator_command_split = assessment_command.split()
     args = evaluator_command_split + \
         ['-c', config_path,
          '-p', str(processes),

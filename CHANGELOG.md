@@ -22,7 +22,7 @@ BREAKING CHANGE: Dummy to trigger 1.0.0 ([`de5cfc0`](https://github.com/EUCANCan
 
 * feat(UI): Add default column ordering ([`6f792fc`](https://github.com/EUCANCan/oncoliner/commit/6f792fcf399af30013dc0b45e33dde87e88083cf))
 
-* feat: Add fixed row with the baseline ([`3907eab`](https://github.com/EUCANCan/oncoliner/commit/3907eabed350d85ce2f30e8d30267f93b61af02e))
+* feat: Add fixeassessmenth the baseline ([`3907eab`](https://github.com/EUCANCan/oncoliner/commit/3907eabed350d85ce2f30e8d30267f93b61af02e))
 
 * feat: Add variant callers combinations ([`4fbc459`](https://github.com/EUCANCan/oncoliner/commit/4fbc4595b2de0390fc9600db6d162a29c74469e2))
 

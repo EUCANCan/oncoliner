@@ -1,6 +1,6 @@
 # VCF Union<!-- omit in toc -->
 
-VCF Union is a standalone tool that allows the user to union two groups of VCF/BCF/VCF.GZ files. It follows the same procedure as ONCOLINER's assesment module, see [ONCOLINER's assesment module](../../modules/oncoliner_assesment/) for more information about the process.
+VCF Union is a standalone tool that allows the user to union two groups of VCF/BCF/VCF.GZ files. It follows the same procedure as ONCOLINER's assessment module, see [ONCOLINER's assessment module](../../modules/oncoliner_assessment/) for more information about the process.
 
 VCF Union is part of the [ONCOLINER suite](../../README.md) and is provided as a standalone command line tool. It is available as in the [Docker image](../../Dockerfile) and [Singularity image](../../singularity.def) of ONCOLINER.
 

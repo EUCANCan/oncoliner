@@ -1,11 +1,11 @@
 from typing import List, Optional
 
-from .assesment_pipeline_dao import AssesmentPipelineDAO
+from .assessment_pipeline_dao import AssessmentPipelineDAO
 from ..shared.metrics_table import MetricsTable
 from ...utils import path_to_pipeline_name
 
 
-class AssesmentDAO():
+class AssessmentDAO():
     def __init__(self, pipeline_folders: List[str]) -> None:
         # Create a dict of pipeline_name -> pipeline_dao
         self._pipeline_dao = dict()
@@ -13,7 +13,7 @@ class AssesmentDAO():
         for pipeline_folder in pipeline_folders:
             pipeline_name = path_to_pipeline_name(pipeline_folder)
             self._pipelines_names.append(pipeline_name)
-            self._pipeline_dao[pipeline_name] = AssesmentPipelineDAO(pipeline_folder)
+            self._pipeline_dao[pipeline_name] = AssessmentPipelineDAO(pipeline_folder)
         # Sort pipelines names
         self._pipelines_names.sort()
 
