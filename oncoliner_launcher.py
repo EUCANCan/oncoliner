@@ -98,7 +98,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', type=str, required=True, help='Path to config file')
     parser.add_argument('-pf', '--pipelines-folders', type=str, required=True, nargs='+', help='Paths to pipelines folders')
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to output folder')
-    parser.add_argument('-cf', '--callers-folder', type=str, help='Path to callers folder')
+    parser.add_argument('-cf', '--callers-folder', type=str, help='Path to callers folder (required for improvement and harmonization)')
     parser.add_argument('--max-processes', type=int, default=1, help='Maximum number of processes to use (defaults to 1)')
 
     args = parser.parse_args()
