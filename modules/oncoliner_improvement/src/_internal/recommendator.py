@@ -2,9 +2,9 @@ import os
 import sys
 import glob
 import shutil
-import multiprocessing
 import logging
 import pandas as pd
+from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExecutor
 
 # Add vcf-ops to the path
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', '..', 'shared', 'vcf_ops', 'src'))
@@ -41,34 +41,28 @@ def compute_improvements(callers_folders, user_folder, results_output_folder, re
         # Remove sample folder if it exists
         shutil.rmtree(baseline_sample_folder, ignore_errors=True)
         shutil.copytree(user_sample_folder, baseline_sample_folder)
-    # Calculate number of processes per caller
-    num_processes = [int(max_processes / len(callers_folders))] * len(callers_folders)
-    for i in range(max_processes % len(callers_folders)):
-        num_processes[i] += 1
     # Check improvements
-    process_list = []
-    for i, caller_folder in enumerate(callers_folders):
-        process = multiprocessing.Process(target=execute_caller_check,
-                                          args=(results_output_folder, num_processes[i], baseline_metrics,
-                                                caller_folder, user_folder, recall_samples, precision_samples),
-                                          kwargs=kwargs, daemon=False)
-        process_list.append(process)
-        process.start()
-        # Avoid too many processes
-        if len(process_list) >= max_processes:
-            process_list.pop(0).join()
-    for process in process_list:
-        process.join()
-    improvement_list_files = glob.glob(os.path.join(results_output_folder, '*', '*aggregated_metrics.csv'))
-    improvement_list = [pd.read_csv(file) for file in improvement_list_files]
-    return improvement_list
+    pool = ProcessPoolExecutor(max_workers=max_processes)
+    futures = []
+    for caller_folder in callers_folders:
+        future = pool.submit(execute_caller_check, results_output_folder, baseline_metrics,
+                             caller_folder, user_folder, recall_samples, precision_samples, **kwargs)
+        futures.append(future)
+    for future in as_completed(futures):
+        future.result()
+    pool.shutdown()
 
 def filter_operations(df: pd.DataFrame, loss_margin: float, max_recommendations: int):
     filtered_df = filter_metrics_recommendations(df, loss_margin, max_recommendations, 'added_callers')
     result = set(filtered_df['operation'].unique())
     return result
 
-def group_improvements(improvement_list, loss_margin: float, max_recommendations: int):
+def group_improvements(results_output_folder: str, max_processes: int, loss_margin: float, max_recommendations: int):
+    improvement_list_files = glob.glob(os.path.join(results_output_folder, '*', '*aggregated_metrics.csv'))
+    pool = ThreadPoolExecutor(max_workers=max_processes)
+    improvement_list = pool.map(pd.read_csv, improvement_list_files)
+    improvement_list = list(improvement_list)
+    pool.shutdown()
     # Find baseline metrics, if all operations are baseline
     baseline_metrics = [x for x in improvement_list if set(x['operation']) == {'baseline'}][0]
     selected_operations = set()
@@ -120,11 +114,11 @@ def main(evaluation_results, callers_folder, output, recall_samples, precision_s
     # Compute improvements
     results_output_folder = os.path.join(output, 'results')
     os.makedirs(results_output_folder, exist_ok=True)
-    improvement_list = compute_improvements(callers_folders, evaluation_results, results_output_folder, recall_samples, precision_samples,
-                                            processes, loss_margin=loss_margin, gain_margin=gain_margin, indel_threshold=indel_threshold,
-                                            window_radius=window_radius, sv_size_bins=sv_size_bins, variant_types=variant_types)
+    compute_improvements(callers_folders, evaluation_results, results_output_folder, recall_samples, precision_samples,
+                         processes, loss_margin=loss_margin, gain_margin=gain_margin, indel_threshold=indel_threshold,
+                         window_radius=window_radius, sv_size_bins=sv_size_bins, variant_types=variant_types)
     # Create improvement_group
-    improvement_groups = group_improvements(improvement_list, loss_margin, max_recommendations)
+    improvement_groups = group_improvements(results_output_folder, processes, loss_margin, max_recommendations)
     # Create improvement_list folder
     improvement_list_folder = os.path.join(output, 'improvement_list')
     os.makedirs(improvement_list_folder, exist_ok=True)

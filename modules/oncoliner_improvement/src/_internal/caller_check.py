@@ -1,7 +1,6 @@
 import os
 import glob
 import logging
-from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 
 from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
@@ -146,7 +145,7 @@ def _execute_union(user_sample_folder, caller_sample_folder, indel_threshold, wi
 
 
 class CallerChecker:
-    def __init__(self, results_output_folder, num_processes, baseline_metrics, caller_folder, user_folder, recall_samples, precision_samples, loss_margin, gain_margin):
+    def __init__(self, results_output_folder, baseline_metrics, caller_folder, user_folder, recall_samples, precision_samples, loss_margin, gain_margin):
         self.__results_output_folder = results_output_folder
         self.__caller_samples_folder = os.path.join(caller_folder, 'samples')
         self.__caller_name = os.path.basename(caller_folder)
@@ -157,24 +156,14 @@ class CallerChecker:
         self.__user_folder = os.path.join(user_folder, 'samples')
         self.__baseline_metrics = baseline_metrics
         self.__caller_mask = _caller_metrics_mask(self.__caller_samples_folder, self.__recall_samples, self.__precision_samples)
-        self.__num_processes = num_processes
-        if num_processes > 1:
-            self.__pool = ThreadPoolExecutor(num_processes)
 
     def _execute_operation(self, op, sample_names, indel_threshold, window_radius, sv_size_bins, variant_types):
         # Iterate over samples
-        if self.__num_processes > 1:
-            results = self.__pool.map(lambda p: op(*p), [(
+        results = []
+        for sample in sample_names:
+            results.append(op(
                 os.path.join(self.__user_folder, sample),
-                os.path.join(self.__caller_samples_folder, sample), indel_threshold, window_radius, sv_size_bins, variant_types)
-                for sample in sample_names])
-            results = list(results)
-        else:
-            results = []
-            for sample in sample_names:
-                results.append(op(
-                    os.path.join(self.__user_folder, sample),
-                    os.path.join(self.__caller_samples_folder, sample), indel_threshold, window_radius, sv_size_bins, variant_types))
+                os.path.join(self.__caller_samples_folder, sample), indel_threshold, window_radius, sv_size_bins, variant_types))
 
         def save_vcf_results(output_folder):
             samples_output_folder = os.path.join(output_folder, 'samples')
@@ -270,8 +259,8 @@ class CallerChecker:
             save_vcf_results_recall(output_folder)
 
 
-def execute_caller_check(results_output_folder, num_processes, baseline_metrics,
+def execute_caller_check(results_output_folder, baseline_metrics,
                          caller_folder, user_folder, recall_samples, precision_samples, loss_margin, gain_margin, **kwargs):
-    caller_checker = CallerChecker(results_output_folder, num_processes, baseline_metrics,
+    caller_checker = CallerChecker(results_output_folder, baseline_metrics,
                                    caller_folder, user_folder, recall_samples, precision_samples, loss_margin, gain_margin)
     caller_checker.execute(**kwargs)
