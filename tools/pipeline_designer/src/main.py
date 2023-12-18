@@ -404,7 +404,7 @@ if __name__ == '__main__':
                         'A value of 0.05 means that a recommendation will be provided if the performance gain (in any metric) is greater than 5%% over the baseline, '\
                         'provided that --loss-margin is also satisfied. '\
                         'Increasing this value will reduce the number of recommendations and execution time')
-    parser.add_argument('-mr', '--max-recommendations', type=float, default=1,
+    parser.add_argument('-mr', '--max-recommendations', type=int, default=1,
                         help='Maximun number of recommendations to provide for each performance metric per variant type and size and number of variant callers added (default: 1). Set to -1 to provide all recommendations')
     parser.add_argument('--max-combinations', type=int, default=4,
                         help='Maximum number of combinations of variant callers to test (default: 4). Set to -1 to test all combinations')
