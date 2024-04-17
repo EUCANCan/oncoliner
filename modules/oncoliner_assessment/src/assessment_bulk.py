@@ -21,6 +21,7 @@ def read_config(config_path: str) -> pd.DataFrame:
     config = config.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     config['truth_vcf_paths'] = config['truth_vcf_paths'].map(lambda x: [f.strip() for f in x.split(',')])
     config['test_vcf_paths'] = config['test_vcf_paths'].map(lambda x: [f.strip() for f in x.split(',')])
+    config['bed_mask_paths'] = config['bed_mask_paths'].map(lambda x: [f.strip() for f in x.split(',')]) if 'bed_mask_paths' in config else [''] * len(config)
     config['sample_types'] = config['sample_types'].map(lambda x: set([f.strip() for f in x.split(',')]))
     # There must be at least one recall and one precision sample
     if len(config[config['sample_types'].map(lambda x: 'recall' in x)]) == 0:
@@ -37,6 +38,7 @@ def run_evaluator_sample(output_folder: str, sample: pd.Series, indel_threshold:
     sample_name = sample['sample_name']
     truth_vcf_paths = sample['truth_vcf_paths']
     test_vcf_paths = sample['test_vcf_paths']
+    bed_mask_paths = sample['bed_mask_paths'] if 'bed_mask_paths' in sample else []
     fasta_path = sample['reference_fasta_path']
     output_folder = os.path.join(output_folder, sample_name)
     os.makedirs(output_folder, exist_ok=True)
@@ -45,7 +47,7 @@ def run_evaluator_sample(output_folder: str, sample: pd.Series, indel_threshold:
     if os.path.exists(output_prefix + 'metrics.csv') and os.path.getsize(output_prefix + 'metrics.csv') > 0:
         logging.info(f'Skipping {sample_name} evaluation because the metrics file already exists')
         return
-    main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_path, indel_threshold,
+    main(truth_vcf_paths, test_vcf_paths, bed_mask_paths, output_prefix, fasta_path, indel_threshold,
          window_radius, sv_size_bins, contigs, variant_types, keep_intermediates, no_gzip)
 
 

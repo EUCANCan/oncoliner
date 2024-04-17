@@ -1,3 +1,3 @@
-sample_name	sample_types	reference_fasta_path	truth_vcf_paths
-sample_1	recall	./fake_ref.fa	./input/truth/sample_1/*.vcf
-sample_2	precision	./fake_ref.fa	./input/truth/sample_2/*.vcf
+sample_name	sample_types	reference_fasta_path	truth_vcf_paths	bed_mask_paths
+sample_1	recall	./fake_ref.fa	./input/truth/sample_1/*.vcf	./input/truth/sample_1/*.bed
+sample_2	precision	./fake_ref.fa	./input/truth/sample_2/*.vcf	./input/truth/sample_2/*.bed

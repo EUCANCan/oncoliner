@@ -91,11 +91,25 @@ def _ingest(truth_vcfs, test_vcfs, fasta_ref, indel_threshold, output_prefix, co
 
     return df_truth, df_test, df_skipped_truth, df_skipped_test
 
+def skip_fp_variants(df, bed_masks):
+    for bed_mask in bed_masks:
+        bed_df = pd.read_csv(bed_mask, sep='\t', header=None)
+        # Set the first column as string
+        bed_df[0] = bed_df[0].astype(str)
+        # Join the chroms with the start and end
+        for _, row in bed_df.iterrows():
+            start_mask = (df['start_chrom'] == row[0]) & (df['start'] >= row[1]) & (df['start'] <= row[2])
+            end_mask = (df['end_chrom'] == row[0]) & (df['end'] >= row[1]) & (df['end'] <= row[2])
+            mask = start_mask | end_mask
+            df_skipped = df[mask]
+            df = df[~mask]
+    return df, df_skipped
 
-def main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_ref, indel_threshold, window_radius, sv_size_bins, contigs, variant_types, keep_intermediates, no_gzip):
+def main(truth_vcf_paths, test_vcf_paths, bed_mask_paths, output_prefix, fasta_ref, indel_threshold, window_radius, sv_size_bins, contigs, variant_types, keep_intermediates, no_gzip):
     # Get files from the truth and test vcfs
     truth_vcfs = [file for file_pattern in truth_vcf_paths for file in glob.glob(file_pattern)]
     test_vcfs = [file for file_pattern in test_vcf_paths for file in glob.glob(file_pattern)]
+    bed_masks = [file for file_pattern in bed_mask_paths for file in glob.glob(file_pattern)]
 
     # Sort bins
     sv_size_bins.sort()
@@ -115,6 +129,12 @@ def main(truth_vcf_paths, test_vcf_paths, output_prefix, fasta_ref, indel_thresh
     df_tp, df_tp_dup, \
         df_fp, df_fp_dup, \
         df_fn, df_fn_dup = intersect(df_truth, df_test, indel_threshold, window_radius, True)
+
+    # Skip the FP that overlap with the bed masks
+    if len(bed_masks) > 0:
+        df_fp, df_fp_skipped = skip_fp_variants(df_fp, bed_masks)
+        df_fp_dup, df_fp_dup_skipped = skip_fp_variants(df_fp_dup, bed_masks)
+        df_skipped_test = pd.concat([df_skipped_test, df_fp_skipped, df_fp_dup_skipped], ignore_index=True)
 
     # Write VCF files
     command = ' '.join(sys.argv)
@@ -176,6 +196,8 @@ if __name__ == '__main__':
                         help=f'Window ratio (default={DEFAULT_WINDOW_RADIUS})', default=DEFAULT_WINDOW_RADIUS, type=int)
     parser.add_argument(
         '--sv-size-bins', help=f'SV size bins for the output_prefix metrics (default={DEFAULT_SV_BINS})', nargs='+', default=DEFAULT_SV_BINS, type=int)
+    parser.add_argument('--bed-masks', nargs='+', default=[], type=str,
+                        help='Path to the BED mask files. All False Positive (FP) variants will be skipped if they overlap with any of the regions in the BED mask files')
     parser.add_argument('--contigs', nargs='+', default=DEFAULT_CONTIGS, type=str,
                         help=f'Contigs to process (default={DEFAULT_CONTIGS})')
     parser.add_argument('--variant-types', nargs='+', default=DEFAULT_VARIANT_TYPES, type=str,
@@ -191,5 +213,5 @@ if __name__ == '__main__':
     args.fasta_ref = os.path.abspath(args.fasta_ref)
     args.output_prefix = os.path.abspath(args.output_prefix)
 
-    main(args.truths, args.tests, args.output_prefix, args.fasta_ref, args.indel_threshold,
+    main(args.truths, args.tests, args.bed_masks, args.output_prefix, args.fasta_ref, args.indel_threshold,
          args.window_radius, args.sv_size_bins, args.contigs, args.variant_types, args.keep_intermediates, args.no_gzip)
