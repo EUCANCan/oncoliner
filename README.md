@@ -37,13 +37,13 @@ wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc 
 wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12264778/tumorized_NA12878_GRCh37_GRCh37_60X_precision_T.cram.crai
 wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12264432/tumorized_NA12878_GRCh37_GRCh37_40X_N.cram
 wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12264432/tumorized_NA12878_GRCh37_GRCh37_40X_N.cram.crai
-wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc http://ftp.sra.ebi.ac.uk/vol1/ERZ218/ERZ21869344/tumorized_NA12878_GRCh37_GRCh37_60X_precision_T.cram.annotated.vcf
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_NA12878 -nc http://ftp.sra.ebi.ac.uk/vol1/analysis/ERZ218/ERZ21869344/tumorized_NA12878_GRCh37_GRCh37_60X_precision_T.cram.annotated.vcf
 
 wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12261542/tumorized_HG002_GRCh37_GRCh37_60X_precision_T.cram
 wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12261542/tumorized_HG002_GRCh37_GRCh37_60X_precision_T.cram.crai
 wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12257182/tumorized_HG002_GRCh37_GRCh37_40X_N.cram.crai
 wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/run/ERR122/ERR12257182/tumorized_HG002_GRCh37_GRCh37_40X_N.cram
-wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/ERZ218/ERZ21869345/tumorized_HG002_GRCh37_GRCh37_60X_precision_T.cram.annotated.vcf
+wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/analysis/ERZ218/ERZ21869345/tumorized_HG002_GRCh37_GRCh37_60X_precision_T.cram.annotated.vcf
 ```
 
 Then, download the Mosaic genomes and their truth VCF files. Follow the instructions for requesting access and downloading the PCAWG Mosaic genomes and their truth files from [here](https://dcc.icgc.org/releases/PCAWG/pilot50-mosaic) and the HMF mosaic genomes and their truth files from [WIP]().
