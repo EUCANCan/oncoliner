@@ -2,6 +2,8 @@
 
 ![ONCOLINER logo](/docs/images/ONCOLINER_LOGO_COLOR.png)
 
+[![DOI](https://zenodo.org/badge/656654605.svg)](https://zenodo.org/doi/10.5281/zenodo.12755026)
+
 ONCOLINER is an integrated platform with benchmarking data and tools for the detailed assessment, improvement and quality-based harmonization of analysis pipelines across centers. It can not only improve the overall efficiency of somatic variant identification globally, but it will also enable interoperability and consistency within emerging multi-center and multi-hospital data environments, allowing the sharing and integration of cancer datasets and results.
 
 ## Table of contents<!-- omit in toc -->
