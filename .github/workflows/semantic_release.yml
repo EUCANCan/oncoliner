@@ -1,6 +1,9 @@
 name: Semantic Release
 
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   release:
@@ -29,6 +32,7 @@ jobs:
       if: steps.release.outputs.released == 'true'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        tag: ${{ steps.release.outputs.tag }}
 
   build-container:
     needs: release
