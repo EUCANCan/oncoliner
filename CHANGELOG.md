@@ -1,6 +1,24 @@
 # CHANGELOG
 
+## v1.1.0 (2024-07-17)
 
+### Feature
+
+* feat: Add BED masks ([`367ea87`](https://github.com/EUCANCan/oncoliner/commit/367ea873c31e69bf5a763d45e8f2dc4c7d683db6))
+
+### Fix
+
+* fix(UI): Remove reference to old H_score ([`970e567`](https://github.com/EUCANCan/oncoliner/commit/970e5670a03c0de700c79ca2556e41d2e0b6f6c4))
+
+* fix(PipelineDesigner): Fix max-recommentions arg type ([`0883a91`](https://github.com/EUCANCan/oncoliner/commit/0883a91dc8bb68d2d11dc0c3bcbe280e619a2a4b))
+
+* fix: Fix assessment typo ([`38bf0dc`](https://github.com/EUCANCan/oncoliner/commit/38bf0dc14712c6437ef16738de294c37cdb52fb5))
+
+* fix: Rename PHS and remove actionable genes ([`02e101b`](https://github.com/EUCANCan/oncoliner/commit/02e101b175b37240ca6f9e0644d6b854bb9ebb4f))
+
+### Performance
+
+* perf(Improvement): Optimize multi-core analysis ([`0aa662b`](https://github.com/EUCANCan/oncoliner/commit/0aa662b170577a321901cfc2f61e05d5da8503b6))
 
 ## v1.0.0 (2023-12-04)
 
@@ -22,7 +40,7 @@ BREAKING CHANGE: Dummy to trigger 1.0.0 ([`de5cfc0`](https://github.com/EUCANCan
 
 * feat(UI): Add default column ordering ([`6f792fc`](https://github.com/EUCANCan/oncoliner/commit/6f792fcf399af30013dc0b45e33dde87e88083cf))
 
-* feat: Add fixeassessmenth the baseline ([`3907eab`](https://github.com/EUCANCan/oncoliner/commit/3907eabed350d85ce2f30e8d30267f93b61af02e))
+* feat: Add fixed row with the baseline ([`3907eab`](https://github.com/EUCANCan/oncoliner/commit/3907eabed350d85ce2f30e8d30267f93b61af02e))
 
 * feat: Add variant callers combinations ([`4fbc459`](https://github.com/EUCANCan/oncoliner/commit/4fbc4595b2de0390fc9600db6d162a29c74469e2))
 
@@ -109,7 +127,6 @@ Co-authored-by: Henri de Soyres &lt;henri.de-soyres@curie.fr&gt; ([`a2bc9f9`](ht
 ### Unknown
 
 * deps(UI): Change HTML minify library ([`8c67f1a`](https://github.com/EUCANCan/oncoliner/commit/8c67f1a7045db1e89bc5f83813538861716f14b7))
-
 
 ## v0.1.0 (2023-10-17)
 
