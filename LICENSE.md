@@ -58,3 +58,7 @@ application of this clause.
 **11.** We shall have no liability of any kind for making the Software and/or Database available to you for
 download. In any jurisdictions in which such exclusion of liability may be against mandatory laws, the
 maximum liability shall be limited to ONE EURO (1.- €).
+
+**12.** Commercial use of the Software and/or Database or derivative works based thereon, REQUIRES A
+COMMERCIAL LICENSE. For more information contact: rodrigo.martin@bsc.es with cc to: ipr@bsc.es
+(Intellectual Property Rights, Barcelona Supercomputing Center).
