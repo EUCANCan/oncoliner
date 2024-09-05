@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v1.1.1 (2024-09-05)
+
+### Fix
+
+* fix: Fix Docker compatibility ([`652dd3b`](https://github.com/EUCANCan/oncoliner/commit/652dd3bee0bfe759e6a8b0c828ad0e85788980f9))
+
 ## v1.1.0 (2024-07-17)
 
 ### Feature
