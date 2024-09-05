@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -38,70 +42,45 @@ jobs:
     needs: release
     if: needs.release.outputs.released == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
 
-    name: Build Singularity container
+    name: Build container
     steps:
-      - name: Set up Go 1.16
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.16
-        id: go
-
-      - name: Install Singularity dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y \
-            build-essential \
-            libssl-dev \
-            uuid-dev \
-            libgpgme11-dev \
-            squashfs-tools \
-            libseccomp-dev \
-            pkg-config
-
-      - name: Install Singularity
-        env:
-          SINGULARITY_VERSION: 3.9.0
-          GOPATH: /tmp/go
-      
-        run: |
-          mkdir -p $GOPATH
-          sudo mkdir -p /usr/local/var/singularity/mnt && \
-          mkdir -p $GOPATH/src/github.com/sylabs && \
-          cd $GOPATH/src/github.com/sylabs && \
-          wget -qO- https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-ce-${SINGULARITY_VERSION}.tar.gz | \
-          tar xzv && \
-          cd singularity-ce-${SINGULARITY_VERSION} && \
-          ./mconfig -p /usr/local && \
-          make -C builddir && \
-          sudo make -C builddir install          
-
       - name: Check out code for the container build
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Login to GitHub package registry
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | singularity remote login -u ${{ github.actor }} --password-stdin oras://ghcr.io
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and deploy Singularity container
-        run: |
-            recipe=singularity.def
-            basename=oncoliner
-            tag=${{ needs.release.outputs.version }}
-            # Check if container exists
-            base64token=$(echo ${{ secrets.GITHUB_TOKEN }} | base64)
-            echo "Checking if container $basename:$tag already exists"
-            if curl -s -H "Authorization: Bearer $base64token" https://ghcr.io/v2/${{ github.repository_owner }}/${basename}/tags/list | grep $tag; then
-                echo "Container $basename:$tag already exists, skipping build"
-                continue
-            fi
-            # Build container
-            sudo -E singularity build $basename.sif $recipe
-            # Push container and name by tag
-            url="oras://ghcr.io/${{ github.repository_owner }}/${basename}:${tag}"
-            echo "Pushing container to $url"
-            singularity push $basename.sif $url
-            # Push container to latest tag
-            url="oras://ghcr.io/${{ github.repository_owner }}/${basename}:latest"
-            echo "Pushing container to $url"
-            singularity push $basename.sif $url
-            rm $basename.sif
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            ${{ needs.release.outputs.version }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
