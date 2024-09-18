@@ -8,19 +8,27 @@ R. Martín et al., “ONCOLINER: A new solution for monitoring, improving, and h
 
 ONCOLINER is an integrated platform with benchmarking data and tools for the detailed assessment, improvement and quality-based harmonization of analysis pipelines across centers. It can not only improve the overall efficiency of somatic variant identification globally, but it will also enable interoperability and consistency within emerging multi-center and multi-hospital data environments, allowing the sharing and integration of cancer datasets and results.
 
+ONCOLINER is divided into three functional modules (assessment, improvement and harmonization) and a UI module. Each module can be run **independently**. However, the results of the assessment module are required to run the improvement module and the results of the improvement module are required to run the harmonization module. The UI module generates a report for the results of each module. For more information about each module, check the corresponding README file in the [`modules`](/modules) folder:
+
+* [Assessment README](/modules/oncoliner_assessment/README.md)
+* [Improvement README](/modules/oncoliner_improvement/README.md)
+* [Harmonization README](/modules/oncoliner_harmonization/README.md)
+* [UI README](/modules/oncoliner_ui/README.md)
+
 ## Table of contents<!-- omit in toc -->
 - [Quick start guide](#quick-start-guide)
 - [Installation](#installation)
   - [Singularity](#singularity)
   - [Docker](#docker)
 - [Usage](#usage)
-  - [Interface](#interface)
+  - [Assessment (only)](#assessment-only)
+  - [Assessment and improvement (only)](#assessment-and-improvement-only)
+  - [Assessment, improvement and harmonization](#assessment-improvement-and-harmonization)
   - [Normalization](#normalization)
 - [Additional software](#additional-software)
   - [PipelineDesigner](#pipelinedesigner)
   - [VCF Intersect](#vcf-intersect)
   - [VCF Union](#vcf-union)
-- [Modules](#modules)
 - [How to use ONCOLINER in your specific use case](#how-to-use-oncoliner-in-your-specific-use-case)
   - [Specific benchmarking datasets](#specific-benchmarking-datasets)
   - [Specific variant callers](#specific-variant-callers)
@@ -152,11 +160,6 @@ docker build -t oncoliner .
 
 Assuming you have a singularity image called `oncoliner.sif`, you can run ONCOLINER as follows:
 
-```bash
-singularity exec oncoliner.sif python3 -O /oncoliner/oncoliner_launcher.py -c config.tsv -pf pipeline_1_folder pipelines_2_folder -o output_folder --max-processes 48
-```
-
-### Interface
 ```
 usage: oncoliner_launcher.py [-h] -c CONFIG -pf PIPELINES_FOLDERS
                              [PIPELINES_FOLDERS ...] -o OUTPUT
@@ -179,6 +182,41 @@ optional arguments:
   --max-processes MAX_PROCESSES
                         Maximum number of processes to use (defaults to 1)
 ```
+
+### Assessment (only)
+
+```bash
+singularity exec oncoliner.sif python3 -O /oncoliner/oncoliner_launcher.py -c config.tsv -pf pipeline_1_folder -o output_folder --max-processes 48
+```
+
+To run ONCOLINER assessment, you must provide the following arguments (ONCOLINER will automatically enter the assessment mode):
+* `-c` or `--config`: path to the configuration file.
+* `-pf` or `--pipelines-folders`: path to the pipelines folders (one or more).
+* `-o` or `--output`: path to the output folder.
+
+### Assessment and improvement (only)
+
+```bash
+singularity exec oncoliner.sif python3 -O /oncoliner/oncoliner_launcher.py -c config.tsv -pf pipeline_1_folder -cf callers_folder -o output_folder --max-processes 48
+```
+
+To run ONCOLINER improvement, you need to provide the following arguments (ONCOLINER will automatically first run the assessment and then enter the improvement mode):
+* `-c` or `--config`: path to the configuration file.
+* `-pf` or `--pipelines-folders`: path to the pipelines folders (one or more).
+* `-cf` or `--callers-folder`: path to the callers folder (it will be used to compute the improvement).
+* `-o` or `--output`: path to the output folder.
+
+### Assessment, improvement and harmonization
+
+```bash
+singularity exec oncoliner.sif python3 -O /oncoliner/oncoliner_launcher.py -c config.tsv -pf pipeline_1_folder pipelines_2_folder -cf callers_folder -o output_folder --max-processes 48
+```
+
+To run ONCOLINER harmonization, you need to provide the following arguments (ONCOLINER will automatically first run the assessment and improvement and then enter the harmonization mode):
+* `-c` or `--config`: path to the configuration file.
+* `-pf` or `--pipelines-folders`: path to the pipelines folders (more than one).
+* `-cf` or `--callers-folder`: path to the callers folder (it will be used to compute the improvement and then the harmonization).
+* `-o` or `--output`: path to the output folder.
 
 #### Configuration file<!-- omit in toc -->
 
@@ -235,7 +273,7 @@ You can check an example of callers folder in [`example/input/callers_folder`](/
 
 ### Normalization
 
-It is recommended to normalize indels and SNVs before executing ONCOLINER. For this purpose, we recommend using pre.py from [Illumina's Haplotype Comparison Tools (hap.py)](https://github.com/Illumina/hap.py). We provide an standalone and containerized **[EUCANCan's pre.py wrapper](https://github.com/EUCANCan/prepy-wrapper)** for this purpose, specially the bulk version of the wrapper.
+Depending on the use case, it may be advisable to normalize indels and SNVs before running ONCOLINER. For this purpose, we recommend using pre.py from [Illumina's Haplotype Comparison Tools (hap.py)](https://github.com/Illumina/hap.py). We provide an standalone and containerized **[EUCANCan's pre.py wrapper](https://github.com/EUCANCan/prepy-wrapper)** for this purpose, specially the bulk version of the wrapper.
 
 ## Additional software
 
@@ -252,17 +290,6 @@ A standalone tool that allows users to intersect two different groups of VCF fil
 ### VCF Union
 
 A standalone tool that allows users to merge two different groups of VCF files. More information about this tool can be found in the [VCF Union README](/tools/vcf_union/README.md).
-
-## Modules
-
-ONCOLINER is divided into three functional modules (assessment, improvement and harmonization) and a UI module. For more information about each module, check the corresponding README file in the [`modules`](/modules) folder:
-
-* [Assessment README](/modules/oncoliner_assessment/README.md)
-* [Improvement README](/modules/oncoliner_improvement/README.md)
-* [Harmonization README](/modules/oncoliner_harmonization/README.md)
-* [UI README](/modules/oncoliner_ui/README.md)
-
-Each module can be run independently. However, the results of the assessment module are required to run the improvement module and the results of the improvement module are required to run the harmonization module. The UI module generates a report for the results of each module.
 
 ## How to use ONCOLINER in your specific use case
 
