@@ -58,7 +58,7 @@ wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc ht
 wget -P benchmarking_datasets/tumorized_genomes/tumorized_precision_HG002 -nc http://ftp.sra.ebi.ac.uk/vol1/analysis/ERZ218/ERZ21869345/tumorized_HG002_GRCh37_GRCh37_60X_precision_T.cram.annotated.vcf
 ```
 
-Then, download the Mosaic genomes and their truth VCF files. Follow the instructions for requesting access and downloading the PCAWG Mosaic genomes and their truth files from [here](https://dcc.icgc.org/releases/PCAWG/pilot50-mosaic) and the HMF mosaic genomes and their truth files from [WIP]().
+Then, download the Mosaic genomes and their truth VCF files. Follow the instructions for requesting access and downloading the PCAWG Mosaic genomes and their truth files from [here](https://dcc.icgc.org/releases/PCAWG/pilot50-mosaic) and the HMF mosaic genomes and their truth files from [here](https://ega-archive.org/studies/EGAS50000000460).
 ```
 mkdir -p benchmarking_datasets/mosaic_genomes/mosaic_genome_PCAWG_0
 mkdir -p benchmarking_datasets/mosaic_genomes/mosaic_genome_PCAWG_1
