@@ -112,7 +112,7 @@ pipeline_1
 
 Download the ONCOLINER singularity image:
 ```
-singularity pull oncoliner.sif oras://ghcr.io/eucancan/oncoliner:latest
+singularity pull oncoliner.sif docker://ghcr.io/eucancan/oncoliner:latest
 ```
 
 Extract the variant callers pre-computed combinations evaluations:
