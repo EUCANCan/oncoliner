@@ -69,7 +69,7 @@ mkdir -p benchmarking_datasets/mosaic_genomes/mosaic_genome_HMF
 # Download data
 ```
 
-Download and index the reference FASTA file. All CRAM files are aligned to GRCh37 (https://ftp.broadinstitute.org/pub/seq/references/Homo_sapiens_assembly19.fasta without scaffolds and supercontigs, only 1-22-X-Y-MT) using BWA-0.7.17 MEM.
+Download and index the reference FASTA file. All CRAM files are aligned to GRCh37 (https://ftp.broadinstitute.org/pub/seq/references/Homo_sapiens_assembly19.fasta without scaffolds and supercontigs, only 1-22-X-Y-MT).
 
 Download the example configuration file and edit it to match the paths of the tumorized and mosaic genomes, truth VCF files and reference FASTA file:
 
