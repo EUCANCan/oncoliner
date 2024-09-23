@@ -113,6 +113,7 @@ The configuration file is a TSV file with the following columns:
 * `reference_fasta_path`: path to the reference FASTA file.
 * `truth_vcf_paths`: path(s) to the truth VCF files, separated by `,`. They can also be wildcard paths (e.g. `truths/*.vcf.gz`).
 * `example_vcf_paths`: path(s) to the test VCF files, separated by `,`. They can also be wildcard paths (e.g. `tests/*.vcf.gz`).
+* `bed_mask_paths` (optional): path(s) to BED files, separated by `,`, describing regions where no False Positive will be computed (they will be skipped). They can also be wildcard paths (e.g. `truths/*.bed`).
 
 #### Interface<!-- omit in toc -->
 ```
