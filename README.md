@@ -225,7 +225,7 @@ The configuration file is a TSV file with the following columns:
 * `sample_types`: sample types (recall or precision), separated by `,`.
 * `reference_fasta_path`: path to the reference FASTA file.
 * `truth_vcf_paths`: path(s) to the truth VCF files, separated by `,`. They can also be wildcard paths (e.g. `truths/*.vcf.gz`).
-* `bed_mask_paths` (optional): path(s) to BED files describing regions where no FP will be computed (they will be skipped).
+* `bed_mask_paths` (optional): path(s) to BED files, separated by `,`, describing regions where no False Positive will be computed (they will be skipped). They can also be wildcard paths (e.g. `truths/*.bed`).
 
 You can check an example of configuration file in [`example/example_config.tsv`](/example/example_config.tsv).
 
