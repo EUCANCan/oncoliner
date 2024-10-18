@@ -42,6 +42,57 @@ mkdir oncoliner_workspace
 cd oncoliner_workspace
 ```
 
+Download and index the reference FASTA file. All Mosaic and Tumorized genomes are provided in CRAM format and are aligned to GRCh37 without scaffolds and supercontigs, only 1-22-X-Y-MT.
+
+```
+# Download all the contigs
+wget http://www.ebi.ac.uk/ena/cram/md5/1b22b98cdeb4a9304cb5d48026a85128 -O partial_chr1.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/a0d9851da00400dec1098a9255ac712e -O partial_chr2.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/641e4338fa8d52a5b781bd2a2c08d3c3 -O partial_chr3.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/23dccd106897542ad87d2765d28a19a1 -O partial_chr4.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/0740173db9ffd264d728f32784845cd7 -O partial_chr5.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/1d3a93a248d92a729ee764823acbbc6b -O partial_chr6.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/618366e953d6aaad97dbe4777c29375e -O partial_chr7.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/96f514a9929e410c6651697bded59aec -O partial_chr8.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/3e273117f15e0a400f01055d9f393768 -O partial_chr9.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/988c28e000e84c26d552359af1ea2e1d -O partial_chr10.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/98c59049a2df285c76ffb1c6db8f8b96 -O partial_chr11.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/51851ac0e1a115847ad36449b0015864 -O partial_chr12.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/283f8d7892baa81b510a015719ca7b0b -O partial_chr13.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/98f3cae32b2a2e9524bc19813927542e -O partial_chr14.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/e5645a794a8238215b2cd77acb95a078 -O partial_chr15.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/fc9b1a7b42b97a864f56b348b06095e6 -O partial_chr16.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/351f64d4f4f9ddd45b35336ad97aa6de -O partial_chr17.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/b15d4b2d29dde9d3e4f93d1d0f2cbc9c -O partial_chr18.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/1aacd71f30db8e561810913e0b72636d -O partial_chr19.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/0dec9660ec1efaaf33281c0d5ea2560f -O partial_chr20.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/2979a6085bfe28e3ad6f552f361ed74d -O partial_chr21.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/a718acaa6135fdca8357d5bfe94211dd -O partial_chr22.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/7e0e2e580297b7764e31dbc80c2540dd -O partial_chrX.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/1fa3474750af0948bdf97d5a0ee52e51 -O partial_chrY.fa &
+wget http://www.ebi.ac.uk/ena/cram/md5/c68f52674c9fb33aef52dcf399755519 -O partial_chrMT.fa &
+wait
+
+# Combine all the chromosomes into a single FASTA file
+cat <(echo -e ">1") partial_chr1.fa <(echo -e "\n>2") partial_chr2.fa \
+	<(echo -e "\n>3") partial_chr3.fa <(echo -e "\n>4") partial_chr4.fa \
+	<(echo -e "\n>5") partial_chr5.fa <(echo -e "\n>6") partial_chr6.fa \
+	<(echo -e "\n>7") partial_chr7.fa <(echo -e "\n>8") partial_chr8.fa \
+	<(echo -e "\n>9") partial_chr9.fa <(echo -e "\n>10") partial_chr10.fa \
+	<(echo -e "\n>11") partial_chr11.fa <(echo -e "\n>12") partial_chr12.fa \
+	<(echo -e "\n>13") partial_chr13.fa <(echo -e "\n>14") partial_chr14.fa \
+	<(echo -e "\n>15") partial_chr15.fa <(echo -e "\n>16") partial_chr16.fa \
+	<(echo -e "\n>17") partial_chr17.fa <(echo -e "\n>18") partial_chr18.fa \
+	<(echo -e "\n>19") partial_chr19.fa <(echo -e "\n>20") partial_chr20.fa \
+	<(echo -e "\n>21") partial_chr21.fa <(echo -e "\n>22") partial_chr22.fa \
+	<(echo -e "\n>X") partial_chrX.fa <(echo -e "\n>Y") partial_chrY.fa \
+	<(echo -e "\n>MT") partial_chrMT.fa > Homo_sapiens_assembly19.fa
+
+# Index the FASTA file with SAMtools
+samtools faidx Homo_sapiens_assembly19.fa
+```
+
+
 Then, download the Tumorized genomes and their truth VCF files ([ENA project](https://www.ebi.ac.uk/ena/browser/view/PRJEB68324)):
 
 ```
@@ -68,8 +119,6 @@ mkdir -p benchmarking_datasets/mosaic_genomes/mosaic_genome_PCAWG_2
 mkdir -p benchmarking_datasets/mosaic_genomes/mosaic_genome_HMF
 # Download data
 ```
-
-Download and index the reference FASTA file. All CRAM files are aligned to GRCh37 (https://ftp.broadinstitute.org/pub/seq/references/Homo_sapiens_assembly19.fasta without scaffolds and supercontigs, only 1-22-X-Y-MT).
 
 Download the example configuration file and edit it to match the paths of the tumorized and mosaic genomes, truth VCF files and reference FASTA file:
 
