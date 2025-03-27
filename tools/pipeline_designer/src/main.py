@@ -132,7 +132,7 @@ def intersect_callers(caller_1_prefix, caller_2_prefix, output_prefix, fasta_ref
     df_1 = extract_vcfs(caller_1_prefix)
     df_2 = extract_vcfs(caller_2_prefix)
     # Intersect
-    df_tp, _, _, _, _, _ = intersect(df_1, df_2, indel_threshold, window_radius, False)
+    df_tp, _, _, _, _, _ = intersect(df_1, df_2, indel_threshold, window_radius)
     # Write VCF files
     if len(df_tp) > 0:
         write_masked_vcfs(df_tp, output_prefix, indel_threshold, fasta_ref)

@@ -7,28 +7,9 @@ from variant_extractor.variants import VariantType
 
 from ._internal.internal_ops import intersect_exact, intersect_window  # noqa
 from .masks import snv_mask, indel_mask  # noqa
-from .genes import is_gene_annotated, extract_protein_affected_genes, add_gene_annotation_to_variant_record
 
 
-def _combine_gene_annotations(df_tp: pd.DataFrame):
-    # Add gene annotations from the truth files if not present
-    # Check if the variant_record_obj is gene annotated in the test file
-    is_test_annotated = df_tp['variant_record_obj'].apply(is_gene_annotated)
-    if is_test_annotated.any():
-        return
-    # Check if the variant_record_obj is gene annotated in the truth file
-    is_truth_annotated = df_tp['variant_record_obj_truth'].apply(is_gene_annotated)
-    if not is_truth_annotated.any():
-        return
-    # Extract protein affected genes from the truth file
-    truth_protein_affected_genes = df_tp['variant_record_obj_truth'].apply(extract_protein_affected_genes)
-
-    # Add gene annotations to the test file
-    for idx, row in df_tp[is_truth_annotated].iterrows():
-        add_gene_annotation_to_variant_record(row['variant_record_obj'], truth_protein_affected_genes[idx])
-
-
-def intersect(df_truth, df_test, indel_threshold, window_radius, combine_gene_annotations=False):
+def intersect(df_truth, df_test, indel_threshold, window_radius):
     # Intersect SNVs comparing start position and alt
     snv_truth_mask = snv_mask(df_truth)
     snv_test_mask = snv_mask(df_test)
@@ -88,8 +69,5 @@ def intersect(df_truth, df_test, indel_threshold, window_radius, combine_gene_an
     df_fp_dup = pd.concat([snv_fp_dup, indel_ins_fp_dup, indel_del_fp_dup, ins_fp_dup, sv_fp_dup])
     df_fn = pd.concat([snv_fn, indel_ins_fn, indel_del_fn, ins_fn, sv_fn])
     df_fn_dup = pd.concat([snv_fn_dup, indel_ins_fn_dup, indel_del_fn_dup, ins_fn_dup, sv_fn_dup])
-
-    if combine_gene_annotations:
-        _combine_gene_annotations(df_tp)
 
     return df_tp, df_tp_dup, df_fp, df_fp_dup, df_fn, df_fn_dup

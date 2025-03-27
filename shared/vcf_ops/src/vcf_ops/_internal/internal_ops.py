@@ -6,10 +6,11 @@ import pandas as pd
 
 def intersect_exact(df_truth, df_test, matching_fields):
     # Find exact matches
-    df_all_tp = pd.merge(df_test.reset_index(), df_truth, how='inner', on=matching_fields,
+    df_all_tp = pd.merge(df_test.reset_index(), df_truth.reset_index(), how='inner', on=matching_fields,
                          copy=False, suffixes=(None, '_truth')).set_index('index')
     # Drop columns from truth
-    df_all_tp.drop([col for col in df_all_tp.columns if col.endswith('_truth') and 'variant_record_obj' not in col], axis=1, inplace=True)
+    df_all_tp.drop([col for col in df_all_tp.columns if col.endswith('_truth') and not col == 'index_truth'], axis=1, inplace=True)
+    df_all_tp.rename(columns={'index_truth': 'idx_truth'}, inplace=True)
     # Find duplicates
     df_tp_dup_mask = df_all_tp.duplicated(subset=matching_fields, keep='first')
     df_tp_dup = df_all_tp[df_tp_dup_mask]
@@ -21,10 +22,8 @@ def intersect_exact(df_truth, df_test, matching_fields):
     df_fp_dup = df_fp[df_fp_dup_mask]
     df_fp = df_fp[~df_fp_dup_mask]
     # Find false negatives
-    df_all_fn_inverse = pd.merge(df_truth.reset_index(), df_all_tp, how='inner',
-                                 on=matching_fields, copy=False, suffixes=(None, '_test')).set_index('index')
     # Find duplicates
-    df_all_fn = df_truth[~df_truth.index.isin(df_all_fn_inverse.index)]
+    df_all_fn = df_truth[~df_truth.index.isin(df_all_tp['idx_truth'])]
     df_fn_dup_mask = df_all_fn.duplicated(subset=matching_fields, keep='first')
     df_fn_dup = df_all_fn[df_fn_dup_mask]
     df_fn = df_all_fn[~df_fn_dup_mask]
@@ -111,7 +110,7 @@ def _matching_window_entries(df_truth, df_test, matching_fields, window_fields, 
     df_tp_test = df_test.loc[selected_cross_merge['index_test']]
     df_tp_dup_test = df_test.loc[duplicated_cross_merge['index_test']]
     df_tp_truth = df_truth.loc[selected_cross_merge['index_truth'].unique()]
-    df_tp_test['variant_record_obj_truth'] = df_truth.loc[selected_cross_merge['index_truth']]['variant_record_obj'].values
+    df_tp_test['idx_truth'] = df_truth.loc[selected_cross_merge['index_truth']].index
     return df_tp_test, df_tp_dup_test, df_tp_truth
 
 

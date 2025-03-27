@@ -1,15 +1,17 @@
 # Copyright 2023 - Barcelona Supercomputing Center
 # Author: Rodrigo Martín
 # BSC Dual License
-from typing import List, Tuple
+from typing import List, Tuple, Sequence, Iterator
 from collections import OrderedDict
 import gzip
 import pandas as pd
 import pysam
 
 from variant_extractor import VariantExtractor
+from variant_extractor.variants import VariantRecord
 
 from .masks import snv_mask, indel_mask  # noqa
+from .constants import ONCOLINER_INFO_GENES_NAME  # noqa
 
 
 def _extract_header(vcf_files: List[str]) -> Tuple[pysam.VariantHeader, bool]:
@@ -44,6 +46,7 @@ def _get_contig_order(contigs: OrderedDict):
         contig_order[contig] = i
     return contig_order
 
+
 def _set_contigs(header: pysam.VariantHeader, contigs: OrderedDict, remove_chr: bool):
     if remove_chr:
         contigs = OrderedDict((contig.replace('chr', ''), length) for contig, length in contigs.items())
@@ -54,7 +57,8 @@ def _set_contigs(header: pysam.VariantHeader, contigs: OrderedDict, remove_chr: 
         if contig not in contigs:
             header.contigs.remove_header(contig)
 
-def _write_raw_file(f, header: pysam.VariantHeader, variants_obj_df, same_samples: bool, same_formats: bool, remove_chr: bool):
+
+def _write_raw_file(f, header: pysam.VariantHeader, variant_record_list: Sequence[VariantRecord], same_samples: bool, same_formats: bool, remove_chr: bool):
     # Remove all format fields except GT for compatibility between VCFs
     if not same_formats or not same_samples:
         for format_ in header.formats:
@@ -72,24 +76,48 @@ def _write_raw_file(f, header: pysam.VariantHeader, variants_obj_df, same_sample
     # Dummy samples (in case samples are not the same in all VCFs)
     dummy_samples = {'DUMMY_NORMAL': {'GT': (0, 0)}, 'DUMMY_TUMOR': {'GT': (0, 1)}}
     # Write variants
-    for variant_record_obj in variants_obj_df:
+    for variant_record in variant_record_list:
         # Reset samples if they are not the same in all VCFs
         if not same_formats or not same_samples:
             # Remove all format fields except GT for compatibility between VCFs
-            variant_record_obj.format = ['GT']
+            variant_record.format = ['GT']
         if not same_samples:
-            variant_record_obj.samples = dummy_samples
+            variant_record.samples = dummy_samples
         if remove_chr:
             # Remove chr from the first 4 fields
-            variant_record_split = str(variant_record_obj).split('\t')
+            variant_record_split = str(variant_record).split('\t')
             variant_record_str = '\t'.join([variant_record_split[0].replace('chr', '')] + variant_record_split[1:4] +
                                            [variant_record_split[4].replace('chr', '')] + variant_record_split[5:])
         else:
-            variant_record_str = str(variant_record_obj)
+            variant_record_str = str(variant_record)
         f.write(variant_record_str + '\n')
 
 
-def write_masked_vcfs(variants_df, output_path_prefix: str, indel_threshold: int, fasta_ref=None, command=None, gzip=True):
+def extract_variants(vcf_file: str, idx_list: List[int], pass_only: bool = True) -> Iterator[VariantRecord]:
+    extractor = VariantExtractor(vcf_file, pass_only=pass_only)
+    idx_list = set(idx_list)
+    for i, variant_record in enumerate(extractor):
+        if i in idx_list:
+            yield variant_record
+    extractor.close()
+
+
+def _build_record_list(variants_df: pd.DataFrame, template_vcfs: List[str]) -> List[VariantRecord]:
+    variant_record_list = []
+    # For each template_vcf create a VariantExtractor
+    for vcf_file in template_vcfs:
+        vcf_variants = variants_df[variants_df['vcf_file'] == vcf_file]
+        for i, variant_record in enumerate(extract_variants(vcf_file, vcf_variants['idx_in_file'], vcf_variants['pass_only'].iloc[0])):
+            variant_info = vcf_variants.iloc[i]
+            if 'GENES' in variant_info:
+                genes_symbols = variant_info['GENES']
+                if genes_symbols is not None and len(genes_symbols) > 0:
+                    variant_record.info[ONCOLINER_INFO_GENES_NAME] = list(genes_symbols)
+            variant_record_list.append(variant_record)
+    return variant_record_list
+
+
+def write_masked_vcfs(variants_df: pd.DataFrame, output_path_prefix: str, indel_threshold: int, fasta_ref=None, command=None, gzip=True):
     df_snv_mask = snv_mask(variants_df)
     df_indel_mask = indel_mask(variants_df, indel_threshold)
     df_snv = variants_df[df_snv_mask]
@@ -104,7 +132,7 @@ def write_masked_vcfs(variants_df, output_path_prefix: str, indel_threshold: int
         write_vcf(df_split, output_file_path, fasta_ref, command)
 
 
-def write_vcf(variants_df: pd.DataFrame, output_vcf, fasta_ref=None, command=None):
+def write_vcf(variants_df: pd.DataFrame, output_vcf: str, fasta_ref=None, command=None, remove_chr=False):
     template_vcfs = list(variants_df['vcf_file'].unique())
     header, same_samples = _extract_header(template_vcfs)
     # Add meta field with the command used to generate the VCF
@@ -118,51 +146,50 @@ def write_vcf(variants_df: pd.DataFrame, output_vcf, fasta_ref=None, command=Non
     variants_df = variants_df.assign(contig_order=variants_df['start_chrom'].map(contig_order))
     # Sort by chromosome and position
     variants_df.sort_values(by=['contig_order', 'start'], inplace=True)
-    # Check if there are chr and non-chr contigs mixed
-    # Get all unique contigs in variants
-    variants_contigs = set(variants_df['variant_record_obj'].map(lambda x: x.contig))
-    remove_chr = False
-    for variants_contig in variants_contigs:
-        if (variants_contig.startswith('chr') and variants_contig.replace('chr', '') in variants_contigs) or \
-            (not variants_contig.startswith('chr') and 'chr' + variants_contig in variants_contigs) or \
-            (variants_contig not in contigs and
-             (variants_contig.replace('chr', '') in contigs or 'chr' + variants_contig in contigs)):
-            remove_chr = True
-            break
     # Apply contigs to header
     _set_contigs(header, contigs, remove_chr)
+    # Build variant_record_list
+    variant_record_list = _build_record_list(variants_df, template_vcfs)
     # Check if all variants have the same format fields
-    formats = variants_df.iloc[0]['variant_record_obj'].format
     same_formats = True
-    if len(template_vcfs) > 1:
-        for variant_record_obj in variants_df['variant_record_obj']:
-            if variant_record_obj.format != formats:
+    if len(variant_record_list) > 0 and len(template_vcfs) > 1:
+        formats = variant_record_list[0].format
+        for variant_record in variant_record_list[1:]:
+            if variant_record.format != formats:
                 same_formats = False
+                break
 
     # Check if the VCF is gzipped
     if output_vcf.endswith('.gz'):
         f = gzip.open(output_vcf, 'wt')
     else:
-        f = open(output_vcf, 'w')
+        f = open(output_vcf, 'w', encoding='utf-8')
     # Write the file
-    _write_raw_file(f, header, variants_df['variant_record_obj'], same_samples, same_formats, remove_chr)
+    _write_raw_file(f, header, variant_record_list, same_samples, same_formats, remove_chr)
     f.close()
 
 
-def _extract_variants(vcf_file) -> pd.DataFrame:
+def _extract_variants(vcf_file, pass_only=True) -> pd.DataFrame:
     try:
-        extractor = VariantExtractor(vcf_file, pass_only=True)
+        extractor = VariantExtractor(vcf_file, pass_only=pass_only)
         variants_df = extractor.to_dataframe()
+        extractor.close()
     except Exception as e:
-        raise Exception(f'Error reading VCF file {vcf_file}') from e
+        raise IOError(f'Error reading VCF file {vcf_file}') from e
     variants_df['vcf_file'] = vcf_file
+    variants_df['vcf_file'] = variants_df['vcf_file'].astype('category')
+    variants_df['pass_only'] = pass_only
+    variants_df['pass_only'] = variants_df['pass_only'].astype('bool')
+    variants_df['idx_in_file'] = variants_df.index
     return variants_df
 
 
 def read_vcfs(vcf_files):
     if len(vcf_files) == 0:
         empty_df = VariantExtractor.empty_dataframe()
-        empty_df['vcf_file'] = ''
+        empty_df.columns += ['vcf_file', 'pass_only', 'idx_in_file']
+        empty_df['vcf_file'] = empty_df['vcf_file'].astype('category')
+        empty_df['pass_only'] = empty_df['pass_only'].astype('bool')
         return empty_df
     vcf_dfs = [_extract_variants(vcf_file) for vcf_file in vcf_files]
     return pd.concat(vcf_dfs, ignore_index=True)

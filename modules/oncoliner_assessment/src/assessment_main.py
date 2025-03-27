@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..'
 
 from vcf_ops import VariantType  # noqa
 from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
+from vcf_ops.genes import combine_gene_annotations  # noqa
 from vcf_ops.masks import snv_mask, indel_mask  # noqa
 from vcf_ops.intersect import intersect  # noqa
 from vcf_ops.metrics import compute_metrics  # noqa
@@ -128,7 +129,8 @@ def main(truth_vcf_paths, test_vcf_paths, bed_mask_paths, output_prefix, fasta_r
     # Run benchmark
     df_tp, df_tp_dup, \
         df_fp, df_fp_dup, \
-        df_fn, df_fn_dup = intersect(df_truth, df_test, indel_threshold, window_radius, True)
+        df_fn, df_fn_dup = intersect(df_truth, df_test, indel_threshold, window_radius)
+    df_tp['GENES'] = combine_gene_annotations(df_tp, df_truth)
 
     # Skip the FP that overlap with the bed masks
     if len(bed_masks) > 0:

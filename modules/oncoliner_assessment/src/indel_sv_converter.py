@@ -1,18 +1,10 @@
 import pandas as pd
 import pysam
 
-from vcf_ops import VariantType  # noqa
+from variant_extractor.variants import VariantType
 
 
 SV_REGEX = r'[\[\]<>.]'
-
-
-def _variant_record_obj(row: pd.Series, chrom_preffix: str):
-    original_obj = row['variant_record_obj']
-    new_contig = chrom_preffix + original_obj.contig.replace('chr', '')
-    new_obj = original_obj._replace(contig=new_contig, pos=row['start'], end=row['end'], ref=row['ref'], alt=row['alt'])
-    return new_obj
-
 
 def _get_chrom_preffix(fasta: pysam.FastaFile):
     # Fix chr1 vs 1
@@ -50,7 +42,6 @@ def indel_to_sv(variants_df: pd.DataFrame, fasta_ref: str) -> pd.DataFrame:
             row['ref'] = row['alt'][1]
             row['alt'] = f']{chrom_preffix+row["start_chrom"]}:{row["end"]}]{row["ref"]}'
             row['brackets'] = ']N'
-            row['variant_record_obj'] = _variant_record_obj(row, chrom_preffix)
         return row
 
     variants_mask = (variants_df['type_inferred'] == VariantType.INS.name) & \
@@ -80,7 +71,6 @@ def sv_to_indel(variants_df: pd.DataFrame, fasta_ref: str) -> pd.DataFrame:
             row['end'] = row['start']
             row['alt'] = new_alt
             row['ref'] = new_alt[0]
-            row['variant_record_obj'] = _variant_record_obj(row, chrom_preffix)
         else:
             raise ValueError('Unknown variant type: ' + row['type_inferred'])
         return row

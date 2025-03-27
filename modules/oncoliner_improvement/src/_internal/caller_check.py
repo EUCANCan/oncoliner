@@ -5,6 +5,7 @@ import pandas as pd
 
 from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
 from vcf_ops.intersect import intersect  # noqa
+from vcf_ops.genes import combine_gene_annotations  # noqa
 from vcf_ops.union import union  # noqa
 from vcf_ops.metrics import compute_metrics, aggregate_metrics  # noqa
 from .common import build_result_dataframe, INTERSECTION_SYMBOL, UNION_SYMBOL  # noqa
@@ -51,11 +52,13 @@ def _execute_intersection(user_sample_folder, caller_sample_folder, indel_thresh
     # Read TP files
     tp_user_path = glob.glob(os.path.join(user_sample_folder, '*tp.*'))
     tp_df_user = read_vcfs(tp_user_path)
+    tp_df_user['GENES'] = combine_gene_annotations(tp_df_user)
     tp_caller_path = glob.glob(os.path.join(caller_sample_folder, '*tp.*'))
     tp_df_caller = read_vcfs(tp_caller_path)
     # Intersect TP files
     tp_df_tp, _, _, _, tp_df_fn, _ = \
-        intersect(tp_df_caller, tp_df_user, indel_threshold, window_radius, True)
+        intersect(tp_df_caller, tp_df_user, indel_threshold, window_radius)
+    tp_df_tp['GENES'] = combine_gene_annotations(tp_df_tp, tp_df_caller)
 
     # Read FP files
     fp_user_path = glob.glob(os.path.join(user_sample_folder, '*fp.*'))
@@ -64,7 +67,7 @@ def _execute_intersection(user_sample_folder, caller_sample_folder, indel_thresh
     fp_df_caller = read_vcfs(fp_caller_path)
     # Intersect FP files
     fp_df_tp, _, _, _, _, _ = \
-        intersect(fp_df_caller, fp_df_user, indel_threshold, window_radius, False)
+        intersect(fp_df_caller, fp_df_user, indel_threshold, window_radius)
 
     # Read FN files
     fn_user_path = glob.glob(os.path.join(user_sample_folder, '*fn.*'))
@@ -121,7 +124,7 @@ def _execute_union(user_sample_folder, caller_sample_folder, indel_threshold, wi
     fn_df_caller = read_vcfs(glob.glob(os.path.join(caller_sample_folder, '*fn.*')))
     # Intersect FN files
     fn_df_tp, _, _, _, _, _ = \
-        intersect(fn_df_caller, fn_df_user, indel_threshold, window_radius, False)
+        intersect(fn_df_caller, fn_df_user, indel_threshold, window_radius)
 
     # Construct output dataframes
     df_tp = tp_df_tp

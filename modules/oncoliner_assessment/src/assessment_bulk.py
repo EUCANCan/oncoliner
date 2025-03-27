@@ -18,7 +18,7 @@ def read_config(config_path: str) -> pd.DataFrame:
     """
     config = pd.read_csv(config_path, sep='\t')
     # Strip all strings
-    config = config.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    config = config.map(lambda x: x.strip() if isinstance(x, str) else x)
     config['truth_vcf_paths'] = config['truth_vcf_paths'].map(lambda x: [f.strip() for f in x.split(',')])
     config['test_vcf_paths'] = config['test_vcf_paths'].map(lambda x: [f.strip() for f in x.split(',')])
     config['bed_mask_paths'] = config['bed_mask_paths'].map(lambda x: [f.strip() for f in x.split(',')]) if 'bed_mask_paths' in config else [''] * len(config)

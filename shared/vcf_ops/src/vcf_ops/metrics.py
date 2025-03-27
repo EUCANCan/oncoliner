@@ -3,7 +3,7 @@ from functools import reduce
 
 from variant_extractor.variants import VariantType
 
-from .genes import combine_genes_symbols, get_cancer_census_genes, is_gene_annotated, extract_protein_affected_genes, GENE_SPLIT_SYMBOL
+from .genes import combine_genes_symbols, get_cancer_census_genes, GENE_SPLIT_SYMBOL
 
 METRICS_COLUMNS = ['variant_type', 'variant_size', 'window_radius', 'recall', 'precision', 'f1_score', 'tp', 'fp', 'fn',
                    'protein_affected_genes_count', 'protein_affected_driver_genes_count', 'protein_affected_genes', 'protein_affected_driver_genes']
@@ -63,16 +63,16 @@ def aggregate_metrics(metrics_list):
     agg_metrics['f1_score'] = 2 * agg_metrics['precision'] * \
         agg_metrics['recall'] / (agg_metrics['precision'] + agg_metrics['recall'])
     # Fill NaNs with 0
-    agg_metrics['recall'].fillna(0, inplace=True)
-    agg_metrics['precision'].fillna(0, inplace=True)
-    agg_metrics['f1_score'].fillna(0, inplace=True)
-    agg_metrics['protein_affected_genes_count'] = agg_metrics['protein_affected_genes'].apply(lambda x: len(x))
+    agg_metrics['recall'] = agg_metrics['recall'].fillna(0)
+    agg_metrics['precision'] = agg_metrics['precision'].fillna(0)
+    agg_metrics['f1_score'] = agg_metrics['f1_score'].fillna(0)
+    agg_metrics['protein_affected_genes_count'] = agg_metrics['protein_affected_genes'].apply(len)
     # Add protein_affected_driver_genes
     agg_metrics['protein_affected_driver_genes'] = agg_metrics['protein_affected_genes'].apply(lambda x: x.intersection(get_cancer_census_genes()))
-    agg_metrics['protein_affected_driver_genes_count'] = agg_metrics['protein_affected_driver_genes'].apply(lambda x: len(x))
+    agg_metrics['protein_affected_driver_genes_count'] = agg_metrics['protein_affected_driver_genes'].apply(len)
     # Convert to string
-    agg_metrics['protein_affected_genes'] = agg_metrics['protein_affected_genes'].apply(lambda x: GENE_SPLIT_SYMBOL.join(x))
-    agg_metrics['protein_affected_driver_genes'] = agg_metrics['protein_affected_driver_genes'].apply(lambda x: GENE_SPLIT_SYMBOL.join(x))
+    agg_metrics['protein_affected_genes'] = agg_metrics['protein_affected_genes'].apply(GENE_SPLIT_SYMBOL.join)
+    agg_metrics['protein_affected_driver_genes'] = agg_metrics['protein_affected_driver_genes'].apply(GENE_SPLIT_SYMBOL.join)
     # Reorder columns
     agg_metrics = agg_metrics[METRICS_COLUMNS]
     return agg_metrics
@@ -115,7 +115,7 @@ def combine_precision_recall_metrics(recall_df, precision_df):
     # Calculate F1 score
     df['f1_score'] = 2 * df['precision'] * df['recall'] / (df['precision'] + df['recall'])
     # Fill NaNs in f1_score with 0
-    df['f1_score'].fillna(0, inplace=True)
+    df['f1_score'] = df['f1_score'].fillna(0)
     df['protein_affected_genes_count'] = recall_df['protein_affected_genes_count']
     df['protein_affected_driver_genes_count'] = recall_df['protein_affected_driver_genes_count']
     df['protein_affected_genes'] = recall_df['protein_affected_genes']
@@ -184,17 +184,17 @@ def compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size
 
     # Setup window sizes names
     window_radius_names = []
-    for i in range(len(bin_sizes_names)):
+    for i, bin_sizes_name in enumerate(bin_sizes_names):
         if bin_names[i] == 'SNV' or bin_names[i] == 'INDEL':
             window_radius_names.append('0')
-        elif bin_sizes_names[i].split('-')[0].strip() == '1' and ('INS' in bin_names[i] or 'DEL' in bin_names[i]):
+        elif bin_sizes_name.split('-')[0].strip() == '1' and ('INS' in bin_names[i] or 'DEL' in bin_names[i]):
             window_radius_names.append('0')
         else:
             window_radius_names.append(str(window_radius))
 
     # Setup masks
     masks = []
-    for i in range(len(bin_names)):
+    for i, bin_sizes_name in enumerate(bin_sizes_names):
         if bin_names[i] == 'INDEL' or bin_names[i] == 'SV':
             masks.append(None)  # Skip indels and SVs, fill in later
             continue
@@ -203,7 +203,7 @@ def compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size
         for name in curr_names[1:]:
             curr_mask = curr_mask | (df['type_inferred'] == name.strip())
 
-        curr_sizes = bin_sizes_names[i].split('-')
+        curr_sizes = bin_sizes_name.split('-')
         if '>' in curr_sizes[0]:
             curr_mask = curr_mask & (df['length'] > int(curr_sizes[0].replace('>', '').strip()))
         elif len(curr_sizes) == 2:
@@ -216,10 +216,10 @@ def compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size
     masks[4] = reduce(lambda x, y: x | y, masks[6:], masks[5])
 
     rows = []
-    for i in range(len(bin_names)):
+    for i, bin_name in enumerate(bin_names):
         df_bin = df[masks[i]]
         row = []
-        row.append(bin_names[i])
+        row.append(bin_name)
         row.append(bin_sizes_names[i])
         row.append(window_radius_names[i])
         tp_df = df_bin[df_bin['benchmark'] == 'TP']
@@ -237,12 +237,11 @@ def compute_metrics(df_tp, df_fp, df_fn, indel_threshold, window_radius, sv_size
         row.append(tp)
         row.append(fp)
         row.append(fn)
-        # Check if the variant_record_obj is gene annotated in the test file
-        is_test_annotated = tp_df['variant_record_obj'].apply(is_gene_annotated)
         protein_affected_genes = set()
         protein_affected_driver_genes = set()
-        if is_test_annotated.any():
-            protein_affected_genes = combine_genes_symbols(tp_df[is_test_annotated]['variant_record_obj'].apply(extract_protein_affected_genes))
+        # Check if there are any genes in the GENES column
+        if 'GENES' in tp_df.columns and tp_df['GENES'].apply(len).sum() > 0:
+            protein_affected_genes = combine_genes_symbols(tp_df['GENES'])
             protein_affected_driver_genes = protein_affected_genes & get_cancer_census_genes()
         row.append(len(protein_affected_genes))
         row.append(len(protein_affected_driver_genes))

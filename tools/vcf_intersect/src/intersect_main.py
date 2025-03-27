@@ -5,6 +5,7 @@ import sys
 # Add vcf-ops to the path
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', '..', 'shared', 'vcf_ops', 'src'))
 from vcf_ops.i_o import read_vcfs, write_masked_vcfs  # noqa
+from vcf_ops.genes import combine_gene_annotations  # noqa
 from vcf_ops.constants import DEFAULT_INDEL_THRESHOLD, DEFAULT_WINDOW_RADIUS  # noqa
 from vcf_ops.intersect import intersect  # noqa
 
@@ -26,7 +27,10 @@ if __name__ == '__main__':
     df_test = read_vcfs(args.files_2)
 
     # Intersect
-    df_tp, df_tp_dup, df_fp, df_fp_dup, df_fn, df_fn_dup = intersect(df_truth, df_test, args.indel_threshold, args.window_radius, args.combine_genes_annotations)
+    df_tp, df_tp_dup, df_fp, df_fp_dup, df_fn, df_fn_dup = intersect(df_truth, df_test, args.indel_threshold, args.window_radius)
+    # Combine genes annotations
+    if args.combine_genes_annotations:
+        df_tp['GENES'] = combine_gene_annotations(df_tp, df_truth)
 
     # Write VCF files
     if len(df_tp) > 0:
