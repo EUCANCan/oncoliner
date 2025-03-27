@@ -1,3 +1,3 @@
-sample_name	sample_types	reference_fasta_path	truth_vcf_paths	test_vcf_paths
-sample_1	recall	./fake_ref.fa	./input/truth/sample_1/*.vcf	/home/rapsss/oncoliner/example/input/pipeline_1/sample_1/*.vcf.gz,/home/rapsss/oncoliner/example/input/pipeline_1/sample_1/*.vcf,/home/rapsss/oncoliner/example/input/pipeline_1/sample_1/*.bcf
-sample_2	precision	./fake_ref.fa	./input/truth/sample_2/*.vcf	/home/rapsss/oncoliner/example/input/pipeline_1/sample_2/*.vcf.gz,/home/rapsss/oncoliner/example/input/pipeline_1/sample_2/*.vcf,/home/rapsss/oncoliner/example/input/pipeline_1/sample_2/*.bcf
+sample_name	sample_types	reference_fasta_path	truth_vcf_paths	bed_mask_paths	test_vcf_paths
+sample_1	recall	./fake_ref.fa	./input/truth/sample_1/*.vcf	./input/truth/sample_1/*.bed	../../input/pipeline_1/samples/sample_1/*.vcf.gz,../../input/pipeline_1/samples/sample_1/*.vcf,../../input/pipeline_1/samples/sample_1/*.bcf
+sample_2	precision	./fake_ref.fa	./input/truth/sample_2/*.vcf	./input/truth/sample_2/*.bed	../../input/pipeline_1/samples/sample_2/*.vcf.gz,../../input/pipeline_1/samples/sample_2/*.vcf,../../input/pipeline_1/samples/sample_2/*.bcf
