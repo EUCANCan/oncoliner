@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.2.0 (2025-03-31)
+
+### Features
+
+- Add pass_only option to read_vcf
+  ([`d046b34`](https://github.com/EUCANCan/oncoliner/commit/d046b347fd985fdc5fc05219bc79d2f982bde6cb))
+
+
 ## v1.1.2 (2025-03-27)
 
 ### Bug Fixes
