@@ -184,12 +184,12 @@ def _extract_variants(vcf_file, pass_only=True) -> pd.DataFrame:
     return variants_df
 
 
-def read_vcfs(vcf_files):
+def read_vcfs(vcf_files, pass_only=True) -> pd.DataFrame:
     if len(vcf_files) == 0:
         empty_df = VariantExtractor.empty_dataframe()
         empty_df.columns += ['vcf_file', 'pass_only', 'idx_in_file']
         empty_df['vcf_file'] = empty_df['vcf_file'].astype('category')
         empty_df['pass_only'] = empty_df['pass_only'].astype('bool')
         return empty_df
-    vcf_dfs = [_extract_variants(vcf_file) for vcf_file in vcf_files]
+    vcf_dfs = [_extract_variants(vcf_file, pass_only=pass_only) for vcf_file in vcf_files]
     return pd.concat(vcf_dfs, ignore_index=True)
