@@ -14,11 +14,12 @@ def intersect_exact(df_truth, df_test, matching_fields):
     # Find duplicates
     df_test_tp_mask = df_test.index.isin(df_all_tp.index)
     df_tp = df_test[df_test_tp_mask]
-    # Add idx_truth to df_tp
-    df_tp.loc[df_tp.index, 'idx_truth'] = df_all_tp.loc[df_tp.index, 'idx_truth']
     df_tp_dup_mask = df_tp.duplicated(subset=matching_fields, keep='first')
     df_tp_dup = df_tp[df_tp_dup_mask]
     df_tp = df_tp[~df_tp_dup_mask]
+    # Add idx_truth to df_tp
+    # Handle duplicate indices in df_all_tp by taking the first occurrence
+    df_tp.loc[df_tp.index, 'idx_truth'] = df_all_tp.loc[df_tp.index, 'idx_truth'].groupby(level=0).first()
     # Find false positives
     df_fp = df_test[~df_test_tp_mask]
     # Find duplicates
