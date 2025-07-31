@@ -6,15 +6,16 @@ import pandas as pd
 
 def intersect_exact(df_truth, df_test, matching_fields):
     # Find exact matches
-    df_all_tp = pd.merge(df_test.reset_index(), df_truth.reset_index(), how='inner', on=matching_fields,
+    df_all_tp = pd.merge(df_test[matching_fields].reset_index(), df_truth[matching_fields].reset_index(), how='inner', on=matching_fields,
                          copy=False, suffixes=(None, '_truth')).set_index('index')
     # Drop columns from truth
     df_all_tp.drop([col for col in df_all_tp.columns if col.endswith('_truth') and not col == 'index_truth'], axis=1, inplace=True)
     df_all_tp.rename(columns={'index_truth': 'idx_truth'}, inplace=True)
     # Find duplicates
     df_tp_dup_mask = df_all_tp.duplicated(subset=matching_fields, keep='first')
-    df_tp_dup = df_all_tp[df_tp_dup_mask]
-    df_tp = df_all_tp[~df_tp_dup_mask]
+    df_tp = df_test[df_test.index.isin(df_all_tp.index)]
+    df_tp_dup = df_tp[df_tp_dup_mask]
+    df_tp = df_tp[~df_tp_dup_mask]
     # Find false positives
     df_fp = df_test[~df_test.index.isin(df_all_tp.index)]
     # Find duplicates

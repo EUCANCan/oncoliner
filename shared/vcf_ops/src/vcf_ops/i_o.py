@@ -94,11 +94,19 @@ def _write_raw_file(f, header: pysam.VariantHeader, variant_record_list: Sequenc
 
 
 def extract_variants(vcf_file: str, idx_list: List[int], pass_only: bool = True) -> Iterator[VariantRecord]:
+    if len(idx_list) == 0:
+        return
     extractor = VariantExtractor(vcf_file, pass_only=pass_only)
     idx_list = set(idx_list)
     for i, variant_record in enumerate(extractor):
         if i in idx_list:
+            idx_list.remove(i)
             yield variant_record
+            # If the idx_list is empty, we can stop
+            if len(idx_list) == 0:
+                break
+    if len(idx_list) > 0:
+        raise ValueError(f'Indices {idx_list} not found in VCF file {vcf_file}')
     extractor.close()
 
 
