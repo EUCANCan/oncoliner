@@ -2,6 +2,7 @@
 # Author: Rodrigo Martín
 # BSC Dual License
 import pandas as pd
+import numpy as np
 
 
 def intersect_exact(df_truth, df_test, matching_fields):
@@ -35,7 +36,51 @@ def intersect_exact(df_truth, df_test, matching_fields):
     return df_tp, df_tp_dup, df_fp, df_fp_dup, df_fn, df_fn_dup
 
 
+def _prefilter_windows(df_truth, df_test, window_fields, window_radius):
+    prefiltering_truth_mask = pd.Series(False, index=df_truth.index)
+    prefiltering_test_mask = pd.Series(False, index=df_test.index)
+    if len(df_truth) == 0 or len(df_test) == 0:
+        # If either dataframe is empty, return empty masks
+        return prefiltering_truth_mask, prefiltering_test_mask
+    for window_field in window_fields:
+        # Sort each dataframe by the window field
+        df_sorted_truth = df_truth.sort_values(by=window_field)
+        df_sorted_test = df_test.sort_values(by=window_field)
+        test_index = 0
+        for truth_index in range(len(df_sorted_truth)):
+            test_value = df_sorted_test.iloc[test_index][window_field]
+            truth_value = df_sorted_truth.iloc[truth_index][window_field]
+            while truth_value > window_radius + test_value:
+                # Move to the next test entry
+                test_index += 1
+                if test_index < len(df_sorted_test):
+                    test_value = df_sorted_test.iloc[test_index][window_field]
+                else:
+                    break
+            if test_index >= len(df_sorted_test):
+                # No more test entries to compare with
+                break
+            exploring_test_index_offset = 0
+            while np.abs(np.subtract(truth_value, test_value)) <= window_radius:
+                # The truth entry is within the window of the test entry
+                prefiltering_truth_mask[df_sorted_truth.index[truth_index]] = True
+                prefiltering_test_mask[df_sorted_test.index[test_index + exploring_test_index_offset]] = True
+                exploring_test_index_offset += 1
+                if test_index + exploring_test_index_offset < len(df_sorted_test):
+                    test_value = df_sorted_test.iloc[test_index + exploring_test_index_offset][window_field]
+                else:
+                    break
+    return prefiltering_truth_mask, prefiltering_test_mask
+
+
 def _entries_in_window(df_truth, df_test, matching_fields, window_fields, window_radius):
+    # Prefilter the dataframes to only include variants that are within windows
+    # This is not estrictly necessary, but it can significantly reduce memory usage
+    # Note that these variants may not even be in the same chromosome, so the next steps
+    # are still necessary to filter them out
+    prefiltering_truth_mask, prefiltering_test_mask = _prefilter_windows(df_truth, df_test, window_fields, window_radius)
+    df_truth = df_truth[prefiltering_truth_mask]
+    df_test = df_test[prefiltering_test_mask]
     # Necessary columns
     necessary_cols = matching_fields + window_fields
     # Drop unnecessary columns
