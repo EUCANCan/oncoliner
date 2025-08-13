@@ -36,30 +36,21 @@ def intersect_exact(df_truth, df_test, matching_fields):
 
 
 def _entries_in_window(df_truth, df_test, matching_fields, window_fields, window_radius):
-    # Calculate window radius
-    curr_df_truth = df_truth.assign(window_radius=window_radius)
-    curr_df_test = df_test.assign(window_radius=window_radius)
     # Necessary columns
-    necessary_cols = matching_fields + window_fields + ['window_radius']
+    necessary_cols = matching_fields + window_fields
     # Drop unnecessary columns
-    curr_df_test = curr_df_test[necessary_cols]
-    curr_df_truth = curr_df_truth[necessary_cols]
-    # Reset index
-    curr_df_test.reset_index(inplace=True)
-    curr_df_truth.reset_index(inplace=True)
-
+    curr_df_test = df_test[necessary_cols]
+    curr_df_truth = df_truth[necessary_cols]
     # Merge on matching fields
-    cross_merge = pd.merge(curr_df_truth, curr_df_test, suffixes=('_truth', '_test'),
-                           how='left', on=matching_fields, copy=False)
-    # Keep only entries that have matches
-    cross_merge.dropna(subset=['window_radius_test'], inplace=True)
+    cross_merge = pd.merge(curr_df_truth.reset_index(), curr_df_test.reset_index(), suffixes=('_truth', '_test'),
+                           how='inner', on=matching_fields, copy=False)
     # Drop entries that are not in the window
     for window_field in window_fields:
         window_field_test = window_field + '_test'
         window_field_truth = window_field + '_truth'
         diff = (cross_merge[window_field_truth].astype(int) - cross_merge[window_field_test].astype(int)).abs()
-        cross_merge = cross_merge[diff <= cross_merge['window_radius_truth']]
-    return cross_merge.drop(matching_fields + ['window_radius_truth', 'window_radius_test'], axis=1)
+        cross_merge = cross_merge[diff <= window_radius]
+    return cross_merge.drop(matching_fields, axis=1)
 
 
 def _matching_window_entries(df_truth, df_test, matching_fields, window_fields, window_radius):

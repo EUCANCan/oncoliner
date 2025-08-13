@@ -57,10 +57,39 @@ def intersect(df_truth, df_test, indel_threshold, window_radius):
     df_test = df_test[~ins_test_mask]
 
     # Intersect rest of SVs comparing start and end positions with a window
-    sv_tp, sv_tp_dup,\
-        sv_fp, sv_fp_dup,\
-        sv_fn, sv_fn_dup = intersect_window(df_truth, df_test, ['start_chrom', 'end_chrom', 'brackets'],
-                                            ['start', 'end'], window_radius)
+    sv_tp_list, sv_tp_dup_list = [], []
+    sv_fp_list, sv_fp_dup_list = [], []
+    sv_fn_list, sv_fn_dup_list = [], []
+
+    for bracket in set(df_truth['brackets'].unique()).union(set(df_test['brackets'].unique())):
+        bracket_truth_mask = df_truth['brackets'] == bracket
+        bracket_test_mask = df_test['brackets'] == bracket
+
+        sv_truth_bracket = df_truth[bracket_truth_mask]
+        sv_test_bracket = df_test[bracket_test_mask]
+
+        df_truth = df_truth[~bracket_truth_mask]
+        df_test = df_test[~bracket_test_mask]
+
+        sv_tp, sv_tp_dup,\
+            sv_fp, sv_fp_dup,\
+            sv_fn, sv_fn_dup = intersect_window(sv_truth_bracket, sv_test_bracket, ['start_chrom', 'end_chrom'],
+                                                ['start', 'end'], window_radius)
+
+        sv_tp_list.append(sv_tp)
+        sv_tp_dup_list.append(sv_tp_dup)
+        sv_fp_list.append(sv_fp)
+        sv_fp_dup_list.append(sv_fp_dup)
+        sv_fn_list.append(sv_fn)
+        sv_fn_dup_list.append(sv_fn_dup)
+
+    # Concatenate results from all bracket types
+    sv_tp = pd.concat(sv_tp_list) if sv_tp_list else pd.DataFrame()
+    sv_tp_dup = pd.concat(sv_tp_dup_list) if sv_tp_dup_list else pd.DataFrame()
+    sv_fp = pd.concat(sv_fp_list) if sv_fp_list else pd.DataFrame()
+    sv_fp_dup = pd.concat(sv_fp_dup_list) if sv_fp_dup_list else pd.DataFrame()
+    sv_fn = pd.concat(sv_fn_list) if sv_fn_list else pd.DataFrame()
+    sv_fn_dup = pd.concat(sv_fn_dup_list) if sv_fn_dup_list else pd.DataFrame()
 
     # Concatenate all results
     df_tp = pd.concat([snv_tp, indel_ins_tp, indel_del_tp, ins_tp, sv_tp])
