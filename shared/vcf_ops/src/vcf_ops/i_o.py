@@ -14,16 +14,23 @@ from .masks import snv_mask, indel_mask  # noqa
 from .constants import ONCOLINER_INFO_GENES_NAME  # noqa
 
 
-def _extract_header(vcf_files: List[str]) -> Tuple[pysam.VariantHeader, bool]:
+def _extract_header(vcf_files: List[str]) -> Tuple[pysam.VariantHeader, bool, bool]:
     headers = [pysam.VariantFile(open(vcf_file)).header for vcf_file in vcf_files]
     main_header = headers[0]
     # Check if samples are the same in all VCFs
     same_samples = True
+    same_formats = True
+    main_samples = list(main_header.samples)
+    formats_keys = list(main_header.formats.keys())
     for header in headers[1:]:
-        if header.samples.header != main_header.samples.header:
-            same_samples = False
+        for i, sample in enumerate(header.samples):
+            if i >= len(main_samples) or sample != main_samples[i]:
+                same_samples = False
+        for i, key in enumerate(header.formats.keys()):
+            if i >= len(formats_keys) or key != formats_keys[i]:
+                same_formats = False
         main_header.merge(header)
-    return main_header, same_samples
+    return main_header, same_samples, same_formats
 
 
 def _get_contigs(header: pysam.VariantHeader, fasta_ref=None):
@@ -110,8 +117,7 @@ def extract_variants(vcf_file: str, idx_list: List[int], pass_only: bool = True)
     extractor.close()
 
 
-def _build_record_list(variants_df: pd.DataFrame, template_vcfs: List[str]) -> List[VariantRecord]:
-    variant_record_list = []
+def _iterate_records(variants_df: pd.DataFrame, template_vcfs: List[str]) -> Iterator[VariantRecord]:
     # For each template_vcf create a VariantExtractor
     for vcf_file in template_vcfs:
         vcf_variants = variants_df[variants_df['vcf_file'] == vcf_file]
@@ -121,8 +127,7 @@ def _build_record_list(variants_df: pd.DataFrame, template_vcfs: List[str]) -> L
                 genes_symbols = variant_info['GENES']
                 if genes_symbols is not None and len(genes_symbols) > 0:
                     variant_record.info[ONCOLINER_INFO_GENES_NAME] = list(genes_symbols)
-            variant_record_list.append(variant_record)
-    return variant_record_list
+            yield variant_record
 
 
 def write_masked_vcfs(variants_df: pd.DataFrame, output_path_prefix: str, indel_threshold: int, fasta_ref=None, command=None, gzip=True):
@@ -142,7 +147,7 @@ def write_masked_vcfs(variants_df: pd.DataFrame, output_path_prefix: str, indel_
 
 def write_vcf(variants_df: pd.DataFrame, output_vcf: str, fasta_ref=None, command=None, remove_chr=False):
     template_vcfs = list(variants_df['vcf_file'].unique())
-    header, same_samples = _extract_header(template_vcfs)
+    header, same_samples, same_formats = _extract_header(template_vcfs)
     # Add meta field with the command used to generate the VCF
     if command:
         header.add_meta('vcf_ops', command)
@@ -156,30 +161,19 @@ def write_vcf(variants_df: pd.DataFrame, output_vcf: str, fasta_ref=None, comman
     variants_df.sort_values(by=['contig_order', 'start'], inplace=True)
     # Apply contigs to header
     _set_contigs(header, contigs, remove_chr)
-    # Build variant_record_list
-    variant_record_list = _build_record_list(variants_df, template_vcfs)
-    # Check if all variants have the same format fields
-    same_formats = True
-    if len(variant_record_list) > 0 and len(template_vcfs) > 1:
-        formats = variant_record_list[0].format
-        for variant_record in variant_record_list[1:]:
-            if variant_record.format != formats:
-                same_formats = False
-                break
-
     # Check if the VCF is gzipped
     if output_vcf.endswith('.gz'):
         f = gzip.open(output_vcf, 'wt')
     else:
         f = open(output_vcf, 'w', encoding='utf-8')
     # Write the file
-    _write_raw_file(f, header, variant_record_list, same_samples, same_formats, remove_chr)
+    _write_raw_file(f, header, _iterate_records(variants_df, template_vcfs), same_samples, same_formats, remove_chr)
     f.close()
 
 
-def _extract_variants(vcf_file, pass_only=True) -> pd.DataFrame:
+def _extract_variants(vcf_file, pass_only=True, ensure_pairs=True) -> pd.DataFrame:
     try:
-        extractor = VariantExtractor(vcf_file, pass_only=pass_only)
+        extractor = VariantExtractor(vcf_file, pass_only=pass_only, ensure_pairs=ensure_pairs)
         variants_df = extractor.to_dataframe()
         extractor.close()
     except Exception as e:
@@ -192,12 +186,12 @@ def _extract_variants(vcf_file, pass_only=True) -> pd.DataFrame:
     return variants_df
 
 
-def read_vcfs(vcf_files, pass_only=True) -> pd.DataFrame:
+def read_vcfs(vcf_files, pass_only=True, ensure_pairs=True) -> pd.DataFrame:
     if len(vcf_files) == 0:
         empty_df = VariantExtractor.empty_dataframe()
         empty_df.columns += ['vcf_file', 'pass_only', 'idx_in_file']
         empty_df['vcf_file'] = empty_df['vcf_file'].astype('category')
         empty_df['pass_only'] = empty_df['pass_only'].astype('bool')
         return empty_df
-    vcf_dfs = [_extract_variants(vcf_file, pass_only=pass_only) for vcf_file in vcf_files]
+    vcf_dfs = [_extract_variants(vcf_file, pass_only=pass_only, ensure_pairs=ensure_pairs) for vcf_file in vcf_files]
     return pd.concat(vcf_dfs, ignore_index=True)
